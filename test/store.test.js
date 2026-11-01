@@ -79,8 +79,8 @@ test('settings start from defaults and keep their PIN', () => {
 test('saving settings merges the change and persists it', () => {
   const dir = tmp();
   const pin = loadSettings(dir).pin;
-  const s = saveSettings(dir, { congregation: 'East-Tagalog Lingayen Congregation' });
-  assert.equal(s.congregation, 'East-Tagalog Lingayen Congregation');
+  const s = saveSettings(dir, { congregation: 'Riverside Congregation' });
+  assert.equal(s.congregation, 'Riverside Congregation');
   assert.equal(s.pin, pin);
-  assert.equal(loadSettings(dir).congregation, 'East-Tagalog Lingayen Congregation');
+  assert.equal(loadSettings(dir).congregation, 'Riverside Congregation');
 });

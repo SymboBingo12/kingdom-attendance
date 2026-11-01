@@ -9,7 +9,7 @@ const { createService } = require('../src/core/service');
 
 function make({ renderer, deliver } = {}) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'att-fin-'));
-  const settings = { congregation: 'East-Tagalog Lingayen Congregation', theme: 'light' };
+  const settings = { congregation: 'Riverside Congregation', theme: 'light' };
   const calls = [];
   const service = createService({
     dataDir,
@@ -33,7 +33,7 @@ test('Finalize makes the video and reports it ready in M³', async () => {
   assert.equal(s.render.message, 'Ready in M³');
   assert.equal(s.render.savedTo, 'C:\\M3\\2026-11-01\\a.mp4');
   assert.equal(calls[0].totals.total, 5);
-  assert.equal(calls[0].congregation, 'East-Tagalog Lingayen Congregation');
+  assert.equal(calls[0].congregation, 'Riverside Congregation');
   assert.equal(calls[0].theme, 'light');
 });
 

@@ -202,7 +202,7 @@ input[type=number], input[type=text] { font: inherit; font-size: 16px; color: va
     <div class="fields">
       <label for="inHall">Kingdom Hall (Left + Center + Right)<input type="number" id="inHall" min="0" max="9999" value="56" inputmode="numeric"></label>
       <label for="inZoom">Zoom<input type="number" id="inZoom" min="0" max="9999" value="19" inputmode="numeric"></label>
-      <label for="inCong">Congregation name<input type="text" id="inCong" value="East-Tagalog Lingayen Congregation"></label>
+      <label for="inCong">Congregation name<input type="text" id="inCong" value="Riverside Congregation"></label>
       <label>Meeting
         <span class="seg" role="group" aria-label="Meeting">
           <button type="button" id="segMid" aria-pressed="true">Midweek</button>
@@ -327,7 +327,7 @@ function vis(t, beat, delay) {
 const $ = (id) => document.getElementById(id);
 const els = [...document.querySelectorAll('.el')];
 const fmt = (n) => n.toLocaleString('en-US');
-let data = { hall: 56, zoom: 19, total: 75, type: 'Midweek', cong: 'East-Tagalog Lingayen Congregation' };
+let data = { hall: 56, zoom: 19, total: 75, type: 'Midweek', cong: 'Riverside Congregation' };
 const today = new Date();
 const dateText = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 

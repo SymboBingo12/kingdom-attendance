@@ -18,7 +18,7 @@ app.whenReady().then(async () => {
   const settings = { ...loadSettings(dataDir), port: 0 };
   const server = createServer(createService({ dataDir, getSettings: () => settings }), { settings, webDir: path.join(__dirname, '..', 'web'), mdns: false });
   const { port } = await server.listen();
-  const q = new URLSearchParams({ hall: 104, zoom: 23, total: 127, type: 'weekend', date: '2026-11-01', cong: 'East-Tagalog Lingayen Congregation', theme: 'light' });
+  const q = new URLSearchParams({ hall: 104, zoom: 23, total: 127, type: 'weekend', date: '2026-11-01', cong: 'Riverside Congregation', theme: 'light' });
   const started = Date.now();
   try {
     const out = await renderAttendance({
