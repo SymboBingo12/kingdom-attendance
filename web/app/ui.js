@@ -7,6 +7,8 @@
 
   const svg = (d, w = 2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const ICONS = {
+    home: svg('<path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/>'),
+    plus: svg('<path d="M12 5v14M5 12h14"/>', 2.4),
     back: svg('<path d="M15 5l-7 7 7 7"/>', 2.4),
     chev: svg('<path d="M9 5l7 7-7 7"/>', 2.2),
     down: svg('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', 2.2),

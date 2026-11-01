@@ -30,18 +30,18 @@
     for (const [g, ps] of M.groupsOf(people)) {
       const shown = ps.filter((p) => M.visible(p, m.marks, mem.q, mem.filter));
       if (!shown.length) continue;
-      html += `<div class="ghead"><b>${UI.esc(g)}</b><span>${M.countMarked(ps, m.marks)} of ${ps.length}</span></div>`;
+      html += `<div class="ghead"><b>${UI.esc(g)}</b><span>${M.countMarked(ps, m.marks)} of ${ps.length}</span></div><div class="pgrid">`;
       html += shown.map((p) => {
         const x = m.marks[p.id];
         const step = x ? `<span class="step"><button data-dec="${p.id}" aria-label="One fewer for ${UI.esc(p.name)}" ${lock}>−</button><b class="st-num">${x.n}</b><button data-inc="${p.id}" aria-label="One more for ${UI.esc(p.name)}" ${lock}>+</button></span>` : '';
         return `<div class="prow"><span class="nm">${UI.esc(p.name)}</span>${step}<button class="mk kh" data-mark="kh" data-id="${p.id}" aria-pressed="${!!x && x.where === 'kh'}" aria-label="${UI.esc(p.name)} at the Kingdom Hall" ${lock}>KH</button><button class="mk zm" data-mark="zoom" data-id="${p.id}" aria-pressed="${!!x && x.where === 'zoom'}" aria-label="${UI.esc(p.name)} on Zoom" ${lock}>Zoom</button></div>`;
-      }).join('');
+      }).join('') + '</div>';
     }
     const q = String(mem.q || '').trim();
     if (!html) html = `<p class="empty-note">${mem.filter === 'none' && !q ? 'Everyone on the list is marked.' : 'No names match.'}</p>`;
     if (mem.filter === 'all' && !q) {
       html += `<div class="ghead"><b>Not on the list</b></div>
-        <div class="prow"><span class="nm">Unnamed visitors<br><span class="dim small">People at the hall you don't know by name</span></span><span class="step"><button data-unnamed="-1" aria-label="One fewer unnamed visitor" ${lock}>−</button><b class="st-num">${m.unnamed || 0}</b><button data-unnamed="1" aria-label="One more unnamed visitor" ${lock}>+</button></span></div>
+        <div class="prow notlisted"><span class="nm">Unnamed visitors<br><span class="dim small">People at the hall you don't know by name</span></span><span class="step"><button data-unnamed="-1" aria-label="One fewer unnamed visitor" ${lock}>−</button><b class="st-num">${m.unnamed || 0}</b><button data-unnamed="1" aria-label="One more unnamed visitor" ${lock}>+</button></span></div>
         <div style="padding:var(--space-3) 0"><div class="add-row"><input class="field" id="newName" maxlength="80" placeholder="Add a visitor by name" autocomplete="off" ${lock}><button class="mk kh" data-add="kh" ${lock}>KH</button><button class="mk zm" data-add="zoom" ${lock}>Zoom</button></div></div>`;
     }
     const chips = [['all', 'All'], ['none', `Not marked (${left})`], ['kh', 'Kingdom Hall'], ['zoom', 'Zoom']]
@@ -60,7 +60,7 @@
     const lock = m.finalized ? 'disabled' : '';
     const lanes = LANES.map((l) => `<div class="lane"><button data-lane="${l}" data-d="-1" aria-label="One fewer in ${l}" ${lock}>−</button><span>${cap(l)}<b class="st-num">${m.lanes[l]}</b></span><button class="plus" data-lane="${l}" data-d="1" aria-label="One more in ${l}" ${lock}>+</button></div>`).join('');
     return `${UI.bar('Count attendance', UI.typeName(m.type), UI.livePill(state, ctx.live))}
-      <div class="pad ${m.finalized ? 'locked' : ''}">
+      <div class="pad countpad ${m.finalized ? 'locked' : ''}">
         ${m.finalized ? lockBanner('a number') : ''}
         <div class="bigtotal"><div class="k">Kingdom Hall</div><div class="v st-num">${state.totals.hall}</div></div>
         ${lanes}
@@ -68,7 +68,7 @@
           <p class="st-card__hint">The Zoom host adds up the "(n)" names and types the total.</p>
           <div class="zstep"><button data-zoom="-1" aria-label="One fewer on Zoom" ${lock}>−</button><input id="zoomIn" data-live type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="${m.zoom}" aria-label="Zoom total" ${lock}><button class="plus" data-zoom="1" aria-label="One more on Zoom" ${lock}>+</button></div>
         </div>
-        <p class="dim small" style="text-align:center">No publisher list yet, so counting is by column.${ctx.who && ctx.who.local ? ' <button class="st-btn st-btn--quiet" data-go="setup">Add a list</button>' : ''}</p>
+        ${ctx.wide && ctx.who && ctx.who.local ? '' /* the banner above already says it */ : `<p class="dim small" style="text-align:center">No publisher list yet, so counting is by column.${ctx.who && ctx.who.local ? ' <button class="st-btn st-btn--quiet" data-go="setup">Add a list</button>' : ''}</p>`}
       </div>`;
   }
 

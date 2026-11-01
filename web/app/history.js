@@ -22,11 +22,26 @@
   const withPin = (url) => { const pin = pinStore.get(); return pin ? `${url}?pin=${encodeURIComponent(pin)}` : url; };
   const day = (date) => new Date(`${date}T12:00:00`);
 
-  function list(entries) {
+  // Desktop: the downloads sit beside the title and the meetings form a table.
+  function table(entries) {
+    const rows = entries.map((m, i) => {
+      const t = totalsOf(m);
+      return `<tr data-go="history/${i}"><td>${UI.longDate(m.date)}</td><td><a href="#/history/${i}">${UI.typeName(m.type)}</a></td><td class="n st-num">${t.hall}</td><td class="n st-num">${t.zoom}</td><td class="n st-num"><b>${t.total}</b></td></tr>`;
+    }).join('');
+    const downloads = `<div class="acts"><a class="st-btn st-btn--primary" href="${withPin('/api/history.xlsx')}" download>${UI.icon('down')}Download for the circuit overseer</a><a class="st-btn st-btn--secondary" href="${withPin('/api/history.csv')}" download>${UI.icon('down')}CSV</a></div>`;
+    return `${UI.bar('History', 'Every finalized meeting, with who was at the Kingdom Hall or on Zoom', downloads)}
+      <div class="pad">
+        <table class="hist"><thead><tr><th>Date</th><th>Meeting</th><th class="n">Hall</th><th class="n">Zoom</th><th class="n">Total</th></tr></thead><tbody>${rows}</tbody></table>
+        <p class="dim small">The circuit overseer's file is an Excel workbook like your attendance sheet: one sheet per meeting with every name at KH or Zoom, and a summary with monthly averages.</p>
+      </div>`;
+  }
+
+  function list(entries, wide) {
     if (!entries.length) {
       return `${UI.bar('History')}<div class="pad"><div class="st-empty"><div class="st-empty__art st-arrive st-rest">${UI.disc(ART.historyArt, 'st-disc--lg')}</div>
         <h3>No meetings yet</h3><p>Each meeting appears here after the AV desk presses Finalize.</p></div></div>`;
     }
+    if (wide) return table(entries);
     const rows = entries.map((m, i) => {
       const t = totalsOf(m);
       return `<button class="hrow" data-go="history/${i}"><span class="when"><b class="st-num">${day(m.date).getDate()}</b>${day(m.date).toLocaleDateString('en-US', { month: 'short' })}</span><span><b>${UI.typeName(m.type)}</b><small>${UI.longDate(m.date)} · Hall ${t.hall} · Zoom ${t.zoom}</small></span><span class="num st-num">${t.total}</span>${UI.icon('chev', 'chev')}</button>`;
@@ -45,11 +60,11 @@
     let body = '';
     if (m.people && m.people.length) {
       for (const [g, ps] of M.groupsOf(m.people)) {
-        body += `<div class="ghead"><b>${UI.esc(g)}</b><span>${M.countMarked(ps, m.marks || {})} of ${ps.length}</span></div>` + ps.map((p) => {
+        body += `<div class="ghead"><b>${UI.esc(g)}</b><span>${M.countMarked(ps, m.marks || {})} of ${ps.length}</span></div><div class="pgrid">` + ps.map((p) => {
           const x = (m.marks || {})[p.id];
           const tag = x ? `<span class="tag ${x.where === 'kh' ? 'kh' : 'zm'}">${x.where === 'kh' ? 'Kingdom Hall' : 'Zoom'}${x.n > 1 ? ` · ${x.n}` : ''}</span>` : '<span class="tag no">Not marked</span>';
           return `<div class="who"><span>${UI.esc(p.name)}</span>${tag}</div>`;
-        }).join('');
+        }).join('') + '</div>';
       }
       if (m.unnamed) body += `<div class="who"><span>Unnamed visitors</span><span class="tag kh">Kingdom Hall · ${m.unnamed}</span></div>`;
     } else {
@@ -65,7 +80,7 @@
       const mem = ctx.memory('history');
       if (!mem.entries) return `${UI.bar('History')}<div class="pad"><p class="dim" style="text-align:center">Loading…</p></div>`;
       if (arg !== undefined && mem.entries[Number(arg)]) return detail(mem.entries[Number(arg)]);
-      return list(mem.entries);
+      return list(mem.entries, ctx.wide);
     },
 
     // Fetches the history when the screen opens, and again after a meeting is finalized or unlocked.

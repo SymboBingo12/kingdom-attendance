@@ -39,7 +39,7 @@
       const c = mem.connect;
       const rendering = state.render.status === 'rendering';
       return `${UI.bar('AV desk', UI.typeName(m.type), UI.livePill(state, ctx.live))}
-        <div class="pad">
+        <div class="pad deskgrid"><div class="deskmain">
           ${UI.tiles(state.totals)}
           ${state.mode === 'names' ? `<p class="dim small" style="margin-top:-8px">Zoom comes from the names marked Zoom. Kingdom Hall includes ${m.unnamed || 0} unnamed visitor${m.unnamed === 1 ? '' : 's'}.</p>` : ''}
           ${status(state)}
@@ -47,6 +47,7 @@
             ? `<div class="row2"><button class="st-btn st-btn--secondary st-btn--main" data-act="unlock" ${rendering ? 'disabled' : ''}>Unlock</button><button class="st-btn st-btn--secondary st-btn--main" data-act="rerender" ${rendering ? 'disabled' : ''}>Make the video again</button></div>`
             : `<button class="st-btn st-btn--primary st-btn--main st-btn--block" data-act="finalize">Finalize</button>
                <p class="dim small" style="margin-top:-8px">Locks the numbers and makes the attendance video for M³.</p>`}
+          </div><div class="deskside">
           <section class="st-card"><h3 class="st-card__title">Connect a phone</h3>
             ${c ? `<div class="connect"><img class="qr" src="${c.qr}" alt="QR code that opens Kingdom Attendance"><div><div class="dim small">PIN</div><div class="pin st-num">${UI.esc(c.pin)}</div><div class="dim small">${UI.esc(c.count)}</div></div></div>`
               : '<p class="dim small">Loading the QR code…</p>'}
@@ -54,7 +55,7 @@
           <section class="st-card"><h3 class="st-card__title">Meeting</h3>
             <div class="st-seg" role="group" aria-label="Meeting"><button data-type="midweek" aria-pressed="${m.type === 'midweek'}">Midweek</button><button data-type="weekend" aria-pressed="${m.type === 'weekend'}">Weekend</button></div>
             <button class="st-btn st-btn--secondary st-btn--block" style="margin-top:var(--space-3)" data-act="new" ${rendering ? 'disabled' : ''}>${mem.newConfirm ? 'Tap again to clear every mark' : 'New meeting'}</button></section>
-        </div>`;
+        </div></div>`;
     },
 
     after({ ctx }) {

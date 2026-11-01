@@ -32,15 +32,31 @@
     }
   }
 
+  const pasteBox = () => `<textarea class="field" id="paste" placeholder="Santos, Ana&#10;Reyes, Mark &amp; Joy&#10;&#10;VISITORS&#10;Lim, Grace"></textarea>`;
+
+  // Desktop: one drop area with every way in. Used by the first-time screen and the list's left column.
+  function uploadArea(mem) {
+    return `<div class="drop">${UI.disc(ART.listArt, 'st-disc--lg st-rest')}
+        <b>Drag your attendance sheet here</b>
+        <span class="dim">An Excel file (.xlsx) like your attendance sheet, or a CSV</span>
+        <label class="st-btn st-btn--primary st-btn--main">Choose a file…<input type="file" id="file" accept=".xlsx,.csv" hidden></label>
+        ${mem.pasting ? `${pasteBox()}<button class="st-btn st-btn--secondary" data-act="usePaste">Use these names</button>
+          <span class="dim small">One name per line. A line in capitals such as <b>VISITORS</b> starts a new group.</span>` : ''}
+        <div class="orrow">${mem.pasting ? '' : '<button class="st-btn st-btn--secondary" data-act="paste">Type or paste names</button>'}<a class="st-btn st-btn--quiet" href="/api/roster/template.csv" download>${UI.icon('down')}Blank template</a><button class="st-btn st-btn--quiet" data-act="sample">Try made-up names</button></div>
+        <span class="dim small">Next you check what was read (which sheet, how many people per group), then press <b>Use this list</b>. It stays on this computer until you upload a new one.</span>
+      </div>`;
+  }
+
   function setup(ctx) {
     const mem = ctx.memory('setup');
+    if (ctx.wide) return `${UI.bar('Add your publisher list', 'Once, on this computer. Attendants then mark each person KH or Zoom.')}<div class="pad">${uploadArea(mem)}</div>`;
     return `${UI.bar('Add your publisher list')}
       <div class="pad">
         <div class="st-empty"><div class="st-empty__art st-arrive st-rest">${UI.disc(ART.listArt, 'st-disc--lg')}</div>
           <h3>One list, used every meeting</h3><p>Upload it once. It stays on this computer until you upload a new one or change a name.</p></div>
         <label class="st-btn st-btn--primary st-btn--main st-btn--block">Choose a file…<input type="file" id="file" accept=".xlsx,.csv" hidden></label>
         <p class="dim small" style="text-align:center;margin:-8px 0 0">An Excel file (.xlsx) like your attendance sheet, or a CSV</p>
-        ${mem.pasting ? `<textarea class="field" id="paste" placeholder="Santos, Ana&#10;Reyes, Mark &amp; Joy&#10;&#10;VISITORS&#10;Lim, Grace"></textarea>
+        ${mem.pasting ? `${pasteBox()}
           <button class="st-btn st-btn--secondary st-btn--block" data-act="usePaste">Use these names</button>
           <p class="dim small">One name per line. A line in capitals such as <b>VISITORS</b> starts a new group.</p>`
           : '<button class="st-btn st-btn--secondary st-btn--block" data-act="paste">Type or paste names</button>'}
@@ -66,19 +82,33 @@
   function listScreen(state, ctx) {
     const mem = ctx.memory('list');
     const groups = M.groupsOf(state.roster);
-    const body = groups.map(([g, ps]) => `<div class="ghead"><b>${UI.esc(g)}</b><span>${ps.length}</span></div>` + ps.map((p) => (
+    const body = groups.map(([g, ps]) => `<div class="ghead"><b>${UI.esc(g)}</b><span>${ps.length}</span></div><div class="pgrid narrow">` + ps.map((p) => (
       `<div class="prow"><span class="nm">${UI.esc(p.name)}</span>${mem.confirm === p.id
         ? `<button class="st-btn st-btn--danger" data-remove="${p.id}">Remove</button><button class="st-btn st-btn--quiet" data-act="keep">Keep</button>`
-        : `<button class="st-btn st-btn--quiet" data-ask="${p.id}" aria-label="Remove ${UI.esc(p.name)}">Remove</button>`}</div>`)).join('')).join('');
+        : `<button class="st-btn st-btn--quiet" data-ask="${p.id}" aria-label="Remove ${UI.esc(p.name)}">Remove</button>`}</div>`)).join('') + '</div>').join('');
+    const addRow = `<div class="add-row"><input class="field" id="listName" maxlength="80" placeholder="Add a name" autocomplete="off">
+          <select class="field" id="listGroup" aria-label="Group">${groups.map(([g]) => `<option>${UI.esc(g)}</option>`).join('')}</select>
+          <button class="st-btn st-btn--secondary" data-act="addToList">Add</button></div>`;
+    if (ctx.wide) {
+      return `${UI.bar('Publisher list', `${state.roster.length} people · past meetings keep the names as they were`)}
+        <div class="pad listgrid">
+          <section class="panel"><h3>Upload a new list</h3>${uploadArea(ctx.memory('setup'))}</section>
+          <section class="panel"><h3>The list now</h3>${addRow}<div>${body}</div></section>
+        </div>`;
+    }
     return `${UI.bar('Publisher list', `${state.roster.length} people`)}
       <div class="pad">
-        <div class="add-row"><input class="field" id="listName" maxlength="80" placeholder="Add a name" autocomplete="off">
-          <select class="field" id="listGroup" aria-label="Group">${groups.map(([g]) => `<option>${UI.esc(g)}</option>`).join('')}</select>
-          <button class="st-btn st-btn--secondary" data-act="addToList">Add</button></div>
+        ${addRow}
         <button class="st-btn st-btn--secondary st-btn--block" data-go="setup">Upload a new list</button>
         ${UI.banner('', 'info', "Past meetings don't change", 'Each finalized meeting keeps the names as they were that day.')}
         <div>${body}</div>
       </div>`;
+  }
+
+  // Dropped on the desktop's drop area (or anywhere on these screens).
+  async function dropped(file, ctx) {
+    if (!/\.(xlsx|csv)$/i.test(file.name)) { ctx.note('Drop an Excel file (.xlsx) or a CSV.'); return; }
+    await preview(ctx, await file.arrayBuffer(), file.name, file.name);
   }
 
   async function useList(ctx) {
@@ -109,6 +139,7 @@
       }
       if (el.id === 'sheet') { mem.sheet = el.value; mem.from = el.value; ctx.redraw(); }
     },
+    onDrop: dropped,
   };
 
   views.list = {
@@ -118,6 +149,8 @@
     },
     async onClick(b, ctx) {
       const mem = ctx.memory('list');
+      // The desktop's upload column works like the first-time screen.
+      if (['paste', 'usePaste', 'sample'].includes(b.dataset.act)) return views.setup.onClick(b, ctx);
       if (b.dataset.ask) { mem.confirm = b.dataset.ask; ctx.redraw(); return; }
       if (b.dataset.act === 'keep') { mem.confirm = null; ctx.redraw(); return; }
       if (b.dataset.remove) { mem.confirm = null; await ctx.act('/api/roster/remove', { id: b.dataset.remove }); return; }
@@ -129,6 +162,8 @@
         if (person) { ctx.note(`${person.name} added.`, 'ok'); }
       }
     },
+    onChange(el, ctx) { if (el.id === 'file') return views.setup.onChange(el, ctx); },
+    onDrop: dropped,
     onKeydown(el, ctx, e) {
       if (el.id === 'listName' && e.key === 'Enter') { e.preventDefault(); document.querySelector('[data-act="addToList"]').click(); }
     },

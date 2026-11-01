@@ -4,7 +4,7 @@
 // and hands it to M³. Closing the window keeps it running; Quit from the tray stops it.
 
 const path = require('node:path');
-const { app, BrowserWindow, Tray, Menu, dialog, shell, nativeImage, nativeTheme } = require('electron');
+const { app, BrowserWindow, Tray, Menu, dialog, shell, nativeImage, nativeTheme, screen } = require('electron');
 const { createService } = require('./core/service');
 const { createServer } = require('./core/server');
 const { loadSettings, saveSettings, newPin, appearanceOf } = require('./core/settings');
@@ -58,8 +58,10 @@ if (!app.requestSingleInstanceLock()) {
 
   function showWindow() {
     if (!win) {
+      // Wide enough for the desktop layout (sidebar from 900 px), but never bigger than the screen.
+      const area = screen.getPrimaryDisplay().workAreaSize;
       win = new BrowserWindow({
-        width: 820, height: 760, minWidth: 420, minHeight: 520, show: false, icon: ICON, title: 'Kingdom Attendance',
+        width: Math.min(1280, area.width), height: Math.min(820, area.height), minWidth: 420, minHeight: 520, show: false, icon: ICON, title: 'Kingdom Attendance',
         backgroundColor: nativeTheme.shouldUseDarkColors ? '#121a2b' : '#ffffff', // the page colour, so opening doesn't flash
         autoHideMenuBar: true,
         webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },

@@ -24,7 +24,27 @@
 
   const countMarked = (people, marks) => people.filter((p) => marks[p.id]).length;
 
-  const api = { groupsOf, visible, countMarked };
+  // The desktop sidebar: which screens it lists, which one is lit, and the "no list yet" prompts.
+  // av: this is the AV computer; named: a publisher list is in use; route: the screen showing now.
+  function sidebar({ av, named, count, route }) {
+    const lit = route === 'setup' ? 'list' : route;
+    const items = [
+      { to: 'home', label: 'Home' },
+      { to: 'mark', label: 'Mark attendance' },
+      { to: 'history', label: 'History' },
+    ];
+    if (av) {
+      items.push(
+        { to: 'desk', label: 'AV desk', av: true },
+        { to: 'list', label: 'Publisher list', av: true, go: named ? 'list' : 'setup', badge: named ? count : null },
+        { to: 'settings', label: 'Settings', av: true },
+      );
+    }
+    for (const i of items) { i.go = i.go || i.to; i.current = i.to === lit; }
+    return { items, addList: !!av && !named, noListBanner: !!av && !named && lit !== 'list', pin: !!av };
+  }
+
+  const api = { groupsOf, visible, countMarked, sidebar };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.AttendanceModel = api;
 })(typeof window !== 'undefined' ? window : globalThis);

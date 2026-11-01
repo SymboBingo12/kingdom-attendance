@@ -31,7 +31,7 @@
     const s = info.settings;
     const u = info.update || { state: 'idle' };
     return `${UI.bar('Settings')}
-      <div class="pad">
+      <div class="pad setpad">
         <section class="st-card set"><h3 class="st-card__title">Attendance video</h3>
           <label class="lbl">Congregation name (shown on the video)<input class="field wide" id="congIn" maxlength="80" value="${UI.esc(s.congregation || '')}" placeholder="Riverside Congregation" autocomplete="off"></label>
           <div class="lbl">M³ shared folder</div>
@@ -101,7 +101,12 @@
       if (b.dataset.sw) return post('/api/settings', { [b.dataset.sw]: b.getAttribute('aria-checked') !== 'true' });
       if (b.dataset.host) return post(`/api/host/${b.dataset.host}`);
       if (b.dataset.folder) return post('/api/host/open-folder', { which: b.dataset.folder });
-      if (b.dataset.act === 'newPin') { await post('/api/pin/new'); ctx.note('New PIN made. Phones need the new PIN.', 'ok'); return; }
+      if (b.dataset.act === 'newPin') {
+        ctx.memory('side').stale = true; // the sidebar shows the PIN too
+        await post('/api/pin/new');
+        ctx.note('New PIN made. Phones need the new PIN.', 'ok');
+        return;
+      }
       if (b.dataset.act === 'install') {
         const r = await ctx.api.post('/api/host/install-update', {}).catch(() => ({ ok: false }));
         if (!r.ok) ctx.note('Wait until the video is finished, then try again.');
