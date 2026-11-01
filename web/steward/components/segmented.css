@@ -1,0 +1,11 @@
+/* Segmented control: pick one of 2–4 views or modes (Light / Dark, Day / Week).
+   <div class="st-seg" role="group" aria-label="Theme"><button aria-pressed="true">Light</button><button aria-pressed="false">Dark</button></div> */
+
+.st-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--radius-pill); background: var(--surface); border: 1px solid var(--line); }
+.st-seg button {
+  appearance: none; min-height: var(--tap-min); padding: 0 var(--space-4); border: 0; border-radius: var(--radius-pill);
+  background: none; color: var(--text-dim); font: inherit; font-size: var(--text-sm); font-weight: var(--weight-medium); cursor: pointer;
+  transition: background-color .15s ease-out, color .15s ease-out;
+}
+@media (hover: hover) { .st-seg button:hover { color: var(--text); } }
+.st-seg button[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); font-weight: var(--weight-bold); }

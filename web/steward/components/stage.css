@@ -1,0 +1,39 @@
+/* Stage display: the big countdown seen from the platform and over video. Always dark, scales with its box (16:9).
+   Add both classes, st-stage (layout) and stage (the dark colours from tokens.css). Never use coral here.
+   States in data-state: run, warn (amber, slow flash), over (red, faster flash, words change), between (clock).
+   <div class="st-stage stage" data-state="warn"><p class="st-stage__label">Bible reading</p>
+     <p class="st-stage__time st-num">0:48</p><p class="st-stage__note">Less than a minute left</p>
+     <div class="st-progress"><i style="…"></i></div></div> */
+
+.st-stage {
+  position: relative; container-type: inline-size; aspect-ratio: 16 / 9; overflow: hidden; border-radius: var(--radius-lg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0;
+  /* no padding here: cq units inside measure this box's content width, so padding would shrink everything */
+  background: var(--page); color: var(--text); font-family: var(--font);
+}
+.st-stage p { margin: 0; }
+.st-stage__label { font-size: 3.2cqw; color: var(--text-dim); font-weight: var(--weight-medium); }
+.st-stage__time { font-size: 21cqw; font-weight: var(--weight-black); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.st-stage__note { font-size: 3.4cqw; color: var(--text-dim); margin-top: 1.4cqw; min-height: 1.5em; }
+.st-stage__note b { color: var(--text); }
+.st-stage .st-progress { position: absolute; left: 8cqw; right: 8cqw; bottom: 5cqw; height: 1cqw; background: var(--surface); }
+
+/* A frame that flashes on warnings: opacity only, slower than 3 times a second */
+.st-stage::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1.2cqw var(--tone, transparent); opacity: 0; pointer-events: none; }
+
+.st-stage[data-state="warn"] { --tone: var(--warn); }
+.st-stage[data-state="warn"] .st-stage__time, .st-stage[data-state="warn"] .st-stage__note { color: var(--warn-text); }
+.st-stage[data-state="warn"] .st-progress > i { background: var(--warn); }
+.st-stage[data-state="warn"]::after { animation: st-flash 1s ease-in-out infinite alternate; }
+
+.st-stage[data-state="over"] { --tone: var(--danger); }
+.st-stage[data-state="over"] .st-stage__time, .st-stage[data-state="over"] .st-stage__note { color: var(--danger-text); }
+.st-stage[data-state="over"] .st-progress > i { background: var(--danger); }
+.st-stage[data-state="over"]::after { animation: st-flash .7s ease-in-out infinite alternate; }
+
+.st-stage[data-state="between"] .st-stage__time { font-weight: var(--weight-bold); color: var(--text-dim); }
+
+@keyframes st-flash { from { opacity: .15; } to { opacity: 1; } }
+
+/* Reduced motion: no flashing; the frame stays on, and the colour and words still change */
+@media (prefers-reduced-motion: reduce) { .st-stage[data-state="warn"]::after, .st-stage[data-state="over"]::after { animation: none; opacity: 1; } }

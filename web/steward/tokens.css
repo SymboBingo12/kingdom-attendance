@@ -1,0 +1,130 @@
+/*
+ * Steward design tokens (working name)
+ * Draft 0.3: a publication-style identity. White space, circles, coral headings, one duotone palette per topic.
+ * Use the variables, never the raw values, so a change here updates every app.
+ *
+ * Font (free, Google Fonts):
+ * <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+ */
+
+:root {
+  /* Base */
+  --ink: #1f2a44;          /* text, stage screens */
+  --paper: #ffffff;
+  --brand: #4a6da7;        /* Library Blue: buttons, links in apps, progress */
+  --brand-strong: #3a5a90;
+  --brand-soft: #e3eaf5;
+  --on-brand: #ffffff;
+  --coral: #c9502f;        /* headings and references on content pages; never on timer screens (see --danger) */
+  --coral-bright: #e2673f; /* cover blocks with large white text only */
+  --seaglass: #d3ebe3;     /* the soft circle behind art */
+  --teal: #2f7f86;
+
+  /* Surfaces and text (light theme) */
+  --page: #ffffff;
+  --surface: #f6f8fb;
+  --line: #e2e7ef;
+  --text: #1f2a44;
+  --text-dim: #5d6880;
+
+  /* Meaning, reserved for function; never decoration, never the only signal */
+  --ok: #2f8a5b;
+  --warn: #c98400;
+  --danger: #b3261e;
+  /* Text-safe versions for small text (4.5 : 1 on page and surface); the fills above stay for dots, bars and icons */
+  --ok-text: #24704a;
+  --warn-text: #8a5a00;
+  --danger-text: #b3261e;
+  --on-danger: #ffffff;
+
+  /* Artwork: one duotone palette per topic (dark, mid, light) */
+  --duo-navy: #22305a;    --duo-mustard: #d9a93a;  --duo-cream: #f5e6b8;   /* platform, assemblies */
+  --duo-deepteal: #164e57; --duo-maroon: #7a2b3a;  --duo-aqua: #a9d6d9;    /* time, schedules */
+  --duo-plum: #4f2346;    --duo-rose: #b8657f;     --duo-blush: #f3d9d3;   /* study, reading */
+  --duo-ember: #4a1410;   --duo-vermilion: #d2502f; --duo-peach: #f7c9b0;  /* sound, media */
+
+  /* Typography: one family, like the publications */
+  --font: "Noto Sans", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font);
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --text-2xl: 40px;
+  --weight-light: 300;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 700;
+  --weight-black: 800;
+  --tracking-cover: 0.18em; /* spaced capitals, cover blocks only */
+
+  /* Spacing (multiples of 4) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 56px;
+  --space-8: 96px;
+
+  /* Shape: circles for art, gentle corners for controls */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+  --shadow: 0 1px 2px rgba(31, 42, 68, 0.06), 0 12px 32px -12px rgba(31, 42, 68, 0.22);
+
+  /* Touch */
+  --tap-min: 44px;
+  --tap-main: 56px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --ease-pop: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+/* Dark theme: follows the system unless the app forces light */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --brand: #8fa9d6; --brand-strong: #b3c6e6; --brand-soft: #22304d; --on-brand: #121a2b;
+    --coral: #f08a6c; --seaglass: #1e3a3a;
+    --page: #121a2b; --surface: #1a2338; --line: #2a3550; --text: #e8edf6; --text-dim: #9aa6be;
+    --ok: #5fc08a; --warn: #f2b544; --danger: #ff6b5e;
+    --ok-text: #5fc08a; --warn-text: #f2b544; --danger-text: #ff6b5e; --on-danger: #121a2b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
+  }
+}
+:root[data-theme="dark"] {
+  --brand: #8fa9d6; --brand-strong: #b3c6e6; --brand-soft: #22304d; --on-brand: #121a2b;
+  --coral: #f08a6c; --seaglass: #1e3a3a;
+  --page: #121a2b; --surface: #1a2338; --line: #2a3550; --text: #e8edf6; --text-dim: #9aa6be;
+  --ok: #5fc08a; --warn: #f2b544; --danger: #ff6b5e;
+  --ok-text: #5fc08a; --warn-text: #f2b544; --danger-text: #ff6b5e; --on-danger: #121a2b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
+}
+
+/* Stage screens are always dark: a white screen glares on stage and over OBS video.
+   Every text colour here reaches 7 : 1 on --page; red stays darker than amber so they differ in brightness too */
+.stage {
+  --page: #172036; --surface: #1f2a44; --line: #2c3a5c;
+  --text: #ffffff; --text-dim: #b8c2d6; --brand: #8fa9d6;
+  --ok: #5fc08a; --warn: #f2b544; --danger: #ff8a7f;
+  --ok-text: #5fc08a; --warn-text: #f2b544; --danger-text: #ff8a7f; --on-danger: #172036;
+}
+
+/* Artwork helpers */
+.art-grain { position: relative; isolation: isolate; }
+.art-grain::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; mix-blend-mode: multiply; opacity: 0.45;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.1  0 0 0 0 0.15  0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.art-circle { border-radius: 50%; overflow: hidden; }
+
+/* Printing and PDFs: keep the colours and art; drop the grain, which turns into heavy images */
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .art-grain::after { display: none; }
+}
+.art-fade { -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%); mask-image: radial-gradient(closest-side, #000 62%, transparent 100%); }

@@ -1,0 +1,22 @@
+/* Banners for problems and notices. Icon + title + what to do next; never colour alone (see guidelines/voice.md).
+   Use role="status" for notices, role="alert" only for problems that need action now.
+   <div class="st-banner st-banner--warn" role="status"><svg class="st-banner__icon">…</svg>
+     <div class="st-banner__body"><b>The stage screen lost Wi-Fi</b><p>The timer keeps running here. Reconnect to show it again.</p></div>
+     <button class="st-btn st-btn--quiet">Retry</button></div> */
+
+.st-banner {
+  --tone: var(--brand); --tone-text: var(--brand-strong);
+  display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--tone) 10%, var(--page)); box-shadow: inset 4px 0 0 var(--tone); color: var(--text); font-size: var(--text-sm);
+}
+.st-banner__icon { width: 20px; height: 20px; flex: none; margin-top: 1px; color: var(--tone-text); }
+.st-banner__body { flex: 1; min-width: 0; }
+.st-banner__body b { display: block; font-size: var(--text-md); line-height: 1.35; }
+.st-banner__body p { margin: 2px 0 0; color: var(--text-dim); }
+.st-banner .st-btn { align-self: center; flex: none; }
+
+.st-banner--ok { --tone: var(--ok); --tone-text: var(--ok-text); }
+.st-banner--warn { --tone: var(--warn); --tone-text: var(--warn-text); }
+.st-banner--danger { --tone: var(--danger); --tone-text: var(--danger-text); }
+
+@media (max-width: 480px) { .st-banner { flex-wrap: wrap; } .st-banner .st-btn { margin-left: calc(20px + var(--space-3)); } }

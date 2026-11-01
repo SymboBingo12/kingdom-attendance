@@ -1,0 +1,8 @@
+/* Progress bar. Set the amount with --value (0 to 1); it moves with transform only, so it stays smooth.
+   <div class="st-progress" role="progressbar" aria-label="Part time used" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"
+     style="--value: .4"><i></i></div> */
+
+.st-progress { --value: 0; height: 8px; border-radius: var(--radius-pill); background: var(--brand-soft); overflow: hidden; }
+.st-progress > i { display: block; height: 100%; background: var(--brand); transform: scaleX(var(--value)); transform-origin: left; transition: transform 1s linear; }
+.st-progress--warn > i { background: var(--warn); }
+.st-progress--danger > i { background: var(--danger); }

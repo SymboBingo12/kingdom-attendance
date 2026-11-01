@@ -1,0 +1,31 @@
+/* Buttons. One primary per screen, secondary for the rest, danger only for what can't be undone.
+   <button class="st-btn st-btn--primary">Start</button> */
+
+.st-btn {
+  appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  min-height: var(--tap-min); padding: 0 var(--space-5); border: 1.5px solid transparent; border-radius: var(--radius-pill);
+  background: var(--surface); color: var(--text); font: inherit; font-size: var(--text-sm); font-weight: var(--weight-bold); line-height: 1.2;
+  text-decoration: none; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease-out, background-color .15s ease-out, border-color .15s ease-out;
+}
+.st-btn:active { transform: scale(.97); }
+.st-btn svg { width: 18px; height: 18px; flex: none; }
+
+.st-btn--primary { background: var(--brand); color: var(--on-brand); }
+.st-btn--secondary { background: var(--page); border-color: var(--line); }
+.st-btn--soft { background: var(--brand-soft); color: var(--brand-strong); }
+.st-btn--quiet { background: transparent; color: var(--brand); padding: 0 var(--space-3); }
+.st-btn--danger { background: var(--danger); color: var(--on-danger); }
+
+@media (hover: hover) {
+  .st-btn--primary:hover { background: var(--brand-strong); }
+  .st-btn--secondary:hover { border-color: var(--brand); }
+  .st-btn--soft:hover, .st-btn--quiet:hover { background: color-mix(in srgb, var(--brand) 18%, var(--page)); }
+}
+
+/* Sizes */
+.st-btn--main { min-height: var(--tap-main); padding: 0 var(--space-6); font-size: var(--text-md); }
+.st-btn--block { width: 100%; }
+.st-btn--round { width: var(--tap-min); padding: 0; border-radius: 50%; }
+
+.st-btn:disabled, .st-btn[aria-disabled="true"] { opacity: .45; cursor: not-allowed; transform: none; }
