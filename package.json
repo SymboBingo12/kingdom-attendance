@@ -22,6 +22,38 @@
     "qrcode": "^1.5.4"
   },
   "devDependencies": {
-    "electron": "^45.0.0"
+    "electron": "^45.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.symbobingo12.attendance",
+    "productName": "Kingdom Attendance",
+    "files": [
+      "src/**",
+      "web/**",
+      "assets/**",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**"
+    ],
+    "extraResources": [
+      { "from": "node_modules/ffmpeg-static/ffmpeg.exe.LICENSE", "to": "LICENSES/ffmpeg.LICENSE.txt" },
+      { "from": "web/steward/fonts/OFL.txt", "to": "LICENSES/NotoSans-OFL.txt" },
+      { "from": "LICENSE", "to": "LICENSES/Kingdom-Attendance-MIT.txt" }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Kingdom-Attendance-Setup-${version}.exe"
+    },
+    "directories": {
+      "output": "release"
+    },
+    "publish": null
   }
 }

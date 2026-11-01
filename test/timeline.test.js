@@ -40,6 +40,17 @@ test('counting never goes backwards', () => {
   }
 });
 
+test('after SETTLED nothing moves, so the renderer can repeat the last frame', () => {
+  const { SETTLED } = require('../web/shared/timeline');
+  assert.ok(SETTLED > 9 && SETTLED < 10.5, `SETTLED ${SETTLED}`);
+  assert.deepEqual(frameAt(SETTLED, d), frameAt(12, d));
+  const drawn = (v) => ({ o: v.o, e: v.e, x: v.x }); // p only drives the art drift; the total screen has no art
+  for (const [beat, delay] of [['total', 0], ['total', 0.35], ['foot', 0]]) {
+    assert.deepEqual(drawn(vis(SETTLED, beat, delay)), drawn(vis(12, beat, delay)), `${beat} ${delay}`);
+  }
+  for (const beat of ['intro', 'hall', 'zoom']) assert.equal(vis(SETTLED, beat, 0).o, 0);
+});
+
 test('beats crossfade: the hall fades in as the intro fades out', () => {
   const introOut = vis(2.55, 'intro', 0);
   const hallIn = vis(2.55, 'hall', 0);

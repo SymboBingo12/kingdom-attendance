@@ -12,6 +12,9 @@
   const ENTER = 0.8;
   const EXIT = 0.5;
 
+  // From here to the end every frame is identical: the total has finished counting and everything has arrived.
+  const SETTLED = BEATS.total[0] + COUNT_DELAY + COUNT_TIME;
+
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const easeOut = (p) => 1 - Math.pow(1 - p, 4);
   const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
@@ -42,7 +45,7 @@
     return { o: e * (1 - x), e, x, p: clamp((t - a) / (b - a)) };
   }
 
-  const api = { DURATION, FPS, BEATS, frameAt, vis, clamp };
+  const api = { DURATION, FPS, BEATS, SETTLED, frameAt, vis, clamp };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.AttendanceTimeline = api;
 })(typeof window !== 'undefined' ? window : globalThis);

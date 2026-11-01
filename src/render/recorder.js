@@ -7,7 +7,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
-const { DURATION, FPS } = require('../../web/shared/timeline');
+const { DURATION, FPS, SETTLED } = require('../../web/shared/timeline');
 
 const W = 1920;
 const H = 1080;
@@ -83,7 +83,13 @@ async function renderAttendance({ slideUrl, outDir, fileBase, ffmpegPath = ffmpe
     const frames = Math.round(DURATION * FPS);
     const prof = { start: Date.now(), draw: 0, paint: 0, write: 0, resized: 0 };
     let last = null;
+    let settled = null; // once nothing moves (the held total), the same frame is written again
     for (let i = 0; i <= frames; i++) {
+      if (settled) {
+        await write(ffmpeg.ff.stdin, settled);
+        onProgress((i + 1) / (frames + 1));
+        continue;
+      }
       let t0 = Date.now();
       const painted = nextPaint();
       await wc.executeJavaScript(`window.drawAt(${i / FPS})`);
@@ -99,7 +105,10 @@ async function renderAttendance({ slideUrl, outDir, fileBase, ffmpegPath = ffmpe
         prof.resized++;
       }
       last = img;
-      await write(ffmpeg.ff.stdin, img.toBitmap());
+      const bitmap = img.toBitmap();
+      // Settle one frame late, so the first fully settled frame has really been painted.
+      if ((i - 1) / FPS >= SETTLED) settled = bitmap;
+      await write(ffmpeg.ff.stdin, bitmap);
       prof.write += Date.now() - t0;
       onProgress((i + 1) / (frames + 1));
     }
