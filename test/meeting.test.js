@@ -4,6 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   newMeeting, meetingType, applyTap, setZoom, totals, finalize, unlock, rollIfNewDay,
+  upgrade, setMark, bumpUnnamed, addVisitor, dropMarks,
 } = require('../src/core/meeting');
 
 const sunday = new Date(2026, 10, 1); // Sun 1 Nov 2026
@@ -11,6 +12,7 @@ const sunday = new Date(2026, 10, 1); // Sun 1 Nov 2026
 test('a new meeting starts at zero, typed from the weekday', () => {
   assert.deepEqual(newMeeting(sunday), {
     date: '2026-11-01', type: 'weekend', lanes: { left: 0, center: 0, right: 0 }, zoom: 0, finalized: false, finalizedAt: null,
+    marks: {}, unnamed: 0, visitors: [],
   });
   assert.equal(meetingType(new Date(2026, 10, 5)), 'midweek'); // Thu
   assert.equal(newMeeting(sunday, 'midweek').type, 'midweek');
@@ -66,4 +68,63 @@ test('a new day starts a new meeting', () => {
   assert.equal(r.meeting.date, '2026-11-05');
   assert.equal(r.meeting.type, 'midweek');
   assert.equal(r.meeting.lanes.left, 0);
+});
+
+// ---- Marking by name ----
+
+test('a meeting saved by 0.2.0 (no marks) totals exactly as before', () => {
+  const v1 = { date: '2026-10-28', type: 'midweek', lanes: { left: 3, center: 4, right: 5 }, zoom: 2, finalized: true, finalizedAt: 'x' };
+  assert.deepEqual(totals(v1), { hall: 12, zoom: 2, total: 14 });
+  assert.deepEqual(upgrade(v1).marks, {});
+  assert.equal(upgrade(v1).unnamed, 0);
+});
+
+test('marks count households at the hall or on Zoom, and can move or clear', () => {
+  let m = setMark(newMeeting(sunday), 'p1', 'kh', 2);
+  m = setMark(m, 'p2', 'zoom');
+  assert.deepEqual(totals(m), { hall: 2, zoom: 1, total: 3 });
+  m = setMark(m, 'p1', 'zoom');
+  assert.deepEqual(m.marks.p1, { where: 'zoom', n: 2 }, 'moving keeps the household size');
+  m = setMark(m, 'p1', null);
+  assert.equal(m.marks.p1, undefined);
+  assert.deepEqual(totals(m), { hall: 0, zoom: 1, total: 1 });
+});
+
+test('unnamed visitors count toward the hall and never go below zero', () => {
+  let m = bumpUnnamed(newMeeting(sunday), 1);
+  m = bumpUnnamed(bumpUnnamed(m, 1), -1);
+  assert.equal(totals(m).hall, 1);
+  assert.equal(bumpUnnamed(bumpUnnamed(m, -1), -1).unnamed, 0);
+  assert.throws(() => bumpUnnamed(m, 2), { code: 'BAD_DELTA' });
+});
+
+test('visitors added during the meeting get their own ids and can be marked', () => {
+  const a = addVisitor(newMeeting(sunday), '  Lim, Grace ');
+  const b = addVisitor(a.meeting, 'Ocampo family');
+  assert.deepEqual([a.id, b.id], ['v1', 'v2']);
+  assert.deepEqual(b.meeting.visitors, [{ id: 'v1', name: 'Lim, Grace' }, { id: 'v2', name: 'Ocampo family' }]);
+  assert.equal(totals(setMark(b.meeting, 'v2', 'kh', 3)).hall, 3);
+  assert.throws(() => addVisitor(newMeeting(sunday), '   '), { code: 'BAD_NAME' });
+  assert.throws(() => addVisitor(newMeeting(sunday), 'x'.repeat(81)), { code: 'BAD_NAME' });
+});
+
+test('marks are locked once finalized', () => {
+  const m = finalize(newMeeting(sunday), sunday);
+  assert.throws(() => setMark(m, 'p1', 'kh'), { code: 'LOCKED' });
+  assert.throws(() => bumpUnnamed(m, 1), { code: 'LOCKED' });
+  assert.throws(() => addVisitor(m, 'Lim'), { code: 'LOCKED' });
+});
+
+test('bad marks are refused', () => {
+  const m = newMeeting(sunday);
+  assert.throws(() => setMark(m, 'p1', 'roof'), { code: 'BAD_MARK' });
+  assert.throws(() => setMark(m, 'p1', 'kh', 0), { code: 'BAD_MARK' });
+  assert.throws(() => setMark(m, 'p1', 'kh', 21), { code: 'BAD_MARK' });
+  assert.throws(() => setMark(m, '', 'kh'), { code: 'BAD_MARK' });
+});
+
+test('dropping marks keeps only the people still on the list', () => {
+  let m = setMark(setMark(newMeeting(sunday), 'p1', 'kh'), 'p2', 'zoom');
+  m = setMark(addVisitor(m, 'Lim').meeting, 'v1', 'kh');
+  assert.deepEqual(Object.keys(dropMarks(m, new Set(['p2'])).marks).sort(), ['p2', 'v1'], 'visitors are kept');
 });

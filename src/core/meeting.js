@@ -32,8 +32,20 @@ function newMeeting(d, type) {
     zoom: 0,
     finalized: false,
     finalizedAt: null,
+    marks: {}, // person id -> { where: 'kh' | 'zoom', n } when counting by name
+    unnamed: 0, // people at the hall nobody knows by name
+    visitors: [], // { id: 'v1', name } added during this meeting only
   };
 }
+
+// Meetings saved by 0.2.0 have no name fields; they count exactly as before.
+function upgrade(m) {
+  if (m.marks && m.visitors && typeof m.unnamed === 'number') return m;
+  return { marks: {}, unnamed: 0, visitors: [], ...m };
+}
+
+const MAX_HOUSEHOLD = 20;
+const MAX_NAME = 80;
 
 function assertOpen(m) {
   if (m.finalized) throw new MeetingError('LOCKED', 'Attendance is finalized. Unlock to change it.');
@@ -56,9 +68,52 @@ function setZoom(m, value) {
   return { ...m, zoom: n };
 }
 
+// Marks one person at the hall or on Zoom (n people for a household), or clears them with where = null.
+// Moving a person keeps their household size unless n is given.
+function setMark(m, id, where, n) {
+  if (typeof id !== 'string' || !id) throw new MeetingError('BAD_MARK', 'Unknown person.');
+  if (where !== 'kh' && where !== 'zoom' && where !== null) throw new MeetingError('BAD_MARK', 'Mark someone at the Kingdom Hall or on Zoom.');
+  if (n !== undefined && (!Number.isInteger(n) || n < 1 || n > MAX_HOUSEHOLD)) throw new MeetingError('BAD_MARK', `A household is 1 to ${MAX_HOUSEHOLD} people.`);
+  const up = upgrade(m);
+  assertOpen(up);
+  const marks = { ...up.marks };
+  if (where === null) delete marks[id];
+  else marks[id] = { where, n: n || (marks[id] && marks[id].n) || 1 };
+  return { ...up, marks };
+}
+
+function bumpUnnamed(m, delta) {
+  if (delta !== 1 && delta !== -1) throw new MeetingError('BAD_DELTA', 'A tap adds or removes one person.');
+  const up = upgrade(m);
+  assertOpen(up);
+  return { ...up, unnamed: Math.max(0, up.unnamed + delta) };
+}
+
+function addVisitor(m, name) {
+  const clean = typeof name === 'string' ? name.trim() : '';
+  if (!clean || clean.length > MAX_NAME) throw new MeetingError('BAD_NAME', `Type a name of 1 to ${MAX_NAME} letters.`);
+  const up = upgrade(m);
+  assertOpen(up);
+  const id = `v${up.visitors.reduce((max, v) => Math.max(max, Number(v.id.slice(1)) || 0), 0) + 1}`;
+  return { meeting: { ...up, visitors: [...up.visitors, { id, name: clean }] }, id };
+}
+
+// Keeps the marks of people still on the list (and of this meeting's visitors).
+function dropMarks(m, keepIds) {
+  const up = upgrade(m);
+  const marks = Object.fromEntries(Object.entries(up.marks).filter(([id]) => id.startsWith('v') || keepIds.has(id)));
+  return { ...up, marks };
+}
+
 function totals(m) {
-  const hall = m.lanes.left + m.lanes.center + m.lanes.right;
-  return { hall, zoom: m.zoom, total: hall + m.zoom };
+  const up = upgrade(m);
+  let hall = up.lanes.left + up.lanes.center + up.lanes.right + up.unnamed;
+  let zoom = up.zoom;
+  for (const { where, n } of Object.values(up.marks)) {
+    if (where === 'kh') hall += n;
+    else zoom += n;
+  }
+  return { hall, zoom, total: hall + zoom };
 }
 
 function finalize(m, now) {
@@ -76,4 +131,5 @@ function rollIfNewDay(m, now) {
 
 module.exports = {
   LANES, MeetingError, dateKey, meetingType, newMeeting, applyTap, setZoom, totals, finalize, unlock, rollIfNewDay,
+  upgrade, setMark, bumpUnnamed, addVisitor, dropMarks,
 };
