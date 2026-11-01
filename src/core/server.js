@@ -294,7 +294,10 @@ function createServer(service, { settings, webDir, mdns = true, host = null, tru
 
     if (req.method === 'POST' && p === '/api/roster/preview') {
       const buf = await readRaw(req, MAX_LIST_BYTES);
-      return send(res, 200, await readListFile(buf, String(req.headers['x-filename'] || '')));
+      // The page encodes the file name: a header can't carry characters such as "–" as they are.
+      let filename = String(req.headers['x-filename'] || '');
+      try { filename = decodeURIComponent(filename); } catch { /* not encoded */ }
+      return send(res, 200, await readListFile(buf, filename));
     }
     if (req.method === 'POST' && actions[p]) {
       const body = await readBody(req);

@@ -19,7 +19,7 @@
   async function preview(ctx, body, filename, from) {
     const mem = ctx.memory('setup');
     try {
-      const res = await fetch('/api/roster/preview', { method: 'POST', headers: { 'content-type': 'application/octet-stream', 'x-filename': filename }, body });
+      const res = await fetch('/api/roster/preview', { method: 'POST', headers: { 'content-type': 'application/octet-stream', 'x-filename': encodeURIComponent(filename) }, body });
       const data = await res.json();
       if (!res.ok) { ctx.note(data.error || "That file couldn't be read."); return; }
       const best = data.sheets.reduce((a, b) => (b.people.length > a.people.length ? b : a), data.sheets[0]);

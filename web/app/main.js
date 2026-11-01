@@ -81,7 +81,11 @@
     }
     root.innerHTML = view.render({ state, ctx, arg, pinErr });
     // The desk's waiting and "Ready" overlays belong to the desk only.
-    if (name !== 'desk' && root.dataset.view === 'desk') { layer.innerHTML = ''; ctx.memory('desk').lastStatus = undefined; }
+    // Leaving it also forgets its QR code and PIN, so a New PIN made meanwhile shows when it opens again.
+    if (name !== 'desk' && root.dataset.view === 'desk') {
+      layer.innerHTML = '';
+      Object.assign(ctx.memory('desk'), { lastStatus: undefined, connect: null, loadingConnect: false });
+    }
     root.dataset.view = name;
     if (state) window.AttendanceAppearance.apply(state.appearance);
     if (focused) {

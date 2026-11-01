@@ -107,6 +107,14 @@ test('reading a list file: a real .xlsx previews its sheets; bad files are refus
   assert.equal((await s.call('/api/roster', { people: [] })).status, 400, 'an empty list is never saved');
 });
 
+test('a file name with characters like "–" or "ñ" arrives intact (the browser sends it encoded)', async (t) => {
+  const s = await start();
+  t.after(() => s.server.close());
+  const r = await s.call('/api/roster/preview', Buffer.from('Name\nSantos, Ana\n'), { 'content-type': 'application/octet-stream', 'x-filename': encodeURIComponent('Lista – Asunción.csv') });
+  assert.equal(r.status, 200);
+  assert.equal((await r.json()).sheets[0].name, 'Lista – Asunción.csv');
+});
+
 test('the list can be edited from the AV computer', async (t) => {
   const s = await start();
   t.after(() => s.server.close());
