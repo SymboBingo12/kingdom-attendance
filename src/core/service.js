@@ -45,6 +45,28 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
 
   const today = () => M.rollIfNewDay(meeting, now()).meeting;
 
+  const setRender = (patch) => {
+    render = { ...render, ...patch };
+    events.emit('change', getState());
+  };
+
+  // Makes the video and hands it to M³ in the background; the dock follows render.status.
+  let pipeline = Promise.resolve();
+  async function makeVideo() {
+    const s = getSettings();
+    setRender({ status: 'rendering', message: 'Making the video…', savedTo: null });
+    try {
+      const files = await renderer({ meeting, totals: M.totals(meeting), congregation: s.congregation || '', theme: s.theme || 'light' });
+      const out = await deliver({ mp4: files.mp4, dateKey: meeting.date });
+      setRender({ status: 'ready', savedTo: out.savedTo, message: out.fallback ? `Saved to Desktop (${out.reason})` : 'Ready in M³' });
+    } catch (err) {
+      setRender({ status: 'error', savedTo: null, message: `Couldn't make the video: ${err.message}. The numbers are saved. Try Make video again.` });
+    }
+  }
+  const startVideo = () => {
+    if (renderer && deliver) pipeline = makeVideo();
+  };
+
   const isRendering = () => render.status === 'rendering';
 
   return Object.assign(events, {
@@ -62,13 +84,24 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
       return commit(M.setZoom(today(), value));
     },
 
-    // Locks the numbers and records them in history.
+    // Locks the numbers, records them in history and starts the video.
     finalize() {
       if (isRendering()) throw busy();
-      const state = commit(M.finalize(meeting, now()));
+      commit(M.finalize(meeting, now()));
       store.upsertHistory(meeting);
-      return state;
+      startVideo();
+      return getState();
     },
+
+    rerender() {
+      if (isRendering()) throw busy();
+      if (!meeting.finalized) throw new M.MeetingError('NOT_FINAL', 'Finalize the attendance first.');
+      startVideo();
+      return getState();
+    },
+
+    // Resolves when the current video (if any) is done; for tests and the app's quit handler.
+    idle: () => pipeline,
 
     unlock() {
       if (isRendering()) throw busy();
