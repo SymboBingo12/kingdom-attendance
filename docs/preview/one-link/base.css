@@ -1,0 +1,21 @@
+/* Steward base: the few rules every component expects. Needs ../tokens/tokens.css first.
+   Components are prefixed st- so they sit safely next to an app's own CSS. */
+
+/* Put on <body> (or an app's root) for the page font, colours and text size */
+.st-page { margin: 0; background: var(--page); color: var(--text); font-family: var(--font); font-size: var(--text-md); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+[class^="st-"], [class*=" st-"] { box-sizing: border-box; }
+:where([class^="st-"], [class*=" st-"]):focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+
+/* Numbers that change in place (timers, counts) keep their width */
+.st-num { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+
+/* Read by screen readers, not shown */
+.st-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Reduced motion: movement becomes instant; stage warnings turn steady (see stage.css) */
+@media (prefers-reduced-motion: reduce) {
+  [class^="st-"], [class*=" st-"], [class^="st-"]::before, [class*=" st-"]::before, [class^="st-"]::after, [class*=" st-"]::after {
+    animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important;
+  }
+}

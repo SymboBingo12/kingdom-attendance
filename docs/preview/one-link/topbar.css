@@ -1,0 +1,11 @@
+/* Top bar: app name, what it's working on, a status pill and the current time.
+   <header class="st-topbar"><div class="st-topbar__title"><b>Stage Timer</b><small>Midweek meeting</small></div>
+     <span class="st-pill st-pill--ok"><i></i>Stage connected</span><time class="st-topbar__clock st-num">7:02 PM</time></header> */
+
+.st-topbar { display: flex; align-items: center; gap: var(--space-4); min-height: var(--tap-main); padding: var(--space-2) var(--space-5); background: var(--page); border-bottom: 1px solid var(--line); }
+.st-topbar__title { flex: 1; min-width: 0; line-height: 1.2; }
+.st-topbar__title b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-lg); font-weight: var(--weight-black); letter-spacing: -0.02em; }
+.st-topbar__title small { display: block; color: var(--text-dim); font-size: var(--text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.st-topbar__clock { font-size: var(--text-lg); font-weight: var(--weight-bold); }
+
+@media (max-width: 480px) { .st-topbar { padding: var(--space-2) var(--space-4); gap: var(--space-3); } .st-topbar__clock { font-size: var(--text-md); } }

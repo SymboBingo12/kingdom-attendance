@@ -1,0 +1,33 @@
+/* List rows: meeting parts, people, settings. The current row uses aria-current="step"; finished rows add .is-done
+   and a tick, so state never depends on colour alone.
+   <ol class="st-list"><li><button class="st-row" aria-current="step">
+     <span class="st-row__mark"></span><span class="st-row__label">Bible reading<small>Sam</small></span>
+     <span class="st-row__meta st-num">4:00</span></button></li></ol> */
+
+.st-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.st-row {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: var(--tap-min); padding: var(--space-2) var(--space-3);
+  border: 0; border-radius: var(--radius-sm); background: none; color: inherit; font: inherit; font-size: var(--text-sm); text-align: left;
+}
+button.st-row, a.st-row { cursor: pointer; text-decoration: none; }
+@media (hover: hover) { button.st-row:hover, a.st-row:hover { background: var(--surface); } }
+
+.st-row__mark { width: 16px; height: 16px; flex: none; display: grid; place-items: center; }
+.st-row__mark::before { content: ""; width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--text-dim); }
+.st-row__mark svg { width: 16px; height: 16px; color: var(--ok); }
+.st-row__mark:has(svg)::before { display: none; }
+.st-row__label { flex: 1; line-height: 1.3; }
+.st-row__label small { display: block; color: var(--text-dim); font-size: var(--text-xs); }
+.st-row__meta { color: var(--text-dim); }
+
+.st-row[aria-current] { background: var(--brand-soft); color: var(--brand-strong); font-weight: var(--weight-bold); box-shadow: inset 3px 0 0 var(--brand); }
+.st-row[aria-current] .st-row__mark::before { background: var(--brand); border-color: var(--brand); }
+.st-row[aria-current] .st-row__label small, .st-row[aria-current] .st-row__meta { color: var(--brand-strong); font-weight: var(--weight-regular); }
+.st-row.is-done { color: var(--text-dim); }
+.st-row.is-done .st-row__meta { text-decoration: line-through; }
+
+/* Card rows: each row its own soft block, for phones (attendance counts, quick lists) */
+.st-list--cards { gap: var(--space-2); }
+.st-list--cards .st-row { background: var(--surface); border-radius: var(--radius-md); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); font-size: var(--text-md); }
+.st-list--cards .st-row__label { font-weight: var(--weight-medium); }
+.st-list--cards .st-row__meta { min-width: 36px; text-align: center; color: var(--text); font-size: var(--text-lg); font-weight: var(--weight-bold); }

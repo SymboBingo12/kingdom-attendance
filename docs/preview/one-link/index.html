@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kingdom Attendance: one link mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="index.css">
+<script src="art.js"></script>
+<script src="remote-art.js"></script>
+<script src="attendance-art.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+
+  /* Mockup chrome (not part of the app) */
+  .chrome { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); align-items: center; justify-content: center; padding: var(--space-3) var(--space-4); background: var(--surface); border-bottom: 1px solid var(--line); font-size: var(--text-sm); }
+  .chrome b { color: var(--coral); letter-spacing: .12em; text-transform: uppercase; font-size: var(--text-xs); }
+  .chrome label { color: var(--text-dim); display: inline-flex; gap: var(--space-2); align-items: center; }
+  .stage-area { display: flex; gap: var(--space-6); justify-content: center; align-items: flex-start; padding: var(--space-5) var(--space-4) var(--space-7); flex-wrap: wrap; }
+  .notes { width: 300px; display: grid; gap: var(--space-3); font-size: var(--text-sm); color: var(--text-dim); }
+  .notes ul { margin: 0; padding-left: 18px; line-height: 1.6; }
+  .notes b { color: var(--text); }
+
+  /* The device */
+  .device { position: relative; width: 390px; height: 800px; border-radius: 34px; overflow: hidden; background: var(--page); box-shadow: var(--shadow), 0 0 0 1px var(--line); }
+  .device.av { width: 520px; border-radius: var(--radius-lg); }
+  .scroll { height: 100%; overflow-y: auto; overscroll-behavior: contain; }
+  @media (max-width: 560px) {
+    .device, .device.av { width: 100%; height: auto; min-height: 100vh; border-radius: 0; box-shadow: none; overflow: visible; }
+    .scroll { height: auto; overflow: visible; }
+    .stage-area { padding: 0 0 var(--space-7); }
+    .notes { width: auto; padding: 0 var(--space-4); }
+  }
+  .pad { padding: var(--space-4) var(--space-4) var(--space-6); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+  .dim { color: var(--text-dim); }
+  .small { font-size: var(--text-sm); }
+  h2.sec { margin: var(--space-2) 0 0; font-size: var(--text-md); }
+
+  /* Top bar with Back */
+  .bar { position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: var(--space-2); min-height: 60px; padding: var(--space-2) var(--space-3); background: var(--page); border-bottom: 1px solid var(--line); }
+  .bar h1 { flex: 1; margin: 0; font-size: var(--text-lg); font-weight: var(--weight-black); letter-spacing: -0.01em; line-height: 1.2; }
+  .bar h1 small { display: block; font-size: var(--text-xs); font-weight: var(--weight-regular); color: var(--text-dim); letter-spacing: 0; }
+  .back { display: inline-flex; align-items: center; gap: 4px; min-height: var(--tap-min); padding: 0 var(--space-3) 0 var(--space-2); border: 0; border-radius: var(--radius-pill); background: var(--surface); color: var(--brand-strong); font-weight: var(--weight-bold); font-size: var(--text-sm); cursor: pointer; }
+  .back svg { width: 18px; height: 18px; }
+
+  /* Home */
+  .home-meta { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding: 0 var(--space-5); }
+  .nav { display: grid; gap: var(--space-3); }
+  .navcard { display: flex; align-items: center; gap: var(--space-4); width: 100%; min-height: 76px; padding: var(--space-3) var(--space-4); border: 0; border-radius: var(--radius-lg); background: var(--surface); text-align: left; cursor: pointer; transition: transform .12s ease-out; }
+  .navcard:active { transform: scale(.98); }
+  .navcard.main { background: var(--brand-soft); }
+  .ico { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border-radius: var(--radius-md); background: var(--brand-soft); color: var(--brand-strong); }
+  .ico svg { width: 24px; height: 24px; }
+  .navcard.main .ico { background: var(--brand); color: var(--on-brand); }
+  .navcard > span:not(.ico) { flex: 1; line-height: 1.3; }
+  .navcard b { display: block; font-size: var(--text-lg); }
+  .navcard small { display: block; color: var(--text-dim); font-size: var(--text-sm); }
+  .chev { width: 20px; height: 20px; color: var(--text-dim); flex: none; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+  .tile { background: var(--surface); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+  .tile .k { font-size: var(--text-xs); font-weight: var(--weight-bold); letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); }
+  .tile .v { font-size: 28px; font-weight: var(--weight-black); line-height: 1.15; }
+  .tile.kh .k { color: var(--brand-strong); } .tile.zm .k { color: var(--teal); }
+
+  /* Marking */
+  .sticky { position: sticky; top: 60px; z-index: 2; background: var(--page); padding: var(--space-3) var(--space-4); display: grid; gap: var(--space-3); border-bottom: 1px solid var(--line); }
+  .search { min-height: var(--tap-min); padding: 0 var(--space-4); border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--surface); font-size: var(--text-md); width: 100%; }
+  .chips { display: flex; gap: var(--space-2); overflow-x: auto; scrollbar-width: none; }
+  .chip { flex: none; min-height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--page); font-size: var(--text-sm); color: var(--text-dim); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: var(--page); font-weight: var(--weight-bold); }
+  .list { padding: 0 var(--space-4) var(--space-6); }
+  .ghead { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-5) 0 var(--space-2); }
+  .ghead .st-disc { width: 40px; }
+  .ghead b { flex: 1; color: var(--coral); font-size: var(--text-sm); letter-spacing: .06em; text-transform: uppercase; line-height: 1.25; }
+  .ghead span { font-size: var(--text-xs); color: var(--text-dim); white-space: nowrap; }
+  .prow { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px solid var(--line); }
+  .prow .nm { flex: 1; min-width: 0; font-weight: var(--weight-medium); line-height: 1.3; overflow-wrap: anywhere; }
+  .mk { min-width: 54px; min-height: var(--tap-min); border-radius: var(--radius-pill); border: 1.5px solid var(--line); background: var(--page); font-weight: var(--weight-bold); font-size: var(--text-sm); color: var(--text-dim); cursor: pointer; transition: background-color .12s ease-out, transform .12s ease-out; }
+  .mk:active { transform: scale(.95); }
+  .mk.kh[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+  .mk.zm[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .mk[aria-pressed="true"]::before { content: "✓ "; }
+  .step { display: inline-flex; align-items: center; border-radius: var(--radius-pill); background: var(--surface); }
+  .step button { width: 36px; min-height: var(--tap-min); border: 0; background: none; font-size: 18px; font-weight: var(--weight-bold); color: var(--brand-strong); cursor: pointer; }
+  .step b { min-width: 16px; text-align: center; }
+  .locked .mk, .locked .step, .locked .add-row { opacity: .5; pointer-events: none; }
+  .add-row { display: flex; gap: var(--space-2); }
+  .add-row input { flex: 1; min-width: 0; }
+  .field { min-height: var(--tap-min); padding: 0 var(--space-4); border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--page); font-size: var(--text-md); }
+  textarea.field { border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); min-height: 140px; width: 100%; }
+  .empty-note { text-align: center; color: var(--text-dim); padding: var(--space-6) 0; }
+
+  /* Columns mode */
+  .lane { display: flex; align-items: center; gap: var(--space-3); background: var(--surface); border-radius: var(--radius-lg); padding: var(--space-3); }
+  .lane span { flex: 1; font-weight: var(--weight-medium); text-align: center; }
+  .lane span b { display: block; font-size: 40px; font-weight: var(--weight-black); line-height: 1.1; }
+  .lane button { width: 64px; height: 88px; border-radius: var(--radius-md); border: 1.5px solid var(--line); background: var(--page); font-size: 28px; font-weight: var(--weight-bold); color: var(--brand-strong); cursor: pointer; }
+  .lane button.plus { width: 120px; background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+  .zstep { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3); }
+  .zstep button { width: 64px; height: 56px; flex: none; border-radius: var(--radius-md); border: 1.5px solid var(--line); background: var(--page); font-size: 26px; font-weight: var(--weight-bold); color: var(--teal); cursor: pointer; }
+  .zstep button.plus { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .zstep input { flex: 1; width: 0; min-width: 0; height: 56px; border-radius: var(--radius-md); border: 1.5px solid var(--line); background: var(--page); text-align: center; font-size: 28px; font-weight: var(--weight-black); font-variant-numeric: tabular-nums; }
+  .zstep input:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+  .locked .zstep { opacity: .5; pointer-events: none; }
+  .bigtotal { text-align: center; }
+  .bigtotal .k { font-size: var(--text-xs); font-weight: var(--weight-bold); letter-spacing: .12em; text-transform: uppercase; color: var(--coral); }
+  .bigtotal .v { font-size: 64px; font-weight: var(--weight-black); line-height: 1; }
+
+  /* History */
+  .hrow { display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: var(--space-3); border: 0; border-radius: var(--radius-md); background: var(--surface); text-align: left; cursor: pointer; }
+  .hrow .when { width: 52px; flex: none; text-align: center; border-radius: var(--radius-md); background: var(--brand-soft); color: var(--brand-strong); font-size: var(--text-xs); font-weight: var(--weight-bold); text-transform: uppercase; padding: 6px 0; line-height: 1.1; }
+  .hrow .when b { display: block; font-size: var(--text-xl); font-weight: var(--weight-black); }
+  .hrow > span:not(.when):not(.num) { flex: 1; line-height: 1.3; }
+  .hrow small { display: block; color: var(--text-dim); font-size: var(--text-sm); }
+  .hrow .num { font-size: var(--text-xl); font-weight: var(--weight-black); }
+  .who { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--line); font-size: var(--text-sm); }
+  .tag { font-size: var(--text-xs); font-weight: var(--weight-bold); padding: 2px 10px; border-radius: var(--radius-pill); white-space: nowrap; }
+  .tag.kh { background: var(--brand-soft); color: var(--brand-strong); }
+  .tag.zm { background: color-mix(in srgb, var(--teal) 16%, var(--page)); color: var(--teal); }
+  .tag.no { color: var(--text-dim); }
+
+  /* AV desk */
+  .set { display: grid; gap: var(--space-3); }
+  .set .st-card__title { margin: 0; }
+  .set > .st-seg, .set > .st-btn { justify-self: start; }
+  .set .row2 .st-btn { flex: none; }
+  .lbl-line { margin: 0; color: var(--text); font-size: var(--text-sm); }
+  .lbl { display: grid; gap: 6px; color: var(--text-dim); font-size: var(--text-sm); }
+  .field.wide { width: 100%; color: var(--text); }
+  .folder { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+  .folder code { flex: 1 1 200px; min-width: 0; padding: 10px 14px; border-radius: var(--radius-pill); border: 1px solid var(--line); background: var(--page); font-family: inherit; font-size: var(--text-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .folder code.warn { color: var(--warn-text); }
+  .lrow { display: flex; gap: var(--space-2) var(--space-3); align-items: center; flex-wrap: wrap; padding-top: var(--space-2); border-top: 1px solid var(--line); }
+  .lrow__text { flex: 1 1 200px; min-width: 0; display: grid; }
+  .lrow__text code { font-family: inherit; font-weight: var(--weight-bold); overflow-wrap: anywhere; }
+  .lrow__btns { display: flex; gap: var(--space-2); }
+  .steps { margin: 0; padding-left: 20px; color: var(--text-dim); font-size: var(--text-sm); line-height: 1.7; }
+  .steps b { color: var(--text); }
+  .pinpad { min-height: 100%; align-content: center; text-align: center; }
+  .pinin { width: 100%; text-align: center; font-size: 32px; font-weight: var(--weight-black); letter-spacing: .4em; height: 64px; }
+  .err { margin: 0; min-height: 1.4em; color: var(--danger-text); font-size: var(--text-sm); }
+  .qr { width: 96px; height: 96px; flex: none; border-radius: var(--radius-sm); background:
+      conic-gradient(from 90deg at 30% 30%, var(--text) 25%, transparent 0) 0 0/24px 24px, var(--page); box-shadow: 0 0 0 1px var(--line); }
+  .connect { display: flex; gap: var(--space-4); align-items: center; }
+  .pin { font-size: 28px; font-weight: var(--weight-black); letter-spacing: .2em; }
+  .row2 { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+  .row2 .st-btn { flex: 1; }
+
+  /* Done sheet and waiting */
+  .overlay { position: absolute; inset: 0; z-index: 10; }
+  .st-sheet { padding-bottom: var(--space-6); }
+  .st-sheet__art i:nth-of-type(1) { left: -8px; top: 30px; background: var(--duo-mustard); }
+  .st-sheet__art i:nth-of-type(2) { right: -10px; top: 18px; background: var(--coral); }
+  .st-sheet__art i:nth-of-type(3) { left: 6px; bottom: 4px; background: var(--teal); }
+  .st-sheet__art i:nth-of-type(4) { right: 0; bottom: 12px; background: var(--brand); }
+  .st-sheet__art i:nth-of-type(5) { left: 58px; top: -16px; background: var(--duo-rose); }
+  .waiting { position: absolute; inset: 0; z-index: 9; background: var(--page); display: grid; place-items: center; }
+  .waiting .st-wait__art { --ring: var(--brand); }
+  .st-wait__art .st-disc, .st-empty__art .st-disc { overflow: hidden; }
+  @media (prefers-reduced-motion: reduce) { .navcard, .mk { transition: none; } }
+</style>
+</head>
+<body class="st-page">
+
+<div class="chrome" aria-label="Mockup controls">
+  <b>Mockup</b>
+  <label>Viewing as <span class="st-seg" role="group" aria-label="Viewing as"><button data-device="av" aria-pressed="true">AV computer</button><button data-device="phone" aria-pressed="false">Attendant's phone</button></span></label>
+  <label>Look <span class="st-seg" role="group" aria-label="Look"><button data-look="light" aria-pressed="true">Light</button><button data-look="dark" aria-pressed="false">Dark</button></span></label>
+  <button class="st-btn st-btn--quiet" id="restart">Start over as a new congregation</button>
+</div>
+
+<div class="stage-area">
+  <div class="device av" id="device"><div class="scroll" id="scroll"><div id="app"></div></div><div id="layer"></div></div>
+  <aside class="notes">
+    <div class="st-card">
+      <h3 class="st-card__title">One link for everyone</h3>
+      <p class="st-card__hint">Phones scan one QR code and land on this home screen. Every screen has <b>← Home</b> at the top, so nobody jumps between links.</p>
+    </div>
+    <div class="st-card">
+      <h3 class="st-card__title">Try this</h3>
+      <ul>
+        <li>As a new congregation, <b>Add your publisher list</b> (your Excel file works) or try made-up names.</li>
+        <li>Switch to <b>Attendant's phone</b>: the AV desk and list tools disappear.</li>
+        <li><b>Mark attendance</b>: tap KH or Zoom beside a name, − / + for a household.</li>
+        <li>On the AV computer, <b>AV desk → Finalize</b>, then try to change a mark on the phone.</li>
+        <li><b>History → Download for the overseer</b> makes a real Excel file in your sheet's layout.</li>
+        <li>Skip the list to see the <b>Left / Center / Right</b> option.</li>
+      </ul>
+    </div>
+    <p class="small">Made-up meeting data. Files are read in this browser only; nothing is saved or sent anywhere.</p>
+  </aside>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const ICON = {
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+    chev: '<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+    lock: '<svg class="st-banner__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+    info: '<svg class="st-banner__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>',
+    mark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M15.5 11.5l2 2 4-4.5"/></svg>',
+    history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8.5 17v-2.5M12 17v-4.5M15.5 17v-3"/></svg>',
+    desk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12.5" rx="2"/><path d="M10.5 7.8l4 2.45-4 2.45z"/><path d="M8.5 20.5h7M12 16.5v4"/></svg>',
+    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 3h6v3H9z"/><path d="M9 11h6M9 15h4"/></svg>',
+    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  };
+  let artN = 0;
+  const art = (fn, opts = {}) => fn({ ...opts, id: `a${artN++}` });
+  const disc = (fn, cls = '', opts = {}) => `<span class="st-disc art-grain ${cls}">${art(fn, opts)}</span>`;
+
+  // ---------- state ----------
+  const SAMPLE = ['PUBLISHERS', 'Santos, Ana', 'Santos, Ben', 'Reyes, Mark & Joy', 'Cruz, Lea', 'Garcia, Paolo', 'Bautista, Rose', 'Mendoza, Carl', 'Villanueva, Nina & Tom', 'Aquino, Liza', 'Ramos, Dino', 'Flores, Mae', 'Torres, Jun',
+    'BIBLE STUDENTS', 'Navarro, Ella', 'Castillo, Ian', 'VISITORS', 'Lim, Grace', 'INVITED THRU ZOOM', 'Dela Rosa, Kim', 'Ocampo family'];
+  const fresh = () => ({
+    device: 'av', screen: 'home', list: null, cong: 'Riverside Congregation', pending: null, sheets: null,
+    meeting: { type: 'weekend', date: '2026-11-01', marks: {}, unnamed: 0, lanes: { left: 0, center: 0, right: 0 }, zoomTyped: 0, finalized: false },
+    history: [], filter: 'all', q: '', newConfirm: false, detail: null, pasting: false, unlocked: false, pinErr: '', copied: null,
+    set: { m3: '', videoLook: 'light', appearance: 'light', login: true, autoUpd: true, pin: '4713', updText: 'Up to date.', updReady: false },
+  });
+  let S = fresh();
+
+  const named = () => !!(S.list && S.list.length);
+  const groups = (list = S.list || []) => { const m = new Map(); for (const p of list) { if (!m.has(p.group)) m.set(p.group, []); m.get(p.group).push(p); } return [...m.entries()]; };
+  function totalsOf(m, list = S.list) {
+    if (!list || !list.length) { const kh = m.lanes.left + m.lanes.center + m.lanes.right; return { kh, zm: m.zoomTyped, all: kh + m.zoomTyped }; }
+    let kh = m.unnamed, zm = 0;
+    for (const p of list) { const x = m.marks[p.id]; if (x && x.where === 'kh') kh += x.n; if (x && x.where === 'zoom') zm += x.n; }
+    return { kh, zm, all: kh + zm };
+  }
+  const longDate = (d) => new Date(d + 'T12:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const shortDate = (d) => new Date(d + 'T12:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+  const typeName = (t) => (t === 'weekend' ? 'Weekend meeting' : 'Midweek meeting');
+
+  // Made-up past meetings, so History has something to show.
+  function seedHistory() {
+    let seed = 7;
+    const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+    S.history = [['2026-10-28', 'midweek'], ['2026-10-25', 'weekend'], ['2026-10-21', 'midweek']].map(([date, type]) => {
+      const m = { type, date, marks: {}, unnamed: Math.floor(rnd() * 3), lanes: { left: 18 + Math.floor(rnd() * 8), center: 20 + Math.floor(rnd() * 8), right: 14 + Math.floor(rnd() * 8) }, zoomTyped: 15 + Math.floor(rnd() * 10), finalized: true };
+      for (const p of S.list || []) { const r = rnd(); if (r < 0.55) m.marks[p.id] = { where: 'kh', n: p.size }; else if (r < 0.78) m.marks[p.id] = { where: 'zoom', n: p.size }; }
+      return m;
+    });
+  }
+
+  // ---------- reading a list ----------
+  const GROUP_WORDS = /\b(CLMS|VISITORS?|INVITED|GUESTS?|STUDENTS?|GROUP|PUBLISHERS|INTERESTED)\b/;
+  const householdSize = (n) => (/\s(&|\/|and|-)\s|\s&|&\s/i.test(n) ? 2 : 1);
+  function parseRows(rows) {
+    const clean = rows.map((r) => r.map((c) => String(c == null ? '' : c).trim()));
+    const head = clean.findIndex((r) => r.some((c) => /^name$/i.test(c)));
+    if (head >= 0) {
+      const ni = clean[head].findIndex((c) => /^name$/i.test(c)), gi = clean[head].findIndex((c) => /^group$/i.test(c));
+      return clean.slice(head + 1).filter((r) => r[ni]).map((r) => ({ name: r[ni], group: (gi >= 0 && r[gi]) || 'Publishers', size: householdSize(r[ni]) }));
+    }
+    const start = clean.findIndex((r) => /^publishers?$/i.test(r.find((c) => c) || ''));
+    const out = [];
+    let group = 'Publishers';
+    for (const r of clean.slice(start >= 0 ? start + 1 : 0)) {
+      const t = r.find((c) => c) || '';
+      if (!t) continue;
+      if (/^sub-?total/i.test(t) || /^(grand total|total)$/i.test(t)) break;
+      if (/^total\b/i.test(t) || /^[=\d.\s]+$/.test(t)) continue;
+      if (!/[a-z]/.test(t) && GROUP_WORDS.test(t)) { group = /^publishers?$/i.test(t) ? 'Publishers' : t; continue; }
+      out.push({ name: t, group, size: householdSize(t) });
+    }
+    return out;
+  }
+  async function readFile(f) {
+    try {
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+      S.sheets = wb.SheetNames.map((name) => ({ name, list: parseRows(XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: '' })) }));
+      const best = S.sheets.reduce((a, b) => (b.list.length > a.list.length ? b : a));
+      S.pending = { list: best.list, from: S.sheets.length > 1 ? best.name : f.name, sheet: best.name };
+      go('check');
+    } catch {
+      alert("That file couldn't be read. Is it an Excel or CSV file?");
+    }
+  }
+
+  // ---------- screens ----------
+  const bar = (title, sub = '', right = '') => `<header class="bar"><button class="back" data-go="home">${ICON.back}Home</button><h1>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ''}</h1>${right}</header>`;
+  const live = () => (S.meeting.finalized ? '<span class="st-pill st-pill--warn"><i></i>Finalized</span>' : '<span class="st-pill st-pill--ok"><i></i>Live</span>');
+  const tiles = (t) => `<div class="tiles"><div class="tile kh"><div class="k">Hall</div><div class="v st-num">${t.kh}</div></div><div class="tile zm"><div class="k">Zoom</div><div class="v st-num">${t.zm}</div></div><div class="tile"><div class="k">Total</div><div class="v st-num">${t.all}</div></div></div>`;
+
+  function home() {
+    const av = S.device === 'av';
+    const t = totalsOf(S.meeting);
+    const markedCount = named() ? Object.values(S.meeting.marks).filter((x) => x.where).length : null;
+    let first = '';
+    if (!named() && av) {
+      first = `<div class="st-card st-card--raised" style="display:grid;gap:var(--space-3)">
+        <div style="display:flex;gap:var(--space-4);align-items:center">${disc(listArt)}<div><b style="font-size:var(--text-lg)">Add your publisher list</b><p class="dim small" style="margin:4px 0 0">Mark each person at the Kingdom Hall or on Zoom, like your attendance sheet.</p></div></div>
+        <button class="st-btn st-btn--primary st-btn--main st-btn--block" data-go="setup">Add the list</button>
+        <button class="st-btn st-btn--quiet" data-act="columns">Count by Left, Center and Right instead</button></div>`;
+    }
+    return `
+      <header class="st-hero st-arrive"><div class="st-hero__art art-grain st-rest">${art(attendanceHeroArt)}</div>
+        <div class="st-hero__title"><small>${esc(S.cong)}</small><h1>${typeName(S.meeting.type)}</h1></div></header>
+      <div class="home-meta"><span class="dim small">${longDate(S.meeting.date)}</span>${live()}</div>
+      <div class="pad">
+        ${first}
+        ${tiles(t)}
+        <nav class="nav" aria-label="Kingdom Attendance">
+          <button class="navcard main st-arrive" style="--arrive-delay:40ms" data-go="mark"><span class="ico">${ICON.mark}</span><span><b>Mark attendance</b><small>${named() ? `Tap KH or Zoom beside each name · ${markedCount} marked` : 'Count Left, Center and Right'}</small></span>${ICON.chev}</button>
+          <button class="navcard st-arrive" style="--arrive-delay:80ms" data-go="history"><span class="ico">${ICON.history}</span><span><b>History</b><small>Past meetings and the report for the circuit overseer</small></span>${ICON.chev}</button>
+          ${av ? `<button class="navcard st-arrive" style="--arrive-delay:120ms" data-go="desk"><span class="ico">${ICON.desk}</span><span><b>AV desk</b><small>Finalize, the video, and connecting phones</small></span>${ICON.chev}</button>` : ''}
+          ${av && named() ? `<button class="navcard st-arrive" style="--arrive-delay:160ms" data-go="list"><span class="ico">${ICON.list}</span><span><b>Publisher list</b><small>${S.list.length} people · add, remove or upload a new list</small></span>${ICON.chev}</button>` : ''}
+          ${av ? `<button class="navcard st-arrive" style="--arrive-delay:200ms" data-go="settings"><span class="ico">${ICON.settings}</span><span><b>Settings</b><small>Congregation, M³ folder, phones, OBS dock, updates</small></span>${ICON.chev}</button>` : ''}
+        </nav>
+        ${!av ? '<p class="dim small" style="text-align:center">Finalize and the publisher list are on the AV computer.</p>' : ''}
+      </div>`;
+  }
+
+  function setup() {
+    return `${bar('Add your publisher list')}
+      <div class="pad">
+        <div class="st-empty"><div class="st-empty__art st-arrive st-rest">${disc(listArt, 'st-disc--lg')}</div>
+          <h3>One list, used every meeting</h3><p>Upload it once. It stays on this computer until you upload a new one or change a name.</p></div>
+        <label class="st-btn st-btn--primary st-btn--main st-btn--block">Choose a file…<input type="file" id="file" accept=".xlsx,.xls,.csv" hidden></label>
+        <p class="dim small" style="text-align:center;margin:-8px 0 0">An Excel file like your attendance sheet, or a CSV</p>
+        ${S.pasting ? `<textarea class="field" id="paste" placeholder="Santos, Ana&#10;Reyes, Mark &amp; Joy&#10;&#10;VISITORS&#10;Lim, Grace"></textarea><button class="st-btn st-btn--secondary st-btn--block" data-act="usePaste">Use these names</button>
+          <p class="dim small">One name per line. A line in capitals such as <b>VISITORS</b> starts a new group.</p>` : '<button class="st-btn st-btn--secondary st-btn--block" data-act="paste">Type or paste names</button>'}
+        <div class="row2"><button class="st-btn st-btn--quiet" data-act="sample">Try made-up names</button><button class="st-btn st-btn--quiet" data-act="template">${ICON.down}Blank template</button></div>
+      </div>`;
+  }
+
+  function check() {
+    const p = S.pending;
+    return `${bar('Check the list', `From ${p.from}`)}
+      <div class="pad">
+        <h2 class="sec" style="font-size:var(--text-xl);color:var(--coral)">${p.list.length} people found</h2>
+        ${S.sheets && S.sheets.length > 1 ? `<label class="dim small">Which sheet is the list?<br><select class="field" id="sheet" style="width:100%;margin-top:6px">${S.sheets.map((s) => `<option ${s.name === p.sheet ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>` : ''}
+        <div class="st-list st-list--cards">${groups(p.list).map(([g, ps]) => `<div class="st-row"><span class="st-row__label">${esc(g)}<small>${esc(ps.slice(0, 2).map((x) => x.name).join(' · '))}${ps.length > 2 ? ' …' : ''}</small></span><span class="st-row__meta st-num">${ps.length}</span></div>`).join('') || '<p class="dim">No names found. Try another sheet.</p>'}</div>
+        <p class="dim small">Households such as "Mark &amp; Joy" start at 2. Totals and blank rows are left out.</p>
+        <button class="st-btn st-btn--primary st-btn--main st-btn--block" data-act="useList" ${p.list.length ? '' : 'disabled'}>Use this list</button>
+      </div>`;
+  }
+
+  function markNames() {
+    const m = S.meeting, t = totalsOf(m);
+    const q = S.q.toLowerCase();
+    const show = (p) => { const x = m.marks[p.id]; if (q && !p.name.toLowerCase().includes(q)) return false; if (S.filter === 'none') return !x; if (S.filter === 'kh') return x && x.where === 'kh'; if (S.filter === 'zoom') return x && x.where === 'zoom'; return true; };
+    const left = S.list.filter((p) => !m.marks[p.id]).length;
+    let html = '';
+    for (const [g, ps] of groups()) {
+      const shown = ps.filter(show);
+      if (!shown.length) continue;
+      html += `<div class="ghead"><b>${esc(g)}</b><span>${ps.filter((p) => m.marks[p.id]).length} of ${ps.length}</span></div>`;
+      html += shown.map((p) => { const x = m.marks[p.id];
+        return `<div class="prow"><span class="nm">${esc(p.name)}</span>${x ? `<span class="step"><button data-dec="${p.id}" aria-label="One fewer">−</button><b class="st-num">${x.n}</b><button data-inc="${p.id}" aria-label="One more">+</button></span>` : ''}<button class="mk kh" data-mark="kh" data-id="${p.id}" aria-pressed="${!!x && x.where === 'kh'}">KH</button><button class="mk zm" data-mark="zoom" data-id="${p.id}" aria-pressed="${!!x && x.where === 'zoom'}">Zoom</button></div>`; }).join('');
+    }
+    if (!html) html = `<p class="empty-note">${S.filter === 'none' && !q ? 'Everyone on the list is marked.' : 'No names match.'}</p>`;
+    if (S.filter === 'all' && !q) {
+      html += `<div class="ghead"><b>Not on the list</b></div>
+        <div class="prow"><span class="nm">Unnamed visitors<br><span class="dim small">People at the hall you don't know by name</span></span><span class="step"><button data-unnamed="-1" aria-label="One fewer">−</button><b class="st-num">${m.unnamed}</b><button data-unnamed="1" aria-label="One more">+</button></span></div>
+        <div style="padding:var(--space-3) 0"><div class="add-row"><input class="field" id="newName" placeholder="Add a visitor by name" autocomplete="off"><button class="mk kh" data-add="kh">KH</button><button class="mk zm" data-add="zoom">Zoom</button></div></div>`;
+    }
+    return `${bar('Mark attendance', typeName(m.type), live())}
+      <div class="sticky">${tiles(t)}
+        ${m.finalized ? `<div class="st-banner st-banner--warn" role="status">${ICON.lock}<div class="st-banner__body"><b>Finalized</b><p>To change a mark, the AV desk presses Unlock.</p></div></div>` : ''}
+        <input class="search" type="search" id="q" placeholder="Search a name" value="${esc(S.q)}" aria-label="Search a name">
+        <div class="chips" role="group" aria-label="Show">${[['all', 'All'], ['none', `Not marked (${left})`], ['kh', 'Kingdom Hall'], ['zoom', 'Zoom']].map(([f, l]) => `<button class="chip" data-f="${f}" aria-pressed="${S.filter === f}">${l}</button>`).join('')}</div>
+      </div>
+      <div class="list ${m.finalized ? 'locked' : ''}" id="list">${html}</div>`;
+  }
+
+  function markColumns() {
+    const m = S.meeting, t = totalsOf(m);
+    return `${bar('Count attendance', typeName(m.type), live())}
+      <div class="pad ${m.finalized ? 'locked' : ''}">
+        ${m.finalized ? `<div class="st-banner st-banner--warn" role="status">${ICON.lock}<div class="st-banner__body"><b>Finalized</b><p>To change a number, the AV desk presses Unlock.</p></div></div>` : ''}
+        <div class="bigtotal"><div class="k">Kingdom Hall</div><div class="v st-num">${t.kh}</div></div>
+        ${['left', 'center', 'right'].map((l) => `<div class="lane"><button data-lane="${l}" data-d="-1" aria-label="One fewer in ${l}">−</button><span>${l[0].toUpperCase() + l.slice(1)}<b class="st-num">${m.lanes[l]}</b></span><button class="plus" data-lane="${l}" data-d="1" aria-label="One more in ${l}">+</button></div>`).join('')}
+        <div class="st-card"><h3 class="st-card__title" style="display:flex;gap:var(--space-3);align-items:center">${disc(remoteArt, 'st-disc--sm')}Zoom</h3>
+          <p class="st-card__hint">The Zoom host adds up the "(n)" names and types the total.</p>
+          <div class="zstep"><button data-zoom="-1" aria-label="One fewer on Zoom">−</button><input id="zoomIn" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="${m.zoomTyped}" aria-label="Zoom total" ${m.finalized ? 'disabled' : ''}><button class="plus" data-zoom="1" aria-label="One more on Zoom">+</button></div></div>
+        <p class="dim small" style="text-align:center">No publisher list yet, so counting is by column. ${S.device === 'av' ? '<button class="st-btn st-btn--quiet" data-go="setup">Add a list</button>' : ''}</p>
+      </div>`;
+  }
+
+  function history() {
+    const all = [...(S.meeting.finalized ? [S.meeting] : []), ...S.history];
+    if (!all.length) {
+      return `${bar('History')}<div class="pad"><div class="st-empty"><div class="st-empty__art st-arrive st-rest">${disc(historyArt, 'st-disc--lg')}</div>
+        <h3>No meetings yet</h3><p>Each meeting appears here after the AV desk presses Finalize.</p></div></div>`;
+    }
+    return `${bar('History')}
+      <div class="pad">
+        <button class="st-btn st-btn--primary st-btn--main st-btn--block" data-act="export">${ICON.down}Download for the circuit overseer</button>
+        <button class="st-btn st-btn--secondary st-btn--block" data-act="csv">${ICON.down}Download CSV (numbers only)</button>
+        <p class="dim small" style="margin-top:-8px">An Excel file like your attendance sheet: one sheet per meeting${named() ? ' with every name at KH or Zoom' : ''}, and a summary with monthly averages.</p>
+        <div style="display:grid;gap:var(--space-2)">${all.map((m, i) => { const t = totalsOf(m);
+          return `<button class="hrow" data-detail="${i}"><span class="when"><b class="st-num">${new Date(m.date + 'T12:00').getDate()}</b>${new Date(m.date + 'T12:00').toLocaleDateString('en-US', { month: 'short' })}</span><span><b>${typeName(m.type)}</b><small>${longDate(m.date)} · Hall ${t.kh} · Zoom ${t.zm}</small></span><span class="num st-num">${t.all}</span>${ICON.chev}</button>`; }).join('')}</div>
+      </div>`;
+  }
+
+  function detail() {
+    const all = [...(S.meeting.finalized ? [S.meeting] : []), ...S.history];
+    const m = all[S.detail], t = totalsOf(m);
+    let body = '';
+    if (named()) {
+      for (const [g, ps] of groups()) {
+        body += `<div class="ghead"><b>${esc(g)}</b></div>` + ps.map((p) => { const x = m.marks[p.id];
+          return `<div class="who"><span>${esc(p.name)}</span>${x ? `<span class="tag ${x.where === 'kh' ? 'kh' : 'zm'}">${x.where === 'kh' ? 'Kingdom Hall' : 'Zoom'}${x.n > 1 ? ` · ${x.n}` : ''}</span>` : '<span class="tag no">Not marked</span>'}</div>`; }).join('');
+      }
+    } else {
+      body = `<div class="st-list st-list--cards">${['left', 'center', 'right'].map((l) => `<div class="st-row"><span class="st-row__label">${l[0].toUpperCase() + l.slice(1)}</span><span class="st-row__meta st-num">${m.lanes[l]}</span></div>`).join('')}</div>`;
+    }
+    return `<header class="bar"><button class="back" data-go="history">${ICON.back}History</button><h1>${typeName(m.type)}<small>${longDate(m.date)}</small></h1></header>
+      <div class="pad">${tiles(t)}<div>${body}</div></div>`;
+  }
+
+  function desk() {
+    const m = S.meeting, t = totalsOf(m);
+    return `${bar('AV desk', typeName(m.type), live())}
+      <div class="pad">
+        ${tiles(t)}
+        ${named() ? `<p class="dim small" style="margin-top:-8px">Zoom comes from the names marked Zoom. Kingdom Hall includes ${m.unnamed} unnamed visitor${m.unnamed === 1 ? '' : 's'}.</p>` : ''}
+        ${m.finalized
+          ? `<div class="st-banner st-banner--ok" role="status">${ICON.info}<div class="st-banner__body"><b>Ready in M³</b><p>The video is in today's folder. Phones are locked.</p></div></div>
+             <div class="row2"><button class="st-btn st-btn--secondary st-btn--main" data-act="unlock">Unlock</button><button class="st-btn st-btn--secondary st-btn--main" data-act="finalize">Make the video again</button></div>`
+          : `<button class="st-btn st-btn--primary st-btn--main st-btn--block" data-act="finalize">Finalize</button>
+             <p class="dim small" style="margin-top:-8px">Locks the numbers and makes the attendance video for M³.</p>`}
+        <section class="st-card"><h3 class="st-card__title">Connect a phone</h3>
+          <div class="connect"><div class="qr" role="img" aria-label="QR code (placeholder)"></div><div><div class="dim small">PIN</div><div class="pin st-num">4713</div><div class="dim small">http://192.168.1.23:4590</div></div></div>
+          <p class="st-card__hint" style="margin-top:var(--space-3)">One QR code for everyone: attendants and the Zoom host land on the same home screen.</p></section>
+        <section class="st-card"><h3 class="st-card__title">Meeting</h3>
+          <div class="st-seg" role="group" aria-label="Meeting"><button data-type="midweek" aria-pressed="${m.type === 'midweek'}">Midweek</button><button data-type="weekend" aria-pressed="${m.type === 'weekend'}">Weekend</button></div>
+          <button class="st-btn st-btn--secondary st-btn--block" style="margin-top:var(--space-3)" data-act="new">${S.newConfirm ? 'Tap again to clear every mark' : 'New meeting'}</button></section>
+      </div>`;
+  }
+
+  function listScreen() {
+    return `${bar('Publisher list', `${S.list.length} people`)}
+      <div class="pad">
+        <div class="st-list st-list--cards">${groups().map(([g, ps]) => `<div class="st-row"><span class="st-row__label">${esc(g)}</span><span class="st-row__meta st-num">${ps.length}</span></div>`).join('')}</div>
+        <div class="add-row"><input class="field" id="listName" placeholder="Add a name" autocomplete="off"><button class="st-btn st-btn--secondary" data-act="addToList">Add</button></div>
+        <button class="st-btn st-btn--secondary st-btn--block" data-go="setup">Upload a new list</button>
+        <div class="st-banner" role="status">${ICON.info}<div class="st-banner__body"><b>Past meetings don't change</b><p>Each finalized meeting keeps the names as they were that day.</p></div></div>
+      </div>`;
+  }
+
+
+  const cap = (v) => v[0].toUpperCase() + v.slice(1);
+  const LINKS = { count: 'http://192.168.1.23:4590', named: 'http://attendance.local:4590', dock: 'http://localhost:4590/desk' };
+  function linkRow(k, label) {
+    return `<div class="lrow"><div class="lrow__text"><span class="dim small">${label}</span><code>${LINKS[k]}</code></div>
+      <div class="lrow__btns"><button class="st-btn st-btn--secondary" data-copy="${k}">${S.copied === k ? 'Copied' : 'Copy'}</button><button class="st-btn st-btn--secondary" data-open="${k}">Open</button></div></div>`;
+  }
+
+  function settings() {
+    const st = S.set;
+    return `${bar('Settings')}
+      <div class="pad">
+        <section class="st-card set"><h3 class="st-card__title">Attendance video</h3>
+          <label class="lbl">Congregation name (shown on the video)<input class="field wide" id="congIn" value="${esc(S.cong)}" autocomplete="off"></label>
+          <div class="lbl">M³ shared folder</div>
+          <div class="folder"><code class="${st.m3 ? '' : 'warn'}">${st.m3 ? esc(st.m3) : 'Not set: videos go to the Desktop'}</code>
+            <button class="st-btn st-btn--primary" data-set="choose">Choose…</button><button class="st-btn st-btn--secondary" data-set="opened" ${st.m3 ? '' : 'disabled'}>Open</button></div>
+          <p class="st-card__hint">In M³: <b>Settings → Integrations → Shared folder</b>, turn on <b>"Add media from a shared folder"</b> and choose this same folder. The video then appears in that meeting's media list by itself.</p>
+          <p class="lbl-line">Video colours <span class="dim">· only the attendance video, not this screen</span></p>
+          <div class="st-seg" role="group" aria-label="Video colours">${['light', 'dark'].map((v) => `<button data-vlook="${v}" aria-pressed="${st.videoLook === v}">${cap(v)}</button>`).join('')}</div>
+          <button class="st-btn st-btn--secondary" data-set="opened">Open the videos folder</button>
+        </section>
+        <section class="st-card set"><h3 class="st-card__title">Appearance</h3>
+          <p class="st-card__hint">This screen and every phone's pages. Auto follows each phone or computer.</p>
+          <div class="st-seg" role="group" aria-label="Appearance">${['light', 'dark', 'auto'].map((v) => `<button data-appearance="${v}" aria-pressed="${st.appearance === v}">${cap(v)}</button>`).join('')}</div>
+        </section>
+        <section class="st-card set"><h3 class="st-card__title">Phones</h3>
+          <div class="connect"><div class="qr" role="img" aria-label="QR code (placeholder)"></div><div><div class="dim small">PIN</div><div class="pin st-num">${st.pin}</div><button class="st-btn st-btn--secondary" data-set="newPin">New PIN</button></div></div>
+          ${linkRow('count', 'The one link for everyone')}
+          ${linkRow('named', 'Short name (iPhones and computers)')}
+          <p class="st-card__hint">The address can change from week to week. If a saved link stops working, scan the QR code again.</p>
+        </section>
+        <section class="st-card set"><h3 class="st-card__title">OBS dock</h3>
+          ${linkRow('dock', 'Dock address (opens the AV desk)')}
+          <ol class="steps"><li>In OBS: <b>View → Docks → Custom Browser Docks…</b></li><li>Dock Name: <b>Attendance</b>. URL: the dock address above. <b>Apply</b>.</li><li>Near the end of the meeting, press <b>Finalize</b> in the dock.</li></ol>
+        </section>
+        <section class="st-card set">
+          <div class="st-option"><span>Start with Windows<small>Opens hidden in the tray when the computer starts</small></span><button class="st-switch" role="switch" aria-checked="${st.login}" data-sw="login" aria-label="Start with Windows"></button></div>
+        </section>
+        <section class="st-card set"><h3 class="st-card__title">Updates</h3>
+          <p class="st-card__hint"><b>Kingdom Attendance 0.3.0</b> · ${st.updText}</p>
+          <div class="row2"><button class="st-btn st-btn--secondary" data-set="check">Check now</button>${st.updReady ? '<button class="st-btn st-btn--primary" data-set="opened">Restart and update</button>' : ''}</div>
+          <div class="st-option"><span>Update automatically<small>New versions download in the background and install when the app is quit. It never restarts by itself.</small></span><button class="st-switch" role="switch" aria-checked="${st.autoUpd}" data-sw="autoUpd" aria-label="Update automatically"></button></div>
+        </section>
+        <p class="dim small" style="text-align:center">An independent project. Not affiliated with or endorsed by any organisation. MIT licence · © 2026 Caio (SymboBingo12).</p>
+      </div>`;
+  }
+
+  function pinScreen() {
+    return `<div class="pad pinpad">
+      <div class="st-empty"><div class="st-empty__art st-arrive">${disc(markArt, 'st-disc--lg')}</div><h3>Enter the PIN</h3><p>It's shown on the AV computer, under Settings → Phones.</p></div>
+      <input class="field pinin st-num" id="pinIn" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="PIN" placeholder="····">
+      <p class="err" role="alert">${S.pinErr || ''}</p>
+      <button class="st-btn st-btn--primary st-btn--main st-btn--block" data-act="pin">Open</button>
+      <p class="dim small">This phone remembers the PIN. In this mockup, it's ${S.set.pin}.</p></div>`;
+  }
+
+  const SCREENS = { home, setup, check, mark: () => (named() ? markNames() : markColumns()), history, detail, desk, list: listScreen, settings, pin: pinScreen };
+
+  function render(keepScroll) {
+    const sc = $('scroll'), y = sc.scrollTop;
+    artN = 0;
+    $('device').classList.toggle('av', S.device === 'av');
+    $('app').innerHTML = SCREENS[S.device === 'phone' && !S.unlocked ? 'pin' : S.screen]();
+    const ci = $('congIn'); if (ci) ci.addEventListener('change', () => { S.cong = ci.value.trim() || 'Riverside Congregation'; });
+    const pi = $('pinIn');
+    if (pi) {
+      pi.addEventListener('input', () => { pi.value = pi.value.replace(/\D/g, ''); });
+      pi.addEventListener('keydown', (e) => { if (e.key === 'Enter') document.querySelector('[data-act=pin]').click(); });
+    }
+    sc.scrollTop = keepScroll ? y : 0;
+    const f = $('file'); if (f) f.addEventListener('change', (e) => e.target.files[0] && readFile(e.target.files[0]));
+    const sh = $('sheet'); if (sh) sh.addEventListener('change', () => { const s = S.sheets.find((x) => x.name === sh.value); S.pending = { list: s.list, from: s.name, sheet: s.name }; render(); });
+    const q = $('q'); if (q) q.addEventListener('input', () => { S.q = q.value; render(true); const n = $('q'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); });
+    const z = $('zoomIn');
+    if (z) {
+      z.addEventListener('input', () => { const d = z.value.replace(/\D/g, ''); if (d !== z.value) z.value = d; });
+      z.addEventListener('keydown', (e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); stepZoom(e.key === 'ArrowUp' ? 1 : -1, true); } });
+      z.addEventListener('change', () => { S.meeting.zoomTyped = Math.min(999, parseInt(z.value, 10) || 0); render(true); });
+    }
+  }
+  function stepZoom(d, keepFocus) {
+    if (S.meeting.finalized) return;
+    S.meeting.zoomTyped = Math.min(999, Math.max(0, S.meeting.zoomTyped + d));
+    render(true);
+    if (keepFocus) $('zoomIn').focus();
+  }
+  function go(screen) {
+    if (screen === 'desk' && S.device !== 'av') screen = 'home';
+    S.screen = screen; S.newConfirm = false; render();
+  }
+
+  function celebrate() {
+    $('layer').innerHTML = `<div class="waiting"><div class="st-wait"><div class="st-wait__art">${disc(deskArt)}</div><h3>Making the video…</h3><p>About a minute on the hall computer.</p></div></div>`;
+    setTimeout(() => {
+      $('layer').innerHTML = `<div class="overlay"><div class="st-scrim" id="scrim"></div><div class="st-sheet" id="sheetEl"><div class="st-sheet__art">${disc(deskArt, '', { done: true })}<i></i><i></i><i></i><i></i><i></i></div>
+        <h3>Ready in M³</h3><p>Today's attendance: <b class="st-num">${totalsOf(S.meeting).all}</b></p><button class="st-btn st-btn--primary st-btn--main st-btn--block" id="closeSheet">Done</button></div></div>`;
+      requestAnimationFrame(() => requestAnimationFrame(() => { $('scrim').classList.add('is-open'); $('sheetEl').classList.add('is-open'); }));
+      const close = () => { $('layer').innerHTML = ''; };
+      $('closeSheet').addEventListener('click', close); $('scrim').addEventListener('click', close);
+    }, 1400);
+  }
+
+  // ---------- events ----------
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const m = S.meeting;
+    if (b.dataset.device) { S.device = b.dataset.device; for (const x of document.querySelectorAll('[data-device]')) x.setAttribute('aria-pressed', String(x === b)); if (['desk', 'list', 'setup', 'check'].includes(S.screen) && S.device !== 'av') S.screen = 'home'; render(); return; }
+    if (b.dataset.look) { document.documentElement.dataset.theme = b.dataset.look; for (const x of document.querySelectorAll('[data-look]')) x.setAttribute('aria-pressed', String(x === b)); return; }
+    if (b.id === 'restart') { S = fresh(); for (const x of document.querySelectorAll('[data-device]')) x.setAttribute('aria-pressed', String(x.dataset.device === 'av')); $('layer').innerHTML = ''; render(); return; }
+    if (!$('app').contains(b)) return;
+    if (b.dataset.go) return go(b.dataset.go);
+    if (b.dataset.detail) { S.detail = Number(b.dataset.detail); return go('detail'); }
+    if (b.dataset.f) { S.filter = b.dataset.f; return render(true); }
+    if (b.dataset.type) { m.type = b.dataset.type; return render(true); }
+    const a = b.dataset.act;
+    const st = S.set;
+    if (a === 'pin') { if ($('pinIn').value === st.pin) { S.unlocked = true; S.pinErr = ''; S.screen = 'home'; } else S.pinErr = 'Wrong PIN. Check the number shown on the AV computer.'; return render(); }
+    if (b.dataset.copy) { S.copied = b.dataset.copy; render(true); setTimeout(() => { S.copied = null; if (S.screen === 'settings') render(true); }, 1500); return; }
+    if (b.dataset.open || b.dataset.set === 'opened') { const t = b.textContent; b.textContent = 'Opened'; setTimeout(() => { b.textContent = t; }, 1200); return; }
+    if (b.dataset.set === 'choose') { st.m3 = 'D:\\M3 Shared'; return render(true); }
+    if (b.dataset.set === 'newPin') { st.pin = String(Math.floor(Math.random() * 10000)).padStart(4, '0'); return render(true); }
+    if (b.dataset.set === 'check') { st.updText = 'Checking for a new version…'; render(true); setTimeout(() => { st.updText = 'Up to date.'; if (S.screen === 'settings') render(true); }, 1200); return; }
+    if (b.dataset.vlook) { st.videoLook = b.dataset.vlook; return render(true); }
+    if (b.dataset.sw) { st[b.dataset.sw] = !st[b.dataset.sw]; return render(true); }
+    if (b.dataset.appearance) {
+      st.appearance = b.dataset.appearance;
+      const dark = st.appearance === 'dark' || (st.appearance === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      for (const x of document.querySelectorAll('[data-look]')) x.setAttribute('aria-pressed', String(x.dataset.look === (dark ? 'dark' : 'light')));
+      return render(true);
+    }
+    if (a === 'columns') { seedHistory(); return go('mark'); }
+    if (a === 'paste') { S.pasting = true; return render(true); }
+    if (a === 'usePaste') { S.sheets = null; S.pending = { list: parseRows(($('paste').value || '').split(/\r?\n/).map((l) => [l])), from: 'what you typed' }; return go('check'); }
+    if (a === 'sample') { S.sheets = null; S.pending = { list: parseRows(SAMPLE.map((l) => [l])), from: 'the made-up list' }; return go('check'); }
+    if (a === 'template') { const csv = 'Name,Group\n"Santos, Ana",Publishers\n"Reyes, Mark & Joy",Publishers\n"Navarro, Ella",Bible students\n'; Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv' })), download: 'publisher-list-template.csv' }).click(); return; }
+    if (a === 'useList') { S.list = S.pending.list.map((p, i) => ({ ...p, id: i })); S.pending = null; m.marks = {}; m.unnamed = 0; seedHistory(); return go('home'); }
+    if (a === 'addToList') { const v = $('listName').value.trim(); if (!v) return; const g = groups()[0] ? groups()[0][0] : 'Publishers'; S.list.push({ id: Math.max(-1, ...S.list.map((p) => p.id)) + 1, name: v, group: g, size: householdSize(v) }); return render(true); }
+    if (a === 'finalize') { m.finalized = true; render(true); return celebrate(); }
+    if (a === 'unlock') { m.finalized = false; return render(true); }
+    if (a === 'new') { if (!S.newConfirm) { S.newConfirm = true; render(true); setTimeout(() => { if (S.newConfirm) { S.newConfirm = false; if (S.screen === 'desk') render(true); } }, 4000); return; }
+      S.history.unshift(m.finalized ? m : null); S.history = S.history.filter(Boolean); S.meeting = { type: m.type, date: m.date, marks: {}, unnamed: 0, lanes: { left: 0, center: 0, right: 0 }, zoomTyped: 0, finalized: false }; S.newConfirm = false; return render(true); }
+    if (a === 'export') return exportWorkbook();
+    if (a === 'csv') {
+      const rows = [['date', 'meeting', 'hall', 'zoom', 'total'], ...[...(m.finalized ? [m] : []), ...S.history].map((x) => { const t = totalsOf(x); return [x.date, x.type, t.kh, t.zm, t.all]; })];
+      Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([rows.map((r) => r.join(',')).join('\n') + '\n'], { type: 'text/csv' })), download: 'attendance-history.csv' }).click();
+      return;
+    }
+    if (m.finalized) return;
+    if (b.dataset.mark) { const id = Number(b.dataset.id), p = S.list.find((x) => x.id === id), x = m.marks[id]; if (x && x.where === b.dataset.mark) delete m.marks[id]; else m.marks[id] = { where: b.dataset.mark, n: x ? x.n : p.size }; return render(true); }
+    if (b.dataset.inc) { m.marks[b.dataset.inc].n += 1; return render(true); }
+    if (b.dataset.dec) { const x = m.marks[b.dataset.dec]; if (x.n > 1) x.n -= 1; else delete m.marks[b.dataset.dec]; return render(true); }
+    if (b.dataset.unnamed) { m.unnamed = Math.max(0, m.unnamed + Number(b.dataset.unnamed)); return render(true); }
+    if (b.dataset.zoom) return stepZoom(Number(b.dataset.zoom));
+    if (b.dataset.lane) { m.lanes[b.dataset.lane] = Math.max(0, m.lanes[b.dataset.lane] + Number(b.dataset.d)); return render(true); }
+    if (b.dataset.add) { const v = $('newName').value.trim(); if (!v) return $('newName').focus(); const vg = groups().map(([g]) => g).find((g) => /visitor/i.test(g)) || 'Visitors'; const id = Math.max(-1, ...S.list.map((p) => p.id)) + 1; S.list.push({ id, name: v, group: vg, size: 1 }); m.marks[id] = { where: b.dataset.add, n: 1 }; return render(true); }
+  });
+
+  // ---------- the overseer's workbook (same layout as the attendance sheet) ----------
+  function exportWorkbook() {
+    if (typeof XLSX === 'undefined') return alert('Making the Excel file needs the internet in this mockup.');
+    const all = [...(S.meeting.finalized ? [S.meeting] : []), ...S.history];
+    const wb = XLSX.utils.book_new();
+    const summary = [['Date', 'Meeting', 'Zoom', 'In-Person', 'Total']];
+    for (const m of all) {
+      const t = totalsOf(m);
+      const label = `${m.type === 'weekend' ? 'WEEKEND' : 'MIDWEEK'} MEETING (${shortDate(m.date)})`;
+      const rows = [[`${S.cong.toUpperCase()} (${longDate(m.date)})`], ['PUBLISHER', 'ZOOM', 'KINGDOM HALL']];
+      if (named()) {
+        groups().forEach(([g, ps], i) => {
+          if (i > 0) rows.push([], [g]);
+          for (const p of ps) { const x = m.marks[p.id]; rows.push([p.name, x && x.where === 'zoom' ? x.n : '', x && x.where === 'kh' ? x.n : '']); }
+        });
+        rows.push([], ['Unnamed visitors', '', m.unnamed || '']);
+      } else {
+        for (const l of ['left', 'center', 'right']) rows.push([l[0].toUpperCase() + l.slice(1), '', m.lanes[l]]);
+        rows.push(['Zoom (typed total)', m.zoomTyped, '']);
+      }
+      rows.push(['SUB-TOTAL', t.zm, t.kh], ['TOTAL', t.all]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), label.slice(0, 31));
+      summary.push([m.date, m.type === 'weekend' ? 'Weekend' : 'Midweek', t.zm, t.kh, t.all]);
+    }
+    summary.push([]);
+    for (const type of ['midweek', 'weekend']) {
+      const ms = all.filter((m) => m.type === type);
+      if (ms.length) summary.push([`Average, ${type}`, `${ms.length} meeting${ms.length === 1 ? '' : 's'}`, ...[0, 1, 2].map((k) => Math.round(ms.reduce((s, m) => { const t = totalsOf(m); return s + [t.zm, t.kh, t.all][k]; }, 0) / ms.length))]);
+    }
+    summary.push([], ['Weeks with no meeting (assemblies, conventions) are left out of the averages.']);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), 'SUMMARY (AVERAGE)');
+    XLSX.writeFile(wb, 'Attendance for the circuit overseer.xlsx');
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+/* Artwork components: where Steward's art lives in an app. Art goes at the edges of a task (welcome, empty, waiting,
+   done), never behind numbers someone must read fast, never on a stage screen during a talk.
+   Fill each art box with a function from brand/art.js, each with a unique id:
+   el.innerHTML = clockArt({ id: 'home1' });
+   Art moves at four moments only: arrive, wait, celebrate, rest (see motion/motion.md). */
+
+/* Art disc: artwork in a circle with the paper grain. Sizes: sm 46 px (row thumbnail), md 132 px, lg 170 px */
+.st-disc { display: block; flex: none; width: 132px; aspect-ratio: 1; border-radius: 50%; overflow: hidden; }
+.st-disc svg { display: block; width: 100%; height: 100%; }
+.st-disc--sm { width: 46px; }
+.st-disc--lg { width: 170px; }
+
+/* Hero: an art banner that fades into the page, with the screen title over its lower edge.
+   <header class="st-hero"><div class="st-hero__art art-grain" id="art"></div>
+     <div class="st-hero__title"><small>Thursday</small><h1>Midweek meeting</h1></div></header> */
+/* The title sits on the faded lower edge of the art and pushes down when it wraps, so it never covers the picture */
+.st-hero { position: relative; }
+.st-hero__art { height: 190px; margin-bottom: -40px; overflow: hidden; -webkit-mask-image: linear-gradient(#000 40%, transparent 76%); mask-image: linear-gradient(#000 40%, transparent 76%); }
+.st-hero__art svg { display: block; width: 100%; height: 100%; }
+.st-hero__title { position: relative; padding: 0 var(--space-5) var(--space-2); }
+.st-hero__title small { display: block; color: var(--text-dim); font-size: var(--text-sm); }
+.st-hero__title h1, .st-hero__title h2 { margin: 0; color: var(--coral); font-size: var(--text-xl); line-height: 1.15; font-weight: var(--weight-bold); }
+.st-hero--short .st-hero__art { height: 120px; margin-bottom: -30px; }
+.st-hero--short .st-hero__title h1, .st-hero--short .st-hero__title h2 { font-size: var(--text-lg); }
+
+/* Empty state: art with the soft seaglass circle behind it, then what to do first */
+.st-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--space-6) var(--space-5); }
+.st-empty__art { position: relative; width: 170px; height: 170px; margin-bottom: var(--space-5); }
+.st-empty__art::before { content: ""; position: absolute; width: 150px; height: 150px; border-radius: 50%; background: var(--seaglass); left: -26px; top: 30px; }
+.st-empty__art .st-disc { position: relative; width: 100%; }
+.st-empty h3, .st-wait h3 { margin: 0 0 var(--space-2); font-size: var(--text-lg); line-height: 1.25; }
+.st-empty h3 { color: var(--coral); }
+.st-empty p, .st-wait p { margin: 0 0 var(--space-5); color: var(--text-dim); font-size: var(--text-sm); max-width: 28ch; }
+
+/* Waiting: art with slow rings while something connects. Rings stop with reduced motion */
+.st-wait { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: var(--space-6) var(--space-5); }
+.st-wait__art { position: relative; width: 150px; height: 150px; margin-bottom: var(--space-6); }
+.st-wait__art .st-disc { position: relative; z-index: 1; width: 100%; }
+.st-wait__art::before, .st-wait__art::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--ring, var(--duo-vermilion)); animation: st-ring 2.4s ease-out infinite; }
+.st-wait__art::after { animation-delay: 1.2s; }
+@keyframes st-ring { from { transform: scale(1); opacity: .6; } to { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .st-wait__art::before, .st-wait__art::after { animation: none; opacity: 0; } }
+
+/* Done sheet: slides up after a save, art overlapping its top edge, small dots pop around it.
+   Toggle .is-open on both .st-scrim and .st-sheet; place them inside a positioned app frame */
+.st-scrim { position: absolute; inset: 0; background: rgba(31, 42, 68, .35); opacity: 0; pointer-events: none; transition: opacity .25s; }
+.st-sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--page); border-radius: 26px 26px 0 0; padding: 0 var(--space-5) var(--space-4); text-align: center;
+  transform: translateY(calc(100% + 90px)); transition: transform .3s var(--ease-out); }
+.st-scrim.is-open { opacity: 1; pointer-events: auto; }
+.st-sheet.is-open { transform: none; transition-duration: .4s; }
+.st-sheet__art { position: relative; width: 132px; height: 132px; margin: -66px auto 0; }
+.st-sheet__art .st-disc { width: 100%; box-shadow: 0 0 0 6px var(--page); }
+.st-sheet__art i { position: absolute; width: 13px; height: 13px; border-radius: 50%; opacity: 0; transform: scale(.3); }
+/* Celebrate: the art gives one small bounce as the sheet lands, then the dots pop around it */
+.st-sheet.is-open .st-sheet__art .st-disc { animation: st-bump .5s var(--ease-pop) .12s both; }
+@keyframes st-bump { from { transform: scale(.9); } }
+.st-sheet.is-open .st-sheet__art i { animation: st-pop .45s var(--ease-pop) .2s forwards; }
+.st-sheet.is-open .st-sheet__art i:nth-of-type(2) { animation-delay: .26s; } .st-sheet.is-open .st-sheet__art i:nth-of-type(3) { animation-delay: .32s; }
+.st-sheet.is-open .st-sheet__art i:nth-of-type(4) { animation-delay: .38s; } .st-sheet.is-open .st-sheet__art i:nth-of-type(5) { animation-delay: .44s; }
+@keyframes st-pop { to { opacity: 1; transform: scale(1); } }
+.st-sheet h3 { margin: var(--space-3) 0 0; color: var(--coral); font-size: var(--text-xl); }
+.st-sheet p { margin: 0; color: var(--text-dim); }
+.st-sheet p b { color: var(--text); font-size: var(--text-lg); }
+.st-sheet .st-btn { margin-top: var(--space-5); }
+
+/* Arrive: when a screen opens, its art fades in and rises a little, once. Add .st-arrive to a hero, disc or
+   empty-state art box. Stagger a few with style="--arrive-delay: 60ms" (keep steps between 30 and 80 ms) */
+.st-arrive { animation: st-arrive .3s var(--ease-out) var(--arrive-delay, 0s) both; }
+@keyframes st-arrive { from { opacity: 0; transform: translateY(8px); } }
+
+/* Rest: on welcome and empty screens only, one layer of the art moves very slowly, like light shifting on
+   paper. Add .st-rest to the art box; brand/art.js marks the layer. Never in lists, on working screens or on stage */
+.st-rest .art-breathe, .st-rest .art-sway, .st-rest .art-drift { transform-box: fill-box; transform-origin: center; }
+.st-rest .art-breathe { animation: st-breathe 9s ease-in-out infinite alternate; }
+.st-rest .art-breathe--left { transform-origin: 0 50%; }
+.st-rest .art-sway { transform-origin: 50% 100%; transform: rotate(-1.2deg); animation: st-sway 7s ease-in-out infinite alternate; }
+.st-rest .art-drift { animation: st-drift 6s ease-in-out infinite alternate; }
+@keyframes st-breathe { to { transform: scale(1.04); } }
+@keyframes st-sway { to { transform: rotate(1.2deg); } }
+@keyframes st-drift { to { opacity: .55; transform: translateY(-8px); } }
+
+/* Reduced motion: arrive becomes a plain fade; resting art stands still */
+@keyframes st-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .st-arrive.st-arrive { animation: st-fade .2s ease-out var(--arrive-delay, 0s) both !important; }
+  .st-rest .art-breathe, .st-rest .art-sway, .st-rest .art-drift { animation: none; transform: none; }
+}
