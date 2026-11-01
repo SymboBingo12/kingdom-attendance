@@ -1,0 +1,406 @@
+<title>Attendance Video Preview</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: a working preview. The 16:9 stage leads, the player and sample controls sit beneath it. Steward tokens. */
+:root {
+  --page: #ffffff; --surface: #f6f8fb; --line: #e2e7ef; --text: #1f2a44; --text-dim: #5d6880;
+  --brand: #4a6da7; --brand-strong: #3a5a90; --brand-soft: #e3eaf5; --on-brand: #ffffff;
+  --font: "Noto Sans", system-ui, "Segoe UI", Roboto, sans-serif;
+  --ease-out: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --radius-sm: 8px; --radius-md: 14px; --radius-pill: 999px;
+  --shadow: 0 1px 2px rgba(31, 42, 68, 0.06), 0 12px 32px -12px rgba(31, 42, 68, 0.22);
+  /* Slide: light, Steward's publication look (Caio: it's a presentation). Same in both page themes. */
+  --st-page: #ffffff; --st-surface: #f6f8fb; --st-line: #e2e7ef; --st-text: #1f2a44; --st-dim: #5d6880; --st-brand: #4a6da7;
+  --st-coral: #c9502f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #121a2b; --surface: #1a2338; --line: #2a3550; --text: #e8edf6; --text-dim: #9aa6be;
+    --brand: #8fa9d6; --brand-strong: #b3c6e6; --brand-soft: #22304d; --on-brand: #121a2b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #121a2b; --surface: #1a2338; --line: #2a3550; --text: #e8edf6; --text-dim: #9aa6be;
+  --brand: #8fa9d6; --brand-strong: #b3c6e6; --brand-soft: #22304d; --on-brand: #121a2b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 16px 40px -16px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--page); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px; }
+header { display: grid; gap: 4px; }
+h1 { margin: 0; font-size: 28px; font-weight: 700; text-wrap: balance; }
+header p { margin: 0; color: var(--text-dim); max-width: 65ch; }
+
+/* The stage frame */
+.frame { position: relative; width: 100%; aspect-ratio: 16 / 9; max-width: 100%; border-radius: var(--radius-md);
+  overflow: hidden; background: var(--st-page); box-shadow: var(--shadow); }
+.slide { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0;
+  background: var(--st-page); color: var(--st-text); font-family: var(--font); overflow: hidden; }
+.layer { position: absolute; inset: 0; }
+.el { will-change: transform, opacity; opacity: 0; }
+.num { font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 0.9; }
+.eyebrow { font-size: 30px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--st-coral); }
+.circle { border-radius: 50%; overflow: hidden; }
+.circle svg { width: 100%; height: 100%; display: block; }
+
+/* Intro */
+#L-intro { display: grid; grid-template-columns: 640px 1fr; gap: 120px; align-items: center; padding: 0 170px; }
+#L-intro .circle { width: 640px; height: 640px; }
+#L-intro .text { display: grid; gap: 22px; }
+#L-intro h2 { margin: 0; font-size: 128px; font-weight: 800; line-height: 1; letter-spacing: -0.01em; }
+#L-intro .cong { font-size: 46px; font-weight: 500; color: var(--st-text); }
+#L-intro .date { font-size: 36px; color: var(--st-dim); }
+
+/* Hall and Zoom */
+.beat { display: grid; grid-template-columns: 1fr 640px; gap: 80px; align-items: center; padding: 0 170px; }
+.beat .text { display: grid; gap: 18px; }
+.beat .num { font-size: 400px; }
+.beat .cap { font-size: 40px; color: var(--st-dim); }
+.beat .circle { width: 640px; height: 640px; }
+
+/* Total */
+#L-total { display: grid; place-items: center; align-content: center; gap: 28px; text-align: center; }
+#L-total .ringbox { position: relative; display: grid; place-items: center; width: 760px; height: 560px; }
+#L-total .ring { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 3px solid var(--st-brand); }
+#L-total .num { position: relative; font-size: 440px; }
+#L-total .parts { display: flex; gap: 24px; justify-content: center; }
+#L-total .chip { font-size: 40px; padding: 14px 36px; border-radius: 999px; background: var(--st-surface); border: 2px solid var(--st-line); color: var(--st-dim); }
+#L-total .chip b { color: var(--st-text); font-variant-numeric: tabular-nums; margin-left: 12px; }
+
+/* Footer line on every beat after the intro */
+#L-foot { top: auto; bottom: 0; height: 120px; display: flex; justify-content: space-between; align-items: center; padding: 0 170px;
+  font-size: 28px; color: var(--st-dim); }
+#L-foot .rule { position: absolute; left: 170px; right: 170px; top: 0; height: 2px; background: var(--st-line); }
+
+/* Play overlay */
+.overlay { position: absolute; inset: 0; background: transparent; border: 0; cursor: pointer;
+  color: #fff; font: inherit; transition: opacity 200ms var(--ease-out); }
+.overlay span { position: absolute; top: 14px; right: 14px; display: inline-flex; align-items: center; gap: 12px; padding: 14px 26px; border-radius: var(--radius-pill);
+  background: rgba(23, 32, 54, 0.85); border: 1px solid rgba(255, 255, 255, 0.25); font-size: 18px; font-weight: 600; }
+.overlay:focus-visible { outline: 3px solid var(--st-brand); outline-offset: -6px; }
+
+/* Player */
+.player { display: grid; grid-template-columns: auto auto 1fr auto; gap: 12px; align-items: center; }
+button.btn { font: inherit; font-weight: 600; font-size: 15px; min-height: 44px; padding: 0 18px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; transition: transform 120ms ease-out; }
+button.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+button.btn:active { transform: scale(0.97); }
+button.btn:focus-visible, input:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+input[type=range] { width: 100%; accent-color: var(--brand); min-width: 0; }
+.time { font-variant-numeric: tabular-nums; color: var(--text-dim); font-size: 14px; min-width: 88px; text-align: right; }
+.beats { display: grid; grid-template-columns: 2.5fr 2.5fr 2.5fr 4.5fr; gap: 6px; }
+.beats button { font: inherit; font-size: 13px; text-align: left; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+  background: var(--surface); color: var(--text-dim); cursor: pointer; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.beats button[aria-current="true"] { background: var(--brand-soft); color: var(--text); border-color: var(--brand); }
+.beats small { display: block; font-variant-numeric: tabular-nums; opacity: 0.8; }
+
+/* Sample controls */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 20px; display: grid; gap: 16px; }
+.card h3 { margin: 0; font-size: 16px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 14px; }
+label { display: grid; gap: 6px; font-size: 14px; color: var(--text-dim); min-width: 0; }
+input[type=number], input[type=text] { font: inherit; font-size: 16px; color: var(--text); background: var(--page); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); min-height: 44px; padding: 0 12px; width: 100%; min-width: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: var(--page); }
+.seg button { font: inherit; font-size: 15px; min-height: 42px; padding: 0 16px; border: 0; background: transparent; color: var(--text-dim); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); font-weight: 600; }
+.note { margin: 0; font-size: 14px; color: var(--text-dim); max-width: 70ch; }
+.total-out { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--text); }
+
+@media (max-width: 560px) {
+  .player { grid-template-columns: auto auto 1fr; }
+  .player input[type=range] { grid-column: 1 / -1; grid-row: 2; }
+  .player .time { grid-row: 1; grid-column: 3; }
+  .overlay span { font-size: 14px; padding: 8px 14px; top: 8px; right: 8px; }
+  .beats { grid-template-columns: 1fr 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .overlay, button.btn { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Attendance video preview</h1>
+    <p>This is the 12-second video the app makes when the AV desk presses Finalize. It goes into M³ like your Canva slide does today. The numbers are samples from your Canva template; change them below to try others.</p>
+  </header>
+
+  <div class="frame" id="frame">
+    <div class="slide" id="slide" aria-label="Attendance video">
+      <div class="layer" id="L-intro">
+        <div class="el circle" data-b="intro" data-d="0" data-s="1" id="artIntro"></div>
+        <div class="text">
+          <div class="el eyebrow" data-b="intro" data-d=".12">Meeting Attendance</div>
+          <h2 class="el" data-b="intro" data-d=".2" id="introType">Midweek Meeting</h2>
+          <div class="el cong" data-b="intro" data-d=".3" id="introCong"></div>
+          <div class="el date" data-b="intro" data-d=".38" id="introDate"></div>
+        </div>
+      </div>
+
+      <div class="layer beat" id="L-hall">
+        <div class="text">
+          <div class="el eyebrow" data-b="hall" data-d=".05">Kingdom Hall</div>
+          <div class="el num" data-b="hall" data-d=".12" id="hallNum">0</div>
+          <div class="el cap" data-b="hall" data-d=".22">attended in person</div>
+        </div>
+        <div class="el circle" data-b="hall" data-d="0" data-s="1" id="artHall"></div>
+      </div>
+
+      <div class="layer beat" id="L-zoom">
+        <div class="text">
+          <div class="el eyebrow" data-b="zoom" data-d=".05">Zoom</div>
+          <div class="el num" data-b="zoom" data-d=".12" id="zoomNum">0</div>
+          <div class="el cap" data-b="zoom" data-d=".22">joined by video</div>
+        </div>
+        <div class="el circle" data-b="zoom" data-d="0" data-s="1" id="artZoom"></div>
+      </div>
+
+      <div class="layer" id="L-total">
+        <div class="el eyebrow" data-b="total" data-d=".05">Total attendance</div>
+        <div class="ringbox">
+          <div class="el ring" data-b="total" data-d="0" data-r="0" style="width:520px;height:520px;margin:-260px 0 0 -260px;opacity:0;border-color:rgba(74,109,167,.30)"></div>
+          <div class="el ring" data-b="total" data-d=".08" data-r="1" style="width:640px;height:640px;margin:-320px 0 0 -320px;opacity:0;border-color:rgba(74,109,167,.18)"></div>
+          <div class="el ring" data-b="total" data-d=".16" data-r="2" style="width:760px;height:760px;margin:-380px 0 0 -380px;opacity:0;border-color:rgba(74,109,167,.09)"></div>
+          <div class="el num" data-b="total" data-d=".1" id="totalNum">0</div>
+        </div>
+        <div class="el parts" data-b="total" data-d=".35">
+          <span class="chip">Kingdom Hall<b id="chipHall">0</b></span>
+          <span class="chip">Zoom<b id="chipZoom">0</b></span>
+        </div>
+      </div>
+
+      <div class="layer" id="L-foot">
+        <div class="rule"></div>
+        <span class="el" data-b="foot" data-d="0" id="footLeft"></span>
+        <span class="el" data-b="foot" data-d="0" id="footRight"></span>
+      </div>
+    </div>
+    <button class="overlay" id="overlay" aria-label="Play the attendance video"><span>▶ Play the video</span></button>
+  </div>
+
+  <div class="player">
+    <button class="btn primary" id="playBtn">Play</button>
+    <button class="btn" id="fsBtn">Full screen</button>
+    <input type="range" id="scrub" min="0" max="12" step="0.01" value="12" aria-label="Video position">
+    <span class="time" id="time">0:12 / 0:12</span>
+  </div>
+  <div class="beats" role="group" aria-label="Jump to a part">
+    <button data-jump="0">Intro<small>0:00</small></button>
+    <button data-jump="2.5">Kingdom Hall<small>0:02.5</small></button>
+    <button data-jump="5">Zoom<small>0:05</small></button>
+    <button data-jump="7.5">Total, then holds<small>0:07.5</small></button>
+  </div>
+
+  <section class="card" aria-labelledby="tryH">
+    <h3 id="tryH">Try other numbers</h3>
+    <div class="fields">
+      <label for="inHall">Kingdom Hall (Left + Center + Right)<input type="number" id="inHall" min="0" max="9999" value="56" inputmode="numeric"></label>
+      <label for="inZoom">Zoom<input type="number" id="inZoom" min="0" max="9999" value="19" inputmode="numeric"></label>
+      <label for="inCong">Congregation name<input type="text" id="inCong" value="East-Tagalog Lingayen Congregation"></label>
+      <label>Meeting
+        <span class="seg" role="group" aria-label="Meeting">
+          <button type="button" id="segMid" aria-pressed="true">Midweek</button>
+          <button type="button" id="segWkd" aria-pressed="false">Weekend</button>
+        </span>
+      </label>
+    </div>
+    <p class="note">Total: <span class="total-out" id="totalOut">75</span>. The app adds these up itself. In the real app the date and meeting are picked from the day, and the finished video holds on the total so it can stay on screen until the song ends.</p>
+  </section>
+</div>
+
+<script>
+'use strict';
+/* Steward artwork (from kingdom-project-design/brand/art.js, Caio's original art). The Zoom artwork is new, drawn in the same style. */
+const halftone = (id, color, from, to) => `
+  <defs>
+    <pattern id="${id}-dots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="2" fill="${color}"/></pattern>
+    <linearGradient id="${id}-fade" x1="${from[0]}" y1="${from[1]}" x2="${to[0]}" y2="${to[1]}"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+    <mask id="${id}-m"><rect width="100%" height="100%" fill="url(#${id}-fade)"/></mask>
+  </defs>`;
+function audience(rows, dark) {
+  let s = '';
+  for (const r of rows) for (let i = 0; i < r.n; i++) {
+    const x = r.x0 + i * r.gap + (i % 2 ? r.jitter : 0), y = r.y + ((i * 7) % 3) * 6, k = r.k * (1 + (((i * 5) % 4) - 1.5) * 0.05);
+    s += `<g transform="translate(${x} ${y}) scale(${k})" fill="${dark}"><path d="M-62 90 C-62 28 -36 8 0 8 C36 8 62 28 62 90 Z"/><ellipse cx="0" cy="-22" rx="25" ry="30"/></g>`;
+  }
+  return s;
+}
+function platformArt({ dark = '#22305a', mid = '#d9a93a', light = '#f5e6b8', w = 1200, h = 620, cx = 600, id = 'pl' } = {}) {
+  const cy = 250;
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    ${halftone(id, dark, ['0', '0'], ['0.6', '0.8'])}
+    <rect width="${w}" height="${h}" fill="${mid}"/>
+    <g fill="none" stroke="${light}" stroke-opacity=".45" stroke-width="2"><circle cx="${cx}" cy="${cy}" r="300"/><circle cx="${cx}" cy="${cy}" r="360"/><circle cx="${cx}" cy="${cy}" r="430"/></g>
+    <circle cx="${cx}" cy="${cy}" r="235" fill="${light}"/>
+    <g stroke="${dark}" stroke-opacity=".18" stroke-width="3">${Array.from({ length: 9 }, (_, i) => `<line x1="${cx - 200 + i * 50}" y1="0" x2="${cx - 200 + i * 50 + (i - 4) * 45}" y2="404"/>`).join('')}</g>
+    <rect width="${w}" height="${h}" fill="url(#${id}-dots)" mask="url(#${id}-m)" opacity=".35"/>
+    <rect x="0" y="408" width="${w}" height="${h - 408}" fill="${light}" opacity=".55"/>
+    <rect x="0" y="404" width="${w}" height="6" fill="${dark}" opacity=".85"/>
+    <g fill="${dark}">
+      <path d="M${cx - 70} 300 L${cx + 70} 300 L${cx + 58} 322 L${cx + 48} 410 L${cx - 48} 410 L${cx - 58} 322 Z"/>
+      <rect x="${cx - 78}" y="292" width="156" height="12" rx="3"/>
+      <path d="M${cx + 30} 294 C${cx + 34} 262 ${cx + 22} 236 ${cx + 2} 226" fill="none" stroke="${dark}" stroke-width="5" stroke-linecap="round"/>
+      <rect x="${cx - 14}" y="212" width="22" height="34" rx="11" transform="rotate(-38 ${cx - 3} 229)"/>
+    </g>
+    ${audience([{ n: 9, x0: 40, gap: 140, y: 520, k: 0.95, jitter: 8 }, { n: 8, x0: 100, gap: 160, y: 600, k: 1.25, jitter: -10 }], dark)}
+  </svg>`;
+}
+function hallArt({ dark = '#2d3e50', mid = '#6fa3c7', light = '#dcecf5', id = 'hl' } = {}) {
+  const windows = [0, 1, 2, 3].map((i) => `<rect x="${118 + i * 46}" y="214" width="26" height="40" rx="3" fill="${light}"/>`).join('');
+  return `<svg viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    ${halftone(id, dark, ['1', '0'], ['0.4', '0.6'])}
+    <rect width="400" height="400" fill="${light}"/>
+    <circle cx="200" cy="170" r="150" fill="${mid}" opacity=".55"/>
+    <g fill="none" stroke="${dark}" stroke-opacity=".18" stroke-width="2"><circle cx="200" cy="170" r="172"/></g>
+    <rect width="400" height="400" fill="url(#${id}-dots)" mask="url(#${id}-m)" opacity=".3"/>
+    <path d="M86 180 L200 120 L314 180 Z" fill="${dark}"/>
+    <rect x="96" y="178" width="208" height="122" fill="${dark}"/>
+    ${windows}
+    <rect x="186" y="262" width="28" height="38" fill="${mid}"/>
+    <g fill="${dark}" opacity=".9"><circle cx="58" cy="226" r="34"/><circle cx="40" cy="250" r="24"/><rect x="54" y="246" width="8" height="54"/></g>
+    <rect x="0" y="298" width="400" height="102" fill="${mid}"/>
+    <rect x="0" y="298" width="400" height="5" fill="${dark}" opacity=".6"/>
+  </svg>`;
+}
+/* People joining by video: a screen of four tiles. Time-and-schedules duotone. */
+function remoteArt({ dark = '#164e57', mid = '#2f7f86', light = '#a9d6d9', id = 'rm' } = {}) {
+  const tiles = [];
+  const sx = 186, sy = 226, tw = 132, th = 77, g = 4;
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) {
+    const x = sx + c * (tw + g), y = sy + r * (th + g), cx = x + tw / 2, k = 0.42 + ((r + c) % 2) * 0.05;
+    tiles.push(`<rect x="${x}" y="${y}" width="${tw}" height="${th}" rx="5" fill="${(r + c) % 2 ? light : '#c4e4e6'}"/>
+      <g transform="translate(${cx} ${y + th - 36 * k * 1.2}) scale(${k})" fill="${dark}"><path d="M-62 90 C-62 28 -36 8 0 8 C36 8 62 28 62 90 Z"/><ellipse cx="0" cy="-22" rx="25" ry="30"/></g>`);
+  }
+  return `<svg viewBox="0 0 640 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    ${halftone(id, dark, ['0', '1'], ['0.7', '0.3'])}
+    <rect width="640" height="640" fill="${mid}"/>
+    <g fill="none" stroke="${light}" stroke-opacity=".4" stroke-width="3"><circle cx="320" cy="300" r="215"/><circle cx="320" cy="300" r="262"/><circle cx="320" cy="300" r="312"/></g>
+    <circle cx="320" cy="300" r="175" fill="${light}" opacity=".35"/>
+    <rect width="640" height="640" fill="url(#${id}-dots)" mask="url(#${id}-m)" opacity=".3"/>
+    <rect x="170" y="210" width="300" height="190" rx="16" fill="${dark}"/>
+    <clipPath id="${id}-scr"><rect x="186" y="226" width="268" height="158" rx="6"/></clipPath>
+    <g clip-path="url(#${id}-scr)">${tiles.join('')}</g>
+    <path d="M128 412 H512 L486 446 H154 Z" fill="${dark}"/>
+  </svg>`;
+}
+
+document.getElementById('artIntro').innerHTML = hallArt({ id: 'a1' });
+document.getElementById('artHall').innerHTML = platformArt({ id: 'a2' });
+document.getElementById('artZoom').innerHTML = remoteArt({ id: 'a3' });
+
+/* Timeline: the same rules as web/shared/timeline.js in the plan. Deterministic: any t draws the same frame. */
+const DURATION = 12;
+const BEATS = { intro: [0, 2.5], hall: [2.5, 5], zoom: [5, 7.5], total: [7.5, 12], foot: [2.5, 12] };
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+/* Smooth motion: long ease-out-quart arrivals, ease-in-out crossfades between beats, a slow drift on the art. */
+const easeOut = (p) => 1 - Math.pow(1 - p, 4);
+const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+const COUNT_DELAY = 0.3, COUNT_TIME = 1.8, ENTER = 0.8, EXIT = 0.5;
+const countUp = (t, start, value) => Math.round(value * easeOut(clamp((t - start) / COUNT_TIME)));
+function frameAt(t, d) {
+  t = clamp(t, 0, DURATION);
+  let beat = 'total';
+  for (const k of ['intro', 'hall', 'zoom', 'total']) { const [a, b] = BEATS[k]; if (t >= a && t < b) { beat = k; break; } }
+  return {
+    beat,
+    hallShown: countUp(t, BEATS.hall[0] + COUNT_DELAY, d.hall),
+    zoomShown: countUp(t, BEATS.zoom[0] + COUNT_DELAY, d.zoom),
+    totalShown: countUp(t, BEATS.total[0] + COUNT_DELAY, d.total),
+  };
+}
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function vis(t, beat, delay) {
+  const [a, b] = BEATS[beat];
+  const last = beat === 'total' || beat === 'foot';
+  const e = easeOut(clamp((t - a - delay) / (beat === 'intro' ? 1 : ENTER)));
+  // the exit straddles the boundary, so the next beat fades in while this one fades out
+  const x = last ? 0 : easeInOut(clamp((t - (b - 0.3)) / EXIT));
+  return { o: e * (1 - x), e, x, p: clamp((t - a) / (b - a)) };
+}
+
+const $ = (id) => document.getElementById(id);
+const els = [...document.querySelectorAll('.el')];
+const fmt = (n) => n.toLocaleString('en-US');
+let data = { hall: 56, zoom: 19, total: 75, type: 'Midweek', cong: 'East-Tagalog Lingayen Congregation' };
+const today = new Date();
+const dateText = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+function draw(t) {
+  const f = frameAt(t, data);
+  for (const el of els) {
+    const v = vis(t, el.dataset.b, parseFloat(el.dataset.d || 0));
+    let tf = `translateY(${((1 - v.e) * 20 - v.x * 10).toFixed(2)}px)`;
+    if (el.dataset.s) tf = `scale(${((0.97 + 0.03 * v.e) * (1 + 0.03 * v.p)).toFixed(4)})`;
+    if (el.dataset.r) tf = `scale(${(0.92 + 0.08 * v.e).toFixed(4)})`;
+    el.style.opacity = v.o;
+    el.style.transform = tf;
+  }
+  $('hallNum').textContent = fmt(f.hallShown);
+  $('zoomNum').textContent = fmt(f.zoomShown);
+  $('totalNum').textContent = fmt(f.totalShown);
+  $('chipHall').textContent = fmt(data.hall);
+  $('chipZoom').textContent = fmt(data.zoom);
+  $('scrub').value = t;
+  const s = Math.min(DURATION, t);
+  $('time').textContent = `0:${String(Math.floor(s)).padStart(2, '0')} / 0:12`;
+  document.querySelectorAll('.beats button').forEach((b, i) => b.setAttribute('aria-current', String(['intro', 'hall', 'zoom', 'total'][i] === f.beat)));
+}
+function setText() {
+  $('introType').textContent = `${data.type} Meeting`;
+  $('introCong').textContent = data.cong;
+  $('introDate').textContent = dateText;
+  $('footLeft').textContent = `${data.cong} · ${data.type} Meeting`;
+  $('footRight').textContent = dateText;
+  $('totalOut').textContent = fmt(data.total);
+}
+
+/* Scale the 1920×1080 stage to the frame */
+const frame = $('frame'), slide = $('slide');
+const fit = () => { slide.style.transform = `scale(${frame.clientWidth / 1920})`; };
+new ResizeObserver(fit).observe(frame);
+fit();
+
+/* Player */
+let cur = DURATION, playing = false, startAt = 0;
+function tick(now) {
+  if (!playing) return;
+  cur = (now - startAt) / 1000;
+  if (cur >= DURATION) { cur = DURATION; playing = false; syncBtn(); }
+  draw(cur);
+  if (playing) requestAnimationFrame(tick);
+}
+function play() {
+  if (cur >= DURATION) cur = 0;
+  if (reduce) { cur = DURATION; draw(cur); return; }
+  startAt = performance.now() - cur * 1000; playing = true; $('overlay').hidden = true; syncBtn(); requestAnimationFrame(tick);
+}
+function pause() { playing = false; syncBtn(); }
+function syncBtn() { $('playBtn').textContent = playing ? 'Pause' : (cur >= DURATION ? 'Replay' : 'Play'); }
+$('playBtn').addEventListener('click', () => (playing ? pause() : play()));
+$('overlay').addEventListener('click', play);
+$('scrub').addEventListener('input', (e) => { pause(); $('overlay').hidden = true; cur = parseFloat(e.target.value); draw(cur); syncBtn(); });
+document.querySelectorAll('[data-jump]').forEach((b) => b.addEventListener('click', () => { cur = parseFloat(b.dataset.jump); $('overlay').hidden = true; play(); }));
+$('fsBtn').addEventListener('click', () => { try { const p = frame.requestFullscreen && frame.requestFullscreen(); if (p && p.catch) p.catch(() => {}); } catch (e) {} });
+
+/* Sample inputs */
+function readInputs() {
+  const n = (id) => clamp(Math.round(Number($(id).value) || 0), 0, 9999);
+  data.hall = n('inHall'); data.zoom = n('inZoom'); data.total = data.hall + data.zoom;
+  data.cong = $('inCong').value.trim() || 'Your Congregation';
+  setText(); draw(cur);
+}
+['inHall', 'inZoom', 'inCong'].forEach((id) => $(id).addEventListener('input', readInputs));
+function setType(t) { data.type = t; $('segMid').setAttribute('aria-pressed', String(t === 'Midweek')); $('segWkd').setAttribute('aria-pressed', String(t === 'Weekend')); setText(); draw(cur); }
+$('segMid').addEventListener('click', () => setType('Midweek'));
+$('segWkd').addEventListener('click', () => setType('Weekend'));
+
+setText();
+draw(DURATION);
+syncBtn();
+</script>
