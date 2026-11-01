@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attendance video</title>
+<link rel="stylesheet" href="/steward/fonts.css">
+<style>
+  /* The attendance video, drawn at 1920×1080. Light by default (Caio: it's a presentation); ?theme=dark for the dark variant. */
+  .slide {
+    --s-page: #ffffff; --s-surface: #f6f8fb; --s-line: #e2e7ef; --s-text: #1f2a44; --s-dim: #5d6880; --s-coral: #c9502f;
+    --s-ring: 74, 109, 167;
+  }
+  .slide[data-theme="dark"] {
+    --s-page: #172036; --s-surface: #1f2a44; --s-line: #2c3a5c; --s-text: #ffffff; --s-dim: #b8c2d6; --s-coral: #f08a6c;
+    --s-ring: 143, 169, 214;
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+  .slide { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
+    background: var(--s-page); color: var(--s-text); font-family: "Noto Sans", system-ui, "Segoe UI", Roboto, sans-serif; }
+  .layer { position: absolute; inset: 0; }
+  .el { opacity: 0; will-change: transform, opacity; }
+  .num { font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 0.9; }
+  .eyebrow { font-size: 30px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--s-coral); }
+  .circle { border-radius: 50%; overflow: hidden; }
+  .circle svg { width: 100%; height: 100%; display: block; }
+
+  #L-intro { display: grid; grid-template-columns: 640px 1fr; gap: 120px; align-items: center; padding: 0 170px; }
+  #L-intro .circle { width: 640px; height: 640px; }
+  #L-intro .text { display: grid; gap: 22px; }
+  #L-intro h2 { margin: 0; font-size: 128px; font-weight: 800; line-height: 1; letter-spacing: -0.01em; }
+  #L-intro .cong { font-size: 46px; font-weight: 500; }
+  #L-intro .date { font-size: 36px; color: var(--s-dim); }
+
+  .beat { display: grid; grid-template-columns: 1fr 640px; gap: 80px; align-items: center; padding: 0 170px; }
+  .beat .text { display: grid; gap: 18px; }
+  .beat .num { font-size: 400px; }
+  .beat .cap { font-size: 40px; color: var(--s-dim); }
+  .beat .circle { width: 640px; height: 640px; }
+
+  #L-total { display: grid; place-items: center; align-content: center; gap: 28px; text-align: center; }
+  #L-total .ringbox { position: relative; display: grid; place-items: center; width: 760px; height: 560px; }
+  #L-total .ring { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 3px solid; }
+  #L-total .r1 { width: 520px; height: 520px; margin: -260px 0 0 -260px; border-color: rgba(var(--s-ring), .30); }
+  #L-total .r2 { width: 640px; height: 640px; margin: -320px 0 0 -320px; border-color: rgba(var(--s-ring), .18); }
+  #L-total .r3 { width: 760px; height: 760px; margin: -380px 0 0 -380px; border-color: rgba(var(--s-ring), .09); }
+  #L-total .num { position: relative; font-size: 440px; }
+  #L-total .parts { display: flex; gap: 24px; justify-content: center; }
+  #L-total .chip { font-size: 40px; padding: 14px 36px; border-radius: 999px; background: var(--s-surface); border: 2px solid var(--s-line); color: var(--s-dim); }
+  #L-total .chip b { color: var(--s-text); font-variant-numeric: tabular-nums; margin-left: 12px; }
+
+  #L-foot { top: auto; bottom: 0; height: 120px; display: flex; justify-content: space-between; align-items: center; padding: 0 170px; font-size: 28px; color: var(--s-dim); }
+  #L-foot .rule { position: absolute; left: 170px; right: 170px; top: 0; height: 2px; background: var(--s-line); }
+</style>
+</head>
+<body>
+<div class="slide" id="slide">
+  <div class="layer" id="L-intro">
+    <div class="el circle" data-b="intro" data-d="0" data-s="1" id="artIntro"></div>
+    <div class="text">
+      <div class="el eyebrow" data-b="intro" data-d=".12">Meeting Attendance</div>
+      <h2 class="el" data-b="intro" data-d=".2" id="introType">Midweek Meeting</h2>
+      <div class="el cong" data-b="intro" data-d=".3" id="introCong"></div>
+      <div class="el date" data-b="intro" data-d=".38" id="introDate"></div>
+    </div>
+  </div>
+
+  <div class="layer beat" id="L-hall">
+    <div class="text">
+      <div class="el eyebrow" data-b="hall" data-d=".05">Kingdom Hall</div>
+      <div class="el num" data-b="hall" data-d=".12" id="hallNum">0</div>
+      <div class="el cap" data-b="hall" data-d=".22">attended in person</div>
+    </div>
+    <div class="el circle" data-b="hall" data-d="0" data-s="1" id="artHall"></div>
+  </div>
+
+  <div class="layer beat" id="L-zoom">
+    <div class="text">
+      <div class="el eyebrow" data-b="zoom" data-d=".05">Zoom</div>
+      <div class="el num" data-b="zoom" data-d=".12" id="zoomNum">0</div>
+      <div class="el cap" data-b="zoom" data-d=".22">joined by video</div>
+    </div>
+    <div class="el circle" data-b="zoom" data-d="0" data-s="1" id="artZoom"></div>
+  </div>
+
+  <div class="layer" id="L-total">
+    <div class="el eyebrow" data-b="total" data-d=".05">Total attendance</div>
+    <div class="ringbox">
+      <div class="el ring r1" data-b="total" data-d="0" data-r="1"></div>
+      <div class="el ring r2" data-b="total" data-d=".08" data-r="1"></div>
+      <div class="el ring r3" data-b="total" data-d=".16" data-r="1"></div>
+      <div class="el num" data-b="total" data-d=".1" id="totalNum">0</div>
+    </div>
+    <div class="el parts" data-b="total" data-d=".35">
+      <span class="chip">Kingdom Hall<b id="chipHall">0</b></span>
+      <span class="chip">Zoom<b id="chipZoom">0</b></span>
+    </div>
+  </div>
+
+  <div class="layer" id="L-foot">
+    <div class="rule"></div>
+    <span class="el" data-b="foot" data-d="0" id="footLeft"></span>
+    <span class="el" data-b="foot" data-d="0" id="footRight"></span>
+  </div>
+</div>
+<script src="/shared/timeline.js"></script>
+<script src="/shared/art.js"></script>
+<script src="/shared/api.js"></script>
+<script src="/slide.js"></script>
+</body>
+</html>
