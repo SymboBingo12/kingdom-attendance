@@ -33,7 +33,10 @@ if (!app.requestSingleInstanceLock()) {
   };
 
   // The window's colours; "system" makes it follow Windows' own light or dark setting.
-  const applyAppearance = (s) => { nativeTheme.themeSource = appearanceOf(s) === 'auto' ? 'system' : appearanceOf(s); };
+  const applyAppearance = (s) => {
+    nativeTheme.themeSource = appearanceOf(s) === 'auto' ? 'system' : appearanceOf(s);
+    if (win) win.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#121a2b' : '#ffffff');
+  };
 
   function slideUrl({ meeting, totals, congregation, theme }) {
     const q = new URLSearchParams({
@@ -56,6 +59,7 @@ if (!app.requestSingleInstanceLock()) {
     if (!win) {
       win = new BrowserWindow({
         width: 820, height: 760, minWidth: 420, minHeight: 520, show: false, icon: ICON, title: 'Kingdom Attendance',
+        backgroundColor: nativeTheme.shouldUseDarkColors ? '#121a2b' : '#ffffff', // the page colour, so opening doesn't flash
         autoHideMenuBar: true,
         webPreferences: { preload: path.join(__dirname, 'renderer', 'preload.js'), contextIsolation: true, nodeIntegration: false },
       });

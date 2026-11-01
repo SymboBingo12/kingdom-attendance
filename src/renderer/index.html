@@ -39,6 +39,10 @@
   .seg button[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); }
   .row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
   .row > div { flex: 1 1 260px; }
+  header.row { align-items: flex-start; }
+  header .look { flex: none; display: grid; gap: 6px; justify-items: start; }
+  header .look .k { color: var(--text-dim); }
+  .note { font-size: var(--text-xs); }
   .switch { width: 44px; height: 26px; border-radius: 99px; background: var(--line); position: relative; border: 0; flex: none; }
   .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .15s ease-out; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
   .switch[aria-checked="true"] { background: var(--brand); }
@@ -52,9 +56,19 @@
 </head>
 <body>
 <main>
-  <header>
-    <h1>Kingdom Attendance</h1>
-    <p>Running in the tray. Closing this window keeps it running for phones and the OBS dock.</p>
+  <header class="row">
+    <div>
+      <h1>Kingdom Attendance</h1>
+      <p>Running in the tray. Closing this window keeps it running for phones and the OBS dock.</p>
+    </div>
+    <div class="look">
+      <span class="k" id="h-look">Appearance</span>
+      <span class="seg" role="group" aria-labelledby="h-look" title="Colours of this window and of the counting, Zoom, dock and history pages. Auto follows each phone or computer.">
+        <button type="button" data-appearance="light" aria-pressed="false">Light</button>
+        <button type="button" data-appearance="dark" aria-pressed="false">Dark</button>
+        <button type="button" data-appearance="auto" aria-pressed="false">Auto</button>
+      </span>
+    </div>
   </header>
 
   <section class="card" aria-labelledby="h-connect">
@@ -94,24 +108,13 @@
     </div>
     <p class="help">In M³: <b>Settings → Integrations → Shared folder</b>, turn on <b>"Add media from a shared folder"</b> and choose this same folder. The video then appears in that meeting's media list by itself. Without it, the video is saved to the Desktop.</p>
     <div class="field">
-      <label>Video colours</label>
+      <label>Video colours <span class="note">(only the attendance video; this window's colours are under Appearance at the top)</span></label>
       <span class="seg" role="group" aria-label="Video colours">
         <button type="button" data-theme="light" aria-pressed="false">Light</button>
         <button type="button" data-theme="dark" aria-pressed="false">Dark</button>
       </span>
     </div>
     <div><button class="btn" id="openSlides">Open the videos folder</button></div>
-  </section>
-
-  <section class="card" aria-labelledby="h-look">
-    <div class="row">
-      <div><h2 id="h-look">Appearance</h2><p class="help">Colours of this window and of the counting, Zoom, dock and history pages. Light unless you change it; Auto follows each phone or computer.</p></div>
-      <span class="seg" role="group" aria-labelledby="h-look">
-        <button type="button" data-appearance="light" aria-pressed="false">Light</button>
-        <button type="button" data-appearance="dark" aria-pressed="false">Dark</button>
-        <button type="button" data-appearance="auto" aria-pressed="false">Auto</button>
-      </span>
-    </div>
   </section>
 
   <section class="card" aria-labelledby="h-start">
