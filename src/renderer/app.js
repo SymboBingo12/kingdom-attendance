@@ -19,6 +19,7 @@
     $('m3').classList.toggle('empty', !s.m3Folder);
     $('openM3').disabled = !s.m3Folder;
     for (const b of document.querySelectorAll('[data-theme]')) b.setAttribute('aria-pressed', String(b.dataset.theme === (s.theme || 'light')));
+    for (const b of document.querySelectorAll('[data-appearance]')) b.setAttribute('aria-pressed', String(b.dataset.appearance === (s.appearance || 'auto')));
     $('login').setAttribute('aria-checked', String(!!s.openAtLogin));
   }
 
@@ -37,6 +38,8 @@
     if (open && current[open.dataset.open]) A.open(current[open.dataset.open]);
     const theme = e.target.closest('[data-theme]');
     if (theme) save({ theme: theme.dataset.theme });
+    const appearance = e.target.closest('[data-appearance]');
+    if (appearance) save({ appearance: appearance.dataset.appearance });
   });
 
   $('cong').addEventListener('change', () => save({ congregation: $('cong').value.trim() }));

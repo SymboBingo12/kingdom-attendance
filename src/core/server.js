@@ -9,6 +9,7 @@ const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
 const QRCode = require('qrcode');
+const { appearanceOf } = require('./settings');
 
 const PAGES = {
   '/count': 'count.html',
@@ -172,6 +173,8 @@ function createServer(service, { settings, webDir, mdns = true }) {
     if (req.method === 'GET' && p === '/api/whoami') {
       return send(res, 200, { pinRequired: pinRequired(req), local: isLoopback(req.socket.remoteAddress) });
     }
+    // Colours only, so pages can look right before the PIN is entered.
+    if (req.method === 'GET' && p === '/api/appearance') return send(res, 200, { appearance: appearanceOf(cfg()) });
     if (!p.startsWith('/api/')) return send(res, 404, { error: 'Not found' });
     if (!authorised(req, res)) return;
 

@@ -6,7 +6,7 @@
 const { EventEmitter } = require('node:events');
 const M = require('./meeting');
 const { createStore } = require('./store');
-const { loadSettings } = require('./settings');
+const { loadSettings, appearanceOf } = require('./settings');
 
 const TYPES = ['midweek', 'weekend'];
 const SEEN_TAPS = 1000;
@@ -33,7 +33,9 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
 
   const getState = () => {
     const s = getSettings();
-    return { meeting, totals: M.totals(meeting), render, congregation: s.congregation || '', theme: s.theme || 'light' };
+    return {
+      meeting, totals: M.totals(meeting), render, congregation: s.congregation || '', theme: s.theme || 'light', appearance: appearanceOf(s),
+    };
   };
 
   const commit = (next) => {
@@ -98,6 +100,11 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
       if (!meeting.finalized) throw new M.MeetingError('NOT_FINAL', 'Finalize the attendance first.');
       startVideo();
       return getState();
+    },
+
+    // Settings changed on the AV PC (such as the appearance): tell open pages.
+    settingsChanged() {
+      events.emit('change', getState());
     },
 
     // Resolves when the current video (if any) is done; for tests and the app's quit handler.

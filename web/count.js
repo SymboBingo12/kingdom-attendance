@@ -35,6 +35,7 @@
   const dateFmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
 
   function render(state) {
+    window.AttendanceAppearance.apply(state.appearance);
     const m = state.meeting;
     $('hall').textContent = state.totals.hall;
     for (const lane of document.querySelectorAll('.lane')) {

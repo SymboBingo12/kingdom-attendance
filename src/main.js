@@ -4,11 +4,11 @@
 // and hands it to M³. Closing the window keeps it running; Quit from the tray stops it.
 
 const path = require('node:path');
-const { app, BrowserWindow, Tray, Menu, dialog, ipcMain, shell, clipboard, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, dialog, ipcMain, shell, clipboard, nativeImage, nativeTheme } = require('electron');
 const QRCode = require('qrcode');
 const { createService } = require('./core/service');
 const { createServer } = require('./core/server');
-const { loadSettings, saveSettings, newPin } = require('./core/settings');
+const { loadSettings, saveSettings, newPin, APPEARANCES, appearanceOf } = require('./core/settings');
 const { deliverVideo } = require('./core/m3');
 const { renderAttendance } = require('./render/recorder');
 
@@ -31,6 +31,9 @@ if (!app.requestSingleInstanceLock()) {
     if (!app.isPackaged) return; // only the installed app starts with Windows
     app.setLoginItemSettings({ openAtLogin: !!s.openAtLogin, args: ['--hidden'] });
   };
+
+  // The window's colours; "system" makes it follow Windows' own light or dark setting.
+  const applyAppearance = (s) => { nativeTheme.themeSource = appearanceOf(s) === 'auto' ? 'system' : appearanceOf(s); };
 
   function slideUrl({ meeting, totals, congregation, theme }) {
     const q = new URLSearchParams({
@@ -104,11 +107,14 @@ if (!app.requestSingleInstanceLock()) {
 
   ipcMain.handle('info', info);
   ipcMain.handle('save', (_e, patch) => {
-    const allowed = ['congregation', 'm3Folder', 'theme', 'openAtLogin'];
+    const allowed = ['congregation', 'm3Folder', 'theme', 'appearance', 'openAtLogin'];
     const clean = Object.fromEntries(Object.entries(patch || {}).filter(([k]) => allowed.includes(k)));
     if (clean.theme && !['light', 'dark'].includes(clean.theme)) delete clean.theme;
+    if ('appearance' in clean && !APPEARANCES.includes(clean.appearance)) delete clean.appearance;
     const s = saveSettings(dataDir(), clean);
     if ('openAtLogin' in clean) applyLoginItem(s);
+    if ('appearance' in clean) applyAppearance(s);
+    service.settingsChanged();
     return info();
   });
   ipcMain.handle('new-pin', () => { saveSettings(dataDir(), { pin: newPin() }); return info(); });
@@ -153,6 +159,7 @@ if (!app.requestSingleInstanceLock()) {
       return;
     }
     applyLoginItem(getSettings());
+    applyAppearance(getSettings());
     buildTray();
     if (!process.argv.includes('--hidden')) showWindow();
   });

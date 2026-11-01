@@ -16,6 +16,7 @@
 
   function render(s) {
     state = s;
+    window.AttendanceAppearance.apply(s.appearance);
     const m = s.meeting;
     const [y, mo, d] = m.date.split('-').map(Number);
     $('date').textContent = dateFmt.format(new Date(y, mo - 1, d));
