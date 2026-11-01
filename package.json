@@ -1,7 +1,7 @@
 {
   "name": "kingdom-attendance",
   "productName": "Kingdom Attendance",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Kingdom Hall attendance counter: count on phones, finalize into an attendance video for M³",
   "main": "src/main.js",
   "type": "commonjs",
@@ -38,9 +38,18 @@
       "node_modules/ffmpeg-static/**"
     ],
     "extraResources": [
-      { "from": "node_modules/ffmpeg-static/ffmpeg.exe.LICENSE", "to": "LICENSES/ffmpeg.LICENSE.txt" },
-      { "from": "web/steward/fonts/OFL.txt", "to": "LICENSES/NotoSans-OFL.txt" },
-      { "from": "LICENSE", "to": "LICENSES/Kingdom-Attendance-MIT.txt" }
+      {
+        "from": "node_modules/ffmpeg-static/ffmpeg.exe.LICENSE",
+        "to": "LICENSES/ffmpeg.LICENSE.txt"
+      },
+      {
+        "from": "web/steward/fonts/OFL.txt",
+        "to": "LICENSES/NotoSans-OFL.txt"
+      },
+      {
+        "from": "LICENSE",
+        "to": "LICENSES/Kingdom-Attendance-MIT.txt"
+      }
     ],
     "win": {
       "target": "nsis",
