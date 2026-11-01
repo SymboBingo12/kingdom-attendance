@@ -66,7 +66,7 @@
         ${lanes}
         <div class="st-card"><h3 class="st-card__title" style="display:flex;gap:var(--space-3);align-items:center">${UI.disc(window.AttendanceArt.remoteArt, 'st-disc--sm')}Zoom</h3>
           <p class="st-card__hint">The Zoom host adds up the "(n)" names and types the total.</p>
-          <div class="zstep"><button data-zoom="-1" aria-label="One fewer on Zoom" ${lock}>−</button><input id="zoomIn" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="${m.zoom}" aria-label="Zoom total" ${lock}><button class="plus" data-zoom="1" aria-label="One more on Zoom" ${lock}>+</button></div>
+          <div class="zstep"><button data-zoom="-1" aria-label="One fewer on Zoom" ${lock}>−</button><input id="zoomIn" data-live type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="${m.zoom}" aria-label="Zoom total" ${lock}><button class="plus" data-zoom="1" aria-label="One more on Zoom" ${lock}>+</button></div>
         </div>
         <p class="dim small" style="text-align:center">No publisher list yet, so counting is by column.${ctx.who && ctx.who.local ? ' <button class="st-btn st-btn--quiet" data-go="setup">Add a list</button>' : ''}</p>
       </div>`;

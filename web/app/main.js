@@ -63,7 +63,8 @@
   function currentView() {
     if (pinNeeded) return { name: 'pin', view: views.pin };
     const r = route();
-    if (AV_ONLY.includes(r.name) && !(who && who.local)) { go('home'); return { name: 'home', view: views.home }; }
+    // Only once the AV computer has answered "who am I" — a reload on #/settings must not bounce to Home.
+    if (AV_ONLY.includes(r.name) && who && !who.local) { go('home'); return { name: 'home', view: views.home }; }
     return { name: r.name, view: views[r.name] || views.home, arg: r.arg };
   }
 
@@ -71,6 +72,7 @@
   function draw() {
     const focused = document.activeElement && document.activeElement.id ? document.activeElement : null;
     const caret = focused && typeof focused.selectionStart === 'number' ? [focused.selectionStart, focused.selectionEnd] : null;
+    const typing = focused && /^(INPUT|TEXTAREA)$/.test(focused.tagName) && focused.type !== 'file' ? focused.value : null;
     const { name, view, arg } = currentView();
     UI.resetArt();
     if (!pinNeeded && !state) {
@@ -78,11 +80,15 @@
       return;
     }
     root.innerHTML = view.render({ state, ctx, arg, pinErr });
+    // The desk's waiting and "Ready" overlays belong to the desk only.
+    if (name !== 'desk' && root.dataset.view === 'desk') { layer.innerHTML = ''; ctx.memory('desk').lastStatus = undefined; }
     root.dataset.view = name;
     if (state) window.AttendanceAppearance.apply(state.appearance);
     if (focused) {
       const again = document.getElementById(focused.id);
       if (again) {
+        // A live update mustn't wipe what's being typed (fields marked data-live show the AV computer's value instead).
+        if (typing !== null && !again.hasAttribute('data-live') && again.value !== typing) again.value = typing;
         again.focus();
         if (caret) try { again.setSelectionRange(caret[0], caret[1]); } catch { /* not a text field */ }
       }

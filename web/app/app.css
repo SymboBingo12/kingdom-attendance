@@ -139,3 +139,6 @@
 .note { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(560px, calc(100% - 32px)); z-index: 20; }
 .note:empty { display: none; }
 .note .st-banner { box-shadow: var(--shadow); }
+.connect > div { min-width: 0; overflow-wrap: anywhere; }
+.add-row { flex-wrap: wrap; }
+.add-row input { flex: 1 1 160px; }
