@@ -154,6 +154,21 @@ test('connect info (PIN and QR) is only given to the AV PC', async (t) => {
   assert.match(info.count, /\/count$/);
 });
 
+test('pages, their scripts and Steward files are served; other files are not', async (t) => {
+  const s = await start();
+  t.after(() => s.server.close());
+  const page = await fetch(`${s.base}/count`);
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get('content-type'), /text\/html/);
+  const js = await fetch(`${s.base}/count.js`);
+  assert.equal(js.status, 200);
+  assert.match(js.headers.get('content-type'), /javascript/);
+  assert.equal((await fetch(`${s.base}/steward/tokens.css`)).status, 200);
+  assert.equal((await fetch(`${s.base}/shared/api.js`)).status, 200);
+  assert.equal((await fetch(`${s.base}/steward/..%2f..%2fpackage.json`)).status, 404);
+  assert.equal((await fetch(`${s.base}/package.json`)).status, 404);
+});
+
 test('meeting type can be overridden and bad values are refused', async (t) => {
   const s = await start();
   t.after(() => s.server.close());

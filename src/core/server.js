@@ -17,6 +17,7 @@ const PAGES = {
   '/slide': 'slide.html',
   '/history': 'history.html',
 };
+const SCRIPTS = ['/count.js', '/dock.js', '/slide.js', '/history.js'];
 const STATIC_DIRS = ['steward', 'shared'];
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -161,6 +162,7 @@ function createServer(service, { settings, webDir, mdns = true }) {
       return res.end();
     }
     if (req.method === 'GET' && PAGES[p]) return serveFile(res, PAGES[p]);
+    if (req.method === 'GET' && SCRIPTS.includes(p)) return serveFile(res, p.slice(1));
     const dir = p.split('/')[1];
     if (req.method === 'GET' && STATIC_DIRS.includes(dir)) return serveFile(res, p.slice(1));
 
