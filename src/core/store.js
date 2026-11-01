@@ -1,6 +1,7 @@
 'use strict';
 
-// Saves the meeting in progress and the history of finalized meetings. Numbers only, no names.
+// Saves the meeting in progress, the history of finalized meetings and the congregation's publisher list.
+// Names stay in this folder on the AV computer; the CSV export is numbers only.
 // Every write goes to a .tmp file first and is then renamed over the real one, so a crash
 // or power cut mid-write never leaves a half-written file.
 
@@ -37,6 +38,7 @@ function createStore(dir) {
   fs.mkdirSync(dir, { recursive: true });
   const currentFile = path.join(dir, 'current.json');
   const historyFile = path.join(dir, 'meetings.json');
+  const rosterFile = path.join(dir, 'publishers.json');
 
   const listHistory = () => {
     const list = readJson(historyFile);
@@ -45,6 +47,8 @@ function createStore(dir) {
 
   return {
     loadCurrent: () => readJson(currentFile),
+    loadRoster: () => { const list = readJson(rosterFile); return Array.isArray(list) ? list : []; },
+    saveRoster: (list) => writeJsonAtomic(rosterFile, list),
     saveCurrent: (m) => writeJsonAtomic(currentFile, m),
     listHistory,
     upsertHistory(m) {

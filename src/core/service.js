@@ -7,9 +7,19 @@ const { EventEmitter } = require('node:events');
 const M = require('./meeting');
 const { createStore } = require('./store');
 const { loadSettings, appearanceOf } = require('./settings');
+const { householdSize } = require('./roster');
 
 const TYPES = ['midweek', 'weekend'];
 const SEEN_TAPS = 1000;
+
+const MAX_NAME = 80;
+
+function cleanPerson({ name, group, size }) {
+  const n = typeof name === 'string' ? name.trim() : '';
+  if (!n || n.length > MAX_NAME) throw new M.MeetingError('BAD_NAME', `Type a name of 1 to ${MAX_NAME} letters.`);
+  const g = (typeof group === 'string' && group.trim().slice(0, MAX_NAME)) || 'Publishers';
+  return { name: n, group: g, size: Number.isInteger(size) && size >= 1 && size <= 20 ? size : householdSize(n) };
+}
 
 function busy() {
   return new M.MeetingError('BUSY', 'Still making the video.');
@@ -19,7 +29,8 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
   const events = new EventEmitter();
   events.setMaxListeners(0);
   const store = createStore(dataDir);
-  let meeting = store.loadCurrent() || M.newMeeting(now());
+  let meeting = M.upgrade(store.loadCurrent() || M.newMeeting(now()));
+  let roster = store.loadRoster();
   let render = { status: 'idle', message: '', savedTo: null };
 
   // Phones may resend a tap after a Wi-Fi blip; each tap id counts once.
@@ -35,6 +46,7 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     const s = getSettings();
     return {
       meeting, totals: M.totals(meeting), render, congregation: s.congregation || '', theme: s.theme || 'light', appearance: appearanceOf(s),
+      roster, visitors: meeting.visitors, mode: roster.length ? 'names' : 'columns',
     };
   };
 
@@ -46,6 +58,12 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
   };
 
   const today = () => M.rollIfNewDay(meeting, now()).meeting;
+
+  // The names used by today's meeting: the list, then visitors added today under the list's visitor group.
+  const snapshot = () => {
+    const visitorGroup = (roster.find((p) => /visitor/i.test(p.group)) || { group: 'Visitors' }).group;
+    return [...roster, ...meeting.visitors.map((v) => ({ id: v.id, name: v.name, group: visitorGroup, size: 1 }))];
+  };
 
   const setRender = (patch) => {
     render = { ...render, ...patch };
@@ -86,11 +104,62 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
       return commit(M.setZoom(today(), value));
     },
 
-    // Locks the numbers, records them in history and starts the video.
+    // ---- Counting by name ----
+
+    getRoster: () => roster,
+
+    // A new list replaces the old one; today's marks no longer match it, so they are cleared.
+    importRoster(people) {
+      if (!Array.isArray(people) || !people.length) throw new M.MeetingError('BAD_LIST', 'The list has no names.');
+      roster = people.map((p, i) => ({ id: `p${i + 1}`, ...cleanPerson(p) }));
+      store.saveRoster(roster);
+      return commit(meeting.finalized ? meeting : { ...meeting, marks: {} });
+    },
+
+    addPerson(name, group) {
+      const next = roster.reduce((max, p) => Math.max(max, Number(p.id.slice(1)) || 0), 0) + 1;
+      const person = { id: `p${next}`, ...cleanPerson({ name, group }) };
+      roster = [...roster, person];
+      store.saveRoster(roster);
+      commit(meeting);
+      return person;
+    },
+
+    removePerson(id) {
+      roster = roster.filter((p) => p.id !== id);
+      store.saveRoster(roster);
+      return commit(meeting.finalized ? meeting : M.dropMarks(meeting, new Set(roster.map((p) => p.id))));
+    },
+
+    mark(id, where, n, tapId) {
+      if (tapId && seen.has(tapId)) return getState();
+      const m = today();
+      const person = roster.find((p) => p.id === id) || m.visitors.find((v) => v.id === id);
+      if (!person) throw new M.MeetingError('BAD_MARK', 'Unknown person.');
+      // A first mark counts the whole household; a later one keeps whatever the attendant set.
+      const count = n !== undefined ? n : (m.marks[id] ? undefined : person.size || 1);
+      const state = commit(M.setMark(m, id, where, count));
+      if (tapId) remember(tapId);
+      return state;
+    },
+
+    unnamed(delta, tapId) {
+      if (tapId && seen.has(tapId)) return getState();
+      const state = commit(M.bumpUnnamed(today(), delta));
+      if (tapId) remember(tapId);
+      return state;
+    },
+
+    addVisitor(name, where) {
+      const { meeting: m, id } = M.addVisitor(today(), name);
+      return commit(where ? M.setMark(m, id, where) : m);
+    },
+
+    // Locks the numbers, records them in history (with the names as they are today) and starts the video.
     finalize() {
       if (isRendering()) throw busy();
       commit(M.finalize(meeting, now()));
-      store.upsertHistory(meeting);
+      store.upsertHistory({ ...meeting, people: snapshot() });
       startVideo();
       return getState();
     },
