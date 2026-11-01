@@ -9,17 +9,16 @@ const http = require('node:http');
 const os = require('node:os');
 const path = require('node:path');
 const QRCode = require('qrcode');
-const { appearanceOf } = require('./settings');
+const { appearanceOf, APPEARANCES } = require('./settings');
+const { readListFile, TEMPLATE_CSV, MAX_LIST_BYTES, RosterError, BAD_FILE } = require('./roster');
+const { buildOverseerWorkbook } = require('./workbook');
 
-const PAGES = {
-  '/count': 'count.html',
-  '/dock': 'dock.html',
-  '/zoom': 'dock.html',
-  '/slide': 'slide.html',
-  '/history': 'history.html',
-};
-const SCRIPTS = ['/count.js', '/dock.js', '/slide.js', '/history.js'];
-const STATIC_DIRS = ['steward', 'shared'];
+// One link: the app page serves every view; the OBS dock opens it at /desk.
+const PAGES = { '/': 'app.html', '/desk': 'app.html', '/slide': 'slide.html' };
+// v1 addresses (saved on phones, set in OBS) keep working.
+const REDIRECTS = { '/count': '/', '/zoom': '/', '/dock': '/desk', '/history': '/#/history' };
+const SCRIPTS = ['/slide.js'];
+const STATIC_DIRS = ['steward', 'shared', 'app'];
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -28,7 +27,17 @@ const TYPES = {
   '.png': 'image/png',
   '.woff2': 'font/woff2',
 };
-const STATUS = { BAD_LANE: 400, BAD_DELTA: 400, BAD_ZOOM: 400, BAD_TYPE: 400, BAD_BODY: 400, NOT_FINAL: 409, LOCKED: 409, BUSY: 409 };
+const STATUS = {
+  BAD_LANE: 400, BAD_DELTA: 400, BAD_ZOOM: 400, BAD_TYPE: 400, BAD_BODY: 400, BAD_MARK: 400, BAD_NAME: 400, BAD_LIST: 400, BAD_FILE: 400,
+  NOT_FINAL: 409, LOCKED: 409, BUSY: 409,
+};
+// Only the AV computer itself may change the meeting's state, the list or the settings.
+const AV_ONLY = new Set([
+  '/api/finalize', '/api/unlock', '/api/new', '/api/type', '/api/rerender',
+  '/api/roster/preview', '/api/roster/add', '/api/roster/remove', '/api/roster/template.csv',
+  '/api/settings', '/api/pin/new', '/api/host/choose-folder', '/api/host/open-folder', '/api/host/check-update', '/api/host/install-update',
+  '/api/connect',
+]);
 const MAX_BODY = 10 * 1024;
 const PIN_TRIES = 5;
 const PIN_WINDOW_MS = 60 * 1000;
@@ -60,10 +69,9 @@ function buildUrls({ port, ip, hostname }) {
   const suffix = port === 80 ? '' : `:${port}`;
   const host = ip || hostname || 'localhost';
   return {
-    count: `http://${host}${suffix}/count`,
-    zoom: `http://${host}${suffix}/zoom`,
-    dock: `http://localhost${suffix}/dock`,
-    named: hostname ? `http://${hostname}${suffix}/count` : null,
+    count: `http://${host}${suffix}/`,
+    dock: `http://localhost${suffix}/desk`,
+    named: hostname ? `http://${hostname}${suffix}/` : null,
   };
 }
 
@@ -97,14 +105,48 @@ function readBody(req) {
   });
 }
 
-function createServer(service, { settings, webDir, mdns = true }) {
+// A file upload (a publisher list). Too big a file is read to the end and refused, so the answer still arrives.
+function readRaw(req, limit) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on('data', (c) => {
+      size += c.length;
+      if (size <= limit) chunks.push(c);
+    });
+    req.on('end', () => (size > limit ? reject(new RosterError('BAD_FILE', BAD_FILE)) : resolve(Buffer.concat(chunks))));
+    req.on('error', reject);
+  });
+}
+
+const SETTING_KEYS = {
+  congregation: (v) => (typeof v === 'string' ? v.trim().slice(0, 80) : undefined),
+  theme: (v) => (['light', 'dark'].includes(v) ? v : undefined),
+  appearance: (v) => (APPEARANCES.includes(v) ? v : undefined),
+  openAtLogin: (v) => (typeof v === 'boolean' ? v : undefined),
+  autoUpdate: (v) => (typeof v === 'boolean' ? v : undefined),
+};
+
+function cleanSettings(body) {
+  const out = {};
+  for (const [k, check] of Object.entries(SETTING_KEYS)) {
+    const v = check(body[k]);
+    if (v !== undefined) out[k] = v;
+  }
+  return out;
+}
+
+// host: what the desktop app does natively (settings side effects, folder picker, updates). trustLoopback: false
+// makes every request look like a phone's, for tests.
+function createServer(service, { settings, webDir, mdns = true, host = null, trustLoopback = true }) {
   const cfg = () => (typeof settings === 'function' ? settings() : settings);
   const failures = new Map(); // ip -> timestamps of wrong PINs
   const streams = new Set();
   let port = null;
   let announcer = null;
 
-  const pinRequired = (req) => !(cfg().localNoPin && isLoopback(req.socket.remoteAddress));
+  const isLocal = (req) => trustLoopback && isLoopback(req.socket.remoteAddress);
+  const pinRequired = (req) => !(cfg().localNoPin && isLocal(req));
 
   function authorised(req, res) {
     if (!pinRequired(req)) return true;
@@ -147,22 +189,52 @@ function createServer(service, { settings, webDir, mdns = true }) {
     req.on('close', () => { stream.close(); streams.delete(stream); });
   }
 
+  const tapIdOf = (b) => (typeof b.tapId === 'string' ? b.tapId.slice(0, 64) : undefined);
+
+  // What the AV computer's Settings view shows.
+  async function settingsInfo() {
+    const links = urls();
+    return {
+      settings: cfg(),
+      links,
+      qr: await QRCode.toDataURL(links.count, { margin: 1, width: 320 }),
+      version: host.version,
+      update: host.updateStatus(),
+    };
+  }
+
   const actions = {
-    '/api/tap': (b) => service.tap(b.lane, b.delta, typeof b.tapId === 'string' ? b.tapId.slice(0, 64) : undefined),
+    '/api/tap': (b) => service.tap(b.lane, b.delta, tapIdOf(b)),
     '/api/zoom': (b) => service.setZoom(b.value),
+    '/api/mark': (b) => service.mark(b.id, b.where === undefined ? null : b.where, b.n, tapIdOf(b)),
+    '/api/unnamed': (b) => service.unnamed(b.delta, tapIdOf(b)),
+    '/api/visitor': (b) => service.addVisitor(b.name, b.where || null),
     '/api/finalize': () => service.finalize(),
     '/api/unlock': () => service.unlock(),
     '/api/new': (b) => service.newMeeting(b.type),
     '/api/type': (b) => service.setType(b.type),
     '/api/rerender': () => service.rerender(),
+    '/api/roster': (b) => service.importRoster(b.people),
+    '/api/roster/add': (b) => service.addPerson(b.name, b.group),
+    '/api/roster/remove': (b) => service.removePerson(b.id),
+  };
+
+  // Settings and native actions need the desktop app (host); a bare server has none.
+  const hostActions = {
+    '/api/settings': (b) => { host.saveSettings(cleanSettings(b)); service.settingsChanged(); },
+    '/api/pin/new': () => host.newPin(),
+    '/api/host/choose-folder': () => host.chooseFolder(),
+    '/api/host/open-folder': (b) => host.openFolder(b.which === 'm3' ? 'm3' : 'videos'),
+    '/api/host/check-update': () => host.checkUpdate(),
+    '/api/host/install-update': () => ({ ok: host.installUpdate() }),
   };
 
   async function handle(req, res) {
     const u = new URL(req.url, 'http://x');
     const p = u.pathname;
 
-    if (req.method === 'GET' && p === '/') {
-      res.writeHead(302, { Location: '/count' });
+    if (req.method === 'GET' && REDIRECTS[p]) {
+      res.writeHead(302, { Location: REDIRECTS[p] });
       return res.end();
     }
     if (req.method === 'GET' && PAGES[p]) return serveFile(res, PAGES[p]);
@@ -171,11 +243,14 @@ function createServer(service, { settings, webDir, mdns = true }) {
     if (req.method === 'GET' && STATIC_DIRS.includes(dir)) return serveFile(res, p.slice(1));
 
     if (req.method === 'GET' && p === '/api/whoami') {
-      return send(res, 200, { pinRequired: pinRequired(req), local: isLoopback(req.socket.remoteAddress) });
+      return send(res, 200, { pinRequired: pinRequired(req), local: isLocal(req) });
     }
     // Colours only, so pages can look right before the PIN is entered.
     if (req.method === 'GET' && p === '/api/appearance') return send(res, 200, { appearance: appearanceOf(cfg()) });
     if (!p.startsWith('/api/')) return send(res, 404, { error: 'Not found' });
+    if ((AV_ONLY.has(p) || (req.method === 'POST' && p === '/api/roster')) && !isLocal(req)) {
+      return send(res, 403, { error: 'Only on the AV computer.' });
+    }
     if (!authorised(req, res)) return;
 
     if (req.method === 'GET') {
@@ -191,17 +266,45 @@ function createServer(service, { settings, webDir, mdns = true }) {
         return res.end(service.store.historyCsv());
       }
       if (p === '/api/connect') {
-        if (!isLoopback(req.socket.remoteAddress)) return send(res, 403, { error: 'Only on the AV computer.' });
         const links = urls();
         const qr = await QRCode.toDataURL(links.count, { margin: 1, width: 320 });
         return send(res, 200, { ...links, pin: cfg().pin, qr });
       }
+      if (p === '/api/roster') return send(res, 200, service.getRoster());
+      if (p === '/api/roster/template.csv') {
+        res.writeHead(200, {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': 'attachment; filename="publisher-list-template.csv"',
+          'Cache-Control': 'no-store',
+        });
+        return res.end(TEMPLATE_CSV);
+      }
+      if (p === '/api/history.xlsx') {
+        const xlsx = await buildOverseerWorkbook({ history: service.store.listHistory(), congregation: cfg().congregation });
+        res.writeHead(200, {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': 'attachment; filename="Attendance for the circuit overseer.xlsx"',
+          'Cache-Control': 'no-store',
+        });
+        return res.end(xlsx);
+      }
+      if (p === '/api/settings') return host ? send(res, 200, await settingsInfo()) : send(res, 404, { error: 'Not found' });
       return send(res, 404, { error: 'Not found' });
     }
 
+    if (req.method === 'POST' && p === '/api/roster/preview') {
+      const buf = await readRaw(req, MAX_LIST_BYTES);
+      return send(res, 200, await readListFile(buf, String(req.headers['x-filename'] || '')));
+    }
     if (req.method === 'POST' && actions[p]) {
       const body = await readBody(req);
       return send(res, 200, actions[p](body));
+    }
+    if (req.method === 'POST' && hostActions[p]) {
+      if (!host) return send(res, 404, { error: 'Not found' });
+      const body = await readBody(req);
+      const result = await hostActions[p](body);
+      return send(res, 200, p === '/api/host/install-update' ? result : await settingsInfo());
     }
     return send(res, 404, { error: 'Not found' });
   }

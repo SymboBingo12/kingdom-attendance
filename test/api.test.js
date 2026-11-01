@@ -151,18 +151,21 @@ test('connect info (PIN and QR) is only given to the AV PC', async (t) => {
   const info = await (await s.call('/api/connect')).json();
   assert.equal(info.pin, s.settings.pin);
   assert.match(info.qr, /^data:image\/png;base64,/);
-  assert.match(info.count, /\/count$/);
+  assert.match(info.count, /:\d+\/$/);
 });
 
-test('pages, their scripts and Steward files are served; other files are not', async (t) => {
+test('the one-link page, its scripts and Steward files are served; other files are not', async (t) => {
   const s = await start();
   t.after(() => s.server.close());
-  const page = await fetch(`${s.base}/count`);
-  assert.equal(page.status, 200);
-  assert.match(page.headers.get('content-type'), /text\/html/);
-  const js = await fetch(`${s.base}/count.js`);
+  for (const p of ['/', '/desk']) {
+    const page = await fetch(`${s.base}${p}`);
+    assert.equal(page.status, 200, p);
+    assert.match(page.headers.get('content-type'), /text\/html/);
+  }
+  const js = await fetch(`${s.base}/app/main.js`);
   assert.equal(js.status, 200);
   assert.match(js.headers.get('content-type'), /javascript/);
+  assert.equal((await fetch(`${s.base}/slide`)).status, 200);
   assert.equal((await fetch(`${s.base}/steward/tokens.css`)).status, 200);
   assert.equal((await fetch(`${s.base}/shared/api.js`)).status, 200);
   assert.equal((await fetch(`${s.base}/steward/..%2f..%2fpackage.json`)).status, 404);

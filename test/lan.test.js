@@ -22,17 +22,16 @@ test('with no usable network there is no IP link', () => {
 
 // Many Android phones can't open ".local" names at all, so the QR code and the links people
 // are given use the IP address; attendance.local is only offered as a short name.
-test('the counting and Zoom links use the IP address, with attendance.local as the short name', () => {
+test('the one link uses the IP address, with attendance.local as the short name', () => {
   const u = buildUrls({ port: 4590, ip: '192.168.1.23', hostname: 'attendance.local' });
-  assert.equal(u.count, 'http://192.168.1.23:4590/count');
-  assert.equal(u.zoom, 'http://192.168.1.23:4590/zoom');
-  assert.equal(u.named, 'http://attendance.local:4590/count');
-  assert.equal(u.dock, 'http://localhost:4590/dock');
+  assert.equal(u.count, 'http://192.168.1.23:4590/');
+  assert.equal(u.named, 'http://attendance.local:4590/');
+  assert.equal(u.dock, 'http://localhost:4590/desk');
 });
 
 test('with no network the links fall back to the short name, then to this computer', () => {
-  assert.equal(buildUrls({ port: 4590, ip: null, hostname: 'attendance.local' }).count, 'http://attendance.local:4590/count');
-  assert.equal(buildUrls({ port: 80, ip: null, hostname: null }).count, 'http://localhost/count');
+  assert.equal(buildUrls({ port: 4590, ip: null, hostname: 'attendance.local' }).count, 'http://attendance.local:4590/');
+  assert.equal(buildUrls({ port: 80, ip: null, hostname: null }).count, 'http://localhost/');
 });
 
 // The name must point at the address the PC has now, never an old network's (a hotspot used
