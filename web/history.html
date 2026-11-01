@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>History · Kingdom Attendance</title>
+<link rel="stylesheet" href="/steward/fonts.css">
+<link rel="stylesheet" href="/steward/tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--page); color: var(--text); font-family: var(--font); font-size: var(--text-md); }
+  main { max-width: 860px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 16px; }
+  .head { display: flex; justify-content: space-between; align-items: end; gap: 12px; flex-wrap: wrap; }
+  h1 { margin: 0; font-size: var(--text-xl); }
+  .head p { margin: 4px 0 0; color: var(--text-dim); font-size: var(--text-sm); }
+  .csv { display: inline-flex; align-items: center; min-height: var(--tap-min); padding: 0 16px; border-radius: var(--radius-sm); background: var(--brand); color: var(--on-brand); font-weight: var(--weight-bold); text-decoration: none; font-size: var(--text-sm); }
+  .wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-md); }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  th, td { padding: 10px 14px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+  th { font-size: var(--text-xs); letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); background: var(--surface); }
+  tr:last-child td { border-bottom: 0; }
+  td.total { font-weight: var(--weight-bold); }
+  .empty { color: var(--text-dim); padding: 24px; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <div><h1>Attendance history</h1><p>Every finalized meeting, newest first. Numbers only.</p></div>
+    <a class="csv" id="csv" href="/api/history.csv">Download CSV</a>
+  </div>
+  <div class="wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Meeting</th><th>Kingdom Hall</th><th>Zoom</th><th>Total</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</main>
+<script src="/shared/api.js"></script>
+<script src="/history.js"></script>
+</body>
+</html>

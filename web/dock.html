@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Attendance</title>
+<link rel="stylesheet" href="/steward/fonts.css">
+<link rel="stylesheet" href="/steward/tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body { background: var(--page); color: var(--text); font-family: var(--font); font-size: var(--text-sm); -webkit-tap-highlight-color: transparent; }
+  button, input { font: inherit; color: inherit; }
+  button { border: 0; background: none; cursor: pointer; touch-action: manipulation; }
+  :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+  .dock { display: grid; gap: 12px; padding: 12px max(12px, env(safe-area-inset-right, 0px)) 16px max(12px, env(safe-area-inset-left, 0px)); max-width: 520px; margin: 0 auto; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .top h1 { margin: 0; font-size: var(--text-md); font-weight: var(--weight-bold); }
+  .top small { display: block; color: var(--text-dim); font-weight: var(--weight-regular); font-size: var(--text-xs); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface); }
+  .seg button { min-height: 34px; padding: 0 12px; color: var(--text-dim); font-size: var(--text-xs); font-weight: var(--weight-medium); }
+  .seg button[aria-pressed="true"] { background: var(--brand); color: var(--on-brand); }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px; display: grid; gap: 10px; }
+  .row { display: grid; grid-template-columns: 56px 1fr auto; align-items: baseline; gap: 8px; }
+  .row .k { font-size: var(--text-xs); letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim); font-weight: var(--weight-bold); }
+  .row .parts { color: var(--text-dim); font-variant-numeric: tabular-nums; min-width: 0; }
+  .row .v { font-size: var(--text-lg); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums; text-align: right; }
+  .row.total { border-top: 1px solid var(--line); padding-top: 10px; }
+  .row.total .k { color: var(--brand); }
+  .row.total .v { font-size: 34px; line-height: 1; }
+  .zoomin { display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+  .zoomin input { width: 92px; min-height: 40px; text-align: right; font-size: var(--text-lg); font-weight: var(--weight-bold); font-variant-numeric: tabular-nums;
+    padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--page); }
+  .zoomin input:disabled { opacity: .6; }
+  .msg { font-size: var(--text-xs); min-height: 1.3em; text-align: right; color: var(--text-dim); }
+  .msg.bad { color: var(--danger-text); }
+  .msg.ok { color: var(--ok-text); }
+
+  .btn { min-height: var(--tap-main); border-radius: var(--radius-sm); font-weight: var(--weight-bold); font-size: var(--text-md); width: 100%;
+    border: 1px solid var(--line); background: var(--surface); transition: transform 120ms ease-out; }
+  .btn.primary { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btns { display: grid; gap: 8px; }
+
+  .status { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--surface); }
+  .status::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; background: var(--brand); }
+  .status[data-s="rendering"]::before { animation: pulse 1s ease-in-out infinite alternate; }
+  .status[data-s="ready"] { border-color: var(--ok); }
+  .status[data-s="ready"]::before { background: var(--ok); }
+  .status[data-s="error"] { border-color: var(--danger); }
+  .status[data-s="error"]::before { background: var(--danger); }
+  .status .where { display: block; color: var(--text-dim); font-size: var(--text-xs); word-break: break-all; margin-top: 2px; }
+  @keyframes pulse { to { opacity: .3; } }
+
+  .links { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .links a, .links button { color: var(--brand-strong); font-weight: var(--weight-medium); text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; }
+  .links button.armed { color: var(--danger-text); }
+  .connect { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center; }
+  .connect img { width: 120px; height: 120px; border-radius: var(--radius-sm); background: #fff; }
+  .connect .pin { font-size: 28px; font-weight: var(--weight-bold); letter-spacing: .2em; font-variant-numeric: tabular-nums; }
+  .connect .url { color: var(--text-dim); font-size: var(--text-xs); word-break: break-all; -webkit-user-select: text; user-select: text; }
+  .banner { padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--warn); background: color-mix(in srgb, var(--warn) 12%, var(--surface)); }
+
+  /* /zoom: just the Zoom number, for the host's phone */
+  body.zoom-only .hall-only { display: none !important; }
+  body.zoom-only .dock { padding-top: calc(env(safe-area-inset-top, 0px) + 16px); }
+  body.zoom-only .zoomin input { width: 140px; min-height: 56px; font-size: 28px; }
+
+  .pinbox { position: fixed; inset: 0; background: var(--page); display: grid; place-items: center; padding: 24px; }
+  .pinbox form { width: min(320px, 100%); display: grid; gap: 12px; text-align: center; }
+  .pinbox input { font-size: 30px; letter-spacing: .4em; text-align: center; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--surface); }
+  .pinbox .err { color: var(--danger-text); min-height: 1.4em; }
+  @media (prefers-reduced-motion: reduce) { .btn { transition: none; } .status::before { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="dock">
+  <div class="top">
+    <h1>Attendance<small id="date">&nbsp;</small></h1>
+    <span class="seg hall-only" role="group" aria-label="Meeting">
+      <button type="button" data-type="midweek" aria-pressed="false">Midweek</button>
+      <button type="button" data-type="weekend" aria-pressed="false">Weekend</button>
+    </span>
+  </div>
+
+  <div class="banner" id="offline" hidden>Reconnecting to the attendance app…</div>
+
+  <section class="card" aria-label="Count">
+    <div class="row hall-only"><span class="k">Hall</span><span class="parts" id="parts">Left 0 · Center 0 · Right 0</span><span class="v" id="hall">0</span></div>
+    <div class="row">
+      <label class="k" for="zoom">Zoom</label><span></span>
+      <span class="zoomin"><input id="zoom" inputmode="numeric" autocomplete="off" aria-describedby="zoomMsg"></span>
+    </div>
+    <div class="msg" id="zoomMsg" role="status"></div>
+    <div class="row total"><span class="k">Total</span><span></span><span class="v" id="total">0</span></div>
+  </section>
+
+  <div class="btns hall-only">
+    <button class="btn primary" id="finalize">Finalize</button>
+    <button class="btn" id="rerender" hidden>Make video again</button>
+  </div>
+
+  <div class="status hall-only" id="status" hidden role="status"><span><span id="statusText"></span><span class="where" id="statusWhere"></span></span></div>
+
+  <section class="card hall-only" id="connect" hidden aria-label="Connect a phone">
+    <div class="connect">
+      <img id="qr" alt="QR code for the counting page">
+      <div><div>PIN</div><div class="pin" id="pin">····</div><div class="url" id="url"></div></div>
+    </div>
+  </section>
+
+  <nav class="links hall-only">
+    <button type="button" id="toggleConnect">Connect a phone</button>
+    <a href="/history" target="_blank" rel="noopener">History</a>
+    <button type="button" id="newMeeting">New meeting</button>
+  </nav>
+</div>
+
+<div class="pinbox" id="pinScreen" hidden>
+  <form id="pinForm" autocomplete="off">
+    <strong>Enter the PIN</strong>
+    <span>It's shown on the AV computer.</span>
+    <input id="pinInput" inputmode="numeric" maxlength="4" aria-label="PIN" required>
+    <div class="err" id="pinErr" role="alert"></div>
+    <button class="btn primary" type="submit">Continue</button>
+  </form>
+</div>
+
+<script src="/shared/api.js"></script>
+<script src="/dock.js"></script>
+</body>
+</html>
