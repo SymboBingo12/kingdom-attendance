@@ -98,7 +98,7 @@
       const c = await api.get('/api/connect');
       $('qr').src = c.qr;
       $('pin').textContent = c.pin;
-      $('url').textContent = c.ip ? `${c.count}\nor ${c.ip}` : c.count;
+      $('url').textContent = c.named && c.named !== c.count ? `${c.count}\nor ${c.named}` : c.count;
       box.hidden = false;
     } catch (err) {
       setMsg(err.status === 403 ? 'The QR code and PIN are shown on the AV computer only.' : err.message, 'bad');

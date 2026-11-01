@@ -44,7 +44,7 @@ The first tap on a new day starts a fresh count, and every finalized meeting is 
 ## Links, ports and privacy
 
 - The app announces itself as `attendance.local` on port **4590** (or 4591 if that's taken). It uses neither Stage Timer's port 80/4580 nor Stage Countdown's 4578.
-  If `attendance.local` doesn't open on a phone (some Wi-Fi blocks it), use the IP link shown in the app.
+  The QR code and links use the PC's IP address, because many Android phones can't open `.local` names. The address can change from week to week, so scan the QR code again if a saved link stops working.
 - **Numbers only.** No names or personal details are stored. Nothing leaves the hall network: the app makes no internet requests.
 - Phones need the 4-digit PIN; the AV computer itself doesn't. Five wrong PINs in a minute block that phone for a minute.
 

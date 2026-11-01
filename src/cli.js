@@ -18,7 +18,8 @@ const server = createServer(service, { settings: getSettings, webDir: path.join(
 server.listen().then(() => {
   const u = server.urls();
   console.log(`Kingdom Attendance is running (data: ${dataDir})`);
-  console.log(`  Count:  ${u.count}${u.ip ? `  (or ${u.ip})` : ''}`);
+  console.log(`  Count:  ${u.count}${u.named ? `  (or ${u.named})` : ''}`);
+  console.log(`  Zoom:   ${u.zoom}`);
   console.log(`  Dock:   ${u.dock}`);
   console.log(`  PIN:    ${getSettings().pin}`);
 });

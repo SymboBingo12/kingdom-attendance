@@ -53,6 +53,19 @@ function pickLanAddress(interfaces) {
 
 const lanAddress = () => pickLanAddress(os.networkInterfaces());
 
+// The links people are given. They use the IP address because many Android phones can't open
+// ".local" names; the short name is offered as well for phones and PCs that can.
+function buildUrls({ port, ip, hostname }) {
+  const suffix = port === 80 ? '' : `:${port}`;
+  const host = ip || hostname || 'localhost';
+  return {
+    count: `http://${host}${suffix}/count`,
+    zoom: `http://${host}${suffix}/zoom`,
+    dock: `http://localhost${suffix}/dock`,
+    named: hostname ? `http://${hostname}${suffix}/count` : null,
+  };
+}
+
 function send(res, status, body, headers = {}) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers });
   res.end(JSON.stringify(body));
@@ -110,17 +123,7 @@ function createServer(service, { settings, webDir, mdns = true }) {
     return false;
   }
 
-  function urls() {
-    const suffix = port === 80 ? '' : `:${port}`;
-    const ip = lanAddress();
-    const host = announcer ? announcer.hostname : ip || 'localhost';
-    return {
-      count: `http://${host}${suffix}/count`,
-      zoom: `http://${host}${suffix}/zoom`,
-      dock: `http://localhost${suffix}/dock`,
-      ip: ip ? `http://${ip}${suffix}/count` : null,
-    };
-  }
+  const urls = () => buildUrls({ port, ip: lanAddress(), hostname: announcer ? announcer.hostname : null });
 
   function serveFile(res, file) {
     const resolved = path.resolve(webDir, file);
@@ -232,7 +235,7 @@ function createServer(service, { settings, webDir, mdns = true }) {
       }
       if (mdns) {
         const { advertise } = require('./mdns');
-        announcer = advertise({ hostname: cfg().hostname, port, onError: (e) => console.warn('[attendance] mDNS:', e.message) });
+        announcer = advertise({ hostname: cfg().hostname, port, getAddress: lanAddress, onError: (e) => console.warn('[attendance] mDNS:', e.message) });
       }
       return { port };
     },
@@ -245,4 +248,4 @@ function createServer(service, { settings, webDir, mdns = true }) {
   };
 }
 
-module.exports = { createServer, isLoopback, pickLanAddress };
+module.exports = { createServer, isLoopback, pickLanAddress, buildUrls };

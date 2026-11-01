@@ -11,7 +11,7 @@
     $('qr').src = info.qr;
     $('pin').textContent = info.pin;
     $('count').textContent = info.count;
-    $('ip').textContent = info.ip || 'No network found';
+    $('named').textContent = info.named || 'Not available';
     $('zoom').textContent = info.zoom;
     $('dock').textContent = info.dock;
     if (document.activeElement !== $('cong')) $('cong').value = s.congregation || '';
