@@ -43,6 +43,7 @@
   header .look { flex: none; display: grid; gap: 6px; justify-items: start; }
   header .look .k { color: var(--text-dim); }
   .note { font-size: var(--text-xs); }
+  .row > .actions { flex: none; display: flex; gap: 8px; }
   .switch { width: 44px; height: 26px; border-radius: 99px; background: var(--line); position: relative; border: 0; flex: none; }
   .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .15s ease-out; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
   .switch[aria-checked="true"] { background: var(--brand); }
@@ -121,6 +122,17 @@
     <div class="row">
       <div><h2 id="h-start">Start with Windows</h2><p class="help">Opens hidden in the tray when the computer starts.</p></div>
       <button class="switch" role="switch" id="login" aria-checked="false" aria-labelledby="h-start"></button>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="h-upd">
+    <div class="row">
+      <div><h2 id="h-upd">Updates</h2><p class="help"><b id="ver">Kingdom Attendance</b> · <span id="updText"></span></p></div>
+      <div class="actions"><button class="btn" id="checkUpd">Check now</button><button class="btn primary" id="installUpd" hidden>Restart and update</button></div>
+    </div>
+    <div class="row">
+      <div><b>Update automatically</b><p class="help">New versions download in the background and are installed when the app is quit, or when you press Restart and update. It never restarts by itself.</p></div>
+      <button class="switch" role="switch" id="autoUpd" aria-checked="false" aria-label="Update automatically"></button>
     </div>
   </section>
 

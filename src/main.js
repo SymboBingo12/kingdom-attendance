@@ -11,6 +11,7 @@ const { createServer } = require('./core/server');
 const { loadSettings, saveSettings, newPin, APPEARANCES, appearanceOf } = require('./core/settings');
 const { deliverVideo } = require('./core/m3');
 const { renderAttendance } = require('./render/recorder');
+const { createUpdates } = require('./core/updates');
 
 // Developer switches: ATT_DATA_DIR uses a scratch data folder; ATT_SHOT saves a screenshot of the window.
 if (process.env.ATT_DATA_DIR) app.setPath('userData', path.resolve(process.env.ATT_DATA_DIR));
@@ -22,6 +23,7 @@ if (!app.requestSingleInstanceLock()) {
   let tray = null;
   let server = null;
   let service = null;
+  let updates = null;
   let quitting = false;
   const ICON = path.join(__dirname, '..', 'assets', 'icon.png');
   const dataDir = () => app.getPath('userData');
@@ -106,12 +108,28 @@ if (!app.requestSingleInstanceLock()) {
 
   async function info() {
     const u = server.urls();
-    return { ...u, port: server.port, pin: getSettings().pin, qr: await QRCode.toDataURL(u.count, { margin: 1, width: 360 }), settings: getSettings() };
+    return {
+      ...u, port: server.port, pin: getSettings().pin, qr: await QRCode.toDataURL(u.count, { margin: 1, width: 360 }), settings: getSettings(),
+      version: app.getVersion(), update: updates.status(),
+    };
+  }
+
+  // New versions come from the installer's GitHub releases; a developer run has nothing to update.
+  function setupUpdates() {
+    const supported = app.isPackaged && process.platform === 'win32';
+    updates = createUpdates({
+      updater: supported ? require('electron-updater').autoUpdater : null,
+      reason: 'Updates only work in the installed app.',
+      isEnabled: () => getSettings().autoUpdate,
+      isBusy: () => service.getState().render.status === 'rendering',
+    });
+    updates.on('change', (status) => { if (win) win.webContents.send('update', status); });
+    updates.start();
   }
 
   ipcMain.handle('info', info);
   ipcMain.handle('save', (_e, patch) => {
-    const allowed = ['congregation', 'm3Folder', 'theme', 'appearance', 'openAtLogin'];
+    const allowed = ['congregation', 'm3Folder', 'theme', 'appearance', 'openAtLogin', 'autoUpdate'];
     const clean = Object.fromEntries(Object.entries(patch || {}).filter(([k]) => allowed.includes(k)));
     if (clean.theme && !['light', 'dark'].includes(clean.theme)) delete clean.theme;
     if ('appearance' in clean && !APPEARANCES.includes(clean.appearance)) delete clean.appearance;
@@ -128,6 +146,8 @@ if (!app.requestSingleInstanceLock()) {
     saveSettings(dataDir(), { m3Folder: r.filePaths[0] });
     return info();
   });
+  ipcMain.handle('check-update', async () => { await updates.check(); return info(); });
+  ipcMain.handle('install-update', () => updates.install()); // false while the video is being made
   ipcMain.handle('copy', (_e, text) => { clipboard.writeText(String(text)); return true; });
   ipcMain.handle('open', (_e, url) => {
     if (/^http:\/\/(localhost|127\.0\.0\.1|attendance\.local|\d+\.\d+\.\d+\.\d+)(:\d+)?\//.test(url)) shell.openExternal(url);
@@ -147,7 +167,8 @@ if (!app.requestSingleInstanceLock()) {
     e.preventDefault();
     const s = server;
     server = null;
-    s.close().finally(() => app.exit(0));
+    // quit again rather than app.exit(), so a downloaded update is installed on the way out
+    s.close().finally(() => app.quit());
   });
 
   app.whenReady().then(async () => {
@@ -164,6 +185,7 @@ if (!app.requestSingleInstanceLock()) {
     }
     applyLoginItem(getSettings());
     applyAppearance(getSettings());
+    setupUpdates();
     buildTray();
     if (!process.argv.includes('--hidden')) showWindow();
   });

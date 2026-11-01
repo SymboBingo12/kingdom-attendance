@@ -63,6 +63,13 @@ A still image of the last frame is saved next to it (tray → *Open Kingdom Atte
 
 Run [docs/hall-test-checklist.md](docs/hall-test-checklist.md) on the real AV computer.
 
+## Updates
+
+The installed app updates itself from this project's GitHub releases (`SymboBingo12/kingdom-attendance`).
+It checks 15 seconds after it starts and then every 6 hours. A new version downloads in the background and is installed when the app is quit, or when someone presses **Restart and update** in the window. It never restarts by itself, and it won't restart while the video is being made. **Update automatically** can be turned off in the window.
+
+To publish a new version: raise `version` in `package.json`, then run `npm run dist -- --publish always` with a `GH_TOKEN` that can write to the repository. Phones need nothing: they load the pages from the AV computer.
+
 ## Build from source
 
 Requires Node.js 22 or later.

@@ -21,6 +21,24 @@
     for (const b of document.querySelectorAll('[data-theme]')) b.setAttribute('aria-pressed', String(b.dataset.theme === (s.theme || 'light')));
     for (const b of document.querySelectorAll('[data-appearance]')) b.setAttribute('aria-pressed', String(b.dataset.appearance === (s.appearance || 'light')));
     $('login').setAttribute('aria-checked', String(!!s.openAtLogin));
+    $('autoUpd').setAttribute('aria-checked', String(!!s.autoUpdate));
+    $('ver').textContent = `Kingdom Attendance ${info.version}`;
+    showUpdate(info.update);
+  }
+
+  const UPDATE_TEXT = {
+    unsupported: (u) => u.message,
+    idle: () => 'Not checked yet.',
+    checking: () => 'Checking for a new version…',
+    current: () => 'Up to date.',
+    downloading: (u) => `Downloading version ${u.version}… ${u.percent}%`,
+    ready: (u) => `Version ${u.version} is ready. It installs when the app is quit, or press Restart and update.`,
+    error: (u) => `Couldn't check for updates: ${u.message}`,
+  };
+  function showUpdate(u) {
+    $('updText').textContent = (UPDATE_TEXT[u.state] || UPDATE_TEXT.idle)(u);
+    $('installUpd').hidden = u.state !== 'ready';
+    $('checkUpd').disabled = ['unsupported', 'checking', 'downloading', 'ready'].includes(u.state);
   }
 
   let savedTimer = null;
@@ -48,6 +66,12 @@
   $('openSlides').addEventListener('click', () => A.openFolder('slides'));
   $('newPin').addEventListener('click', async () => { show(await A.newPin()); saved('New PIN made. Phones need the new PIN.'); });
   $('login').addEventListener('click', () => save({ openAtLogin: $('login').getAttribute('aria-checked') !== 'true' }));
+  $('autoUpd').addEventListener('click', () => save({ autoUpdate: $('autoUpd').getAttribute('aria-checked') !== 'true' }));
+  $('checkUpd').addEventListener('click', async () => show(await A.checkUpdate()));
+  $('installUpd').addEventListener('click', async () => {
+    if (!(await A.installUpdate())) saved('Wait until the video is finished, then try again.');
+  });
+  A.onUpdate(showUpdate);
 
   A.info().then(show);
   window.addEventListener('focus', () => A.info().then(show));

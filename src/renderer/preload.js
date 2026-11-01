@@ -10,4 +10,7 @@ contextBridge.exposeInMainWorld('attendance', {
   copy: (text) => ipcRenderer.invoke('copy', text),
   open: (url) => ipcRenderer.invoke('open', url),
   openFolder: (which) => ipcRenderer.invoke('open-folder', which),
+  checkUpdate: () => ipcRenderer.invoke('check-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  onUpdate: (fn) => ipcRenderer.on('update', (_e, status) => fn(status)),
 });

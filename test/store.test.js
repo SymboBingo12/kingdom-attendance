@@ -70,6 +70,7 @@ test('settings start from defaults and keep their PIN', () => {
   assert.equal(s.localNoPin, true);
   assert.equal(s.theme, 'light');
   assert.equal(s.appearance, 'light');
+  assert.equal(s.autoUpdate, true);
   assert.equal(s.m3Folder, '');
   assert.match(s.pin, /^\d{4}$/);
   assert.equal(loadSettings(dir).pin, s.pin);
