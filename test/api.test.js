@@ -173,14 +173,14 @@ test('pages, their scripts and Steward files are served; other files are not', a
 test('the appearance choice reaches every page, before the PIN and live afterwards', async (t) => {
   const s = await start({ localNoPin: false });
   t.after(() => s.server.close());
-  assert.deepEqual(await (await s.call('/api/appearance')).json(), { appearance: 'auto' });
+  assert.deepEqual(await (await s.call('/api/appearance')).json(), { appearance: 'light' });
   s.settings.appearance = 'dark';
   assert.deepEqual(await (await s.call('/api/appearance')).json(), { appearance: 'dark' });
   const state = await (await s.call('/api/state', undefined, { 'x-pin': s.settings.pin })).json();
   assert.equal(state.appearance, 'dark');
   assert.equal(state.theme, 'light');
   s.settings.appearance = 'purple';
-  assert.deepEqual(await (await s.call('/api/appearance')).json(), { appearance: 'auto' });
+  assert.deepEqual(await (await s.call('/api/appearance')).json(), { appearance: 'light' });
 });
 
 test('meeting type can be overridden and bad values are refused', async (t) => {

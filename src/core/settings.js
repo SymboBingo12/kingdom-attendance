@@ -12,12 +12,12 @@ const DEFAULTS = {
   congregation: '',
   m3Folder: '',
   theme: 'light', // the video's colours
-  appearance: 'auto', // the app's own colours: auto (follow the device), light or dark
+  appearance: 'light', // the app's own colours: light (Caio's default), dark, or auto (follow the device)
   openAtLogin: true,
 };
 
-const APPEARANCES = ['auto', 'light', 'dark'];
-const appearanceOf = (s) => (APPEARANCES.includes(s.appearance) ? s.appearance : 'auto');
+const APPEARANCES = ['light', 'dark', 'auto'];
+const appearanceOf = (s) => (APPEARANCES.includes(s.appearance) ? s.appearance : 'light');
 
 const newPin = () => String(crypto.randomInt(0, 10000)).padStart(4, '0');
 

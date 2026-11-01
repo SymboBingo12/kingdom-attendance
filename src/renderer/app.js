@@ -19,7 +19,7 @@
     $('m3').classList.toggle('empty', !s.m3Folder);
     $('openM3').disabled = !s.m3Folder;
     for (const b of document.querySelectorAll('[data-theme]')) b.setAttribute('aria-pressed', String(b.dataset.theme === (s.theme || 'light')));
-    for (const b of document.querySelectorAll('[data-appearance]')) b.setAttribute('aria-pressed', String(b.dataset.appearance === (s.appearance || 'auto')));
+    for (const b of document.querySelectorAll('[data-appearance]')) b.setAttribute('aria-pressed', String(b.dataset.appearance === (s.appearance || 'light')));
     $('login').setAttribute('aria-checked', String(!!s.openAtLogin));
   }
 
