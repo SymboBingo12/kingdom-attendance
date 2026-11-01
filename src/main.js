@@ -4,11 +4,10 @@
 // and hands it to M³. Closing the window keeps it running; Quit from the tray stops it.
 
 const path = require('node:path');
-const { app, BrowserWindow, Tray, Menu, dialog, ipcMain, shell, clipboard, nativeImage, nativeTheme } = require('electron');
-const QRCode = require('qrcode');
+const { app, BrowserWindow, Tray, Menu, dialog, shell, nativeImage, nativeTheme } = require('electron');
 const { createService } = require('./core/service');
 const { createServer } = require('./core/server');
-const { loadSettings, saveSettings, newPin, APPEARANCES, appearanceOf } = require('./core/settings');
+const { loadSettings, saveSettings, newPin, appearanceOf } = require('./core/settings');
 const { deliverVideo } = require('./core/m3');
 const { renderAttendance } = require('./render/recorder');
 const { createUpdates } = require('./core/updates');
@@ -63,9 +62,14 @@ if (!app.requestSingleInstanceLock()) {
         width: 820, height: 760, minWidth: 420, minHeight: 520, show: false, icon: ICON, title: 'Kingdom Attendance',
         backgroundColor: nativeTheme.shouldUseDarkColors ? '#121a2b' : '#ffffff', // the page colour, so opening doesn't flash
         autoHideMenuBar: true,
-        webPreferences: { preload: path.join(__dirname, 'renderer', 'preload.js'), contextIsolation: true, nodeIntegration: false },
+        webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
       });
-      win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+      // The window is the same web app phones use, on this computer (so it counts as the AV computer).
+      const appUrl = `http://127.0.0.1:${server.port}/`;
+      const external = (url) => { if (/^https?:\/\//.test(url)) shell.openExternal(url); };
+      win.webContents.setWindowOpenHandler(({ url }) => { external(url); return { action: 'deny' }; });
+      win.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(appUrl)) { e.preventDefault(); external(url); } });
+      win.loadURL(appUrl);
       win.once('ready-to-show', () => {
         win.show();
         if (process.env.ATT_SHOT) {
@@ -106,14 +110,6 @@ if (!app.requestSingleInstanceLock()) {
     tray.on('click', showWindow);
   }
 
-  async function info() {
-    const u = server.urls();
-    return {
-      ...u, port: server.port, pin: getSettings().pin, qr: await QRCode.toDataURL(u.count, { margin: 1, width: 360 }), settings: getSettings(),
-      version: app.getVersion(), update: updates.status(),
-    };
-  }
-
   // New versions come from the installer's GitHub releases; a developer run has nothing to update.
   function setupUpdates() {
     const supported = app.isPackaged && process.platform === 'win32';
@@ -123,41 +119,33 @@ if (!app.requestSingleInstanceLock()) {
       isEnabled: () => getSettings().autoUpdate,
       isBusy: () => service.getState().render.status === 'rendering',
     });
-    updates.on('change', (status) => { if (win) win.webContents.send('update', status); });
     updates.start();
   }
 
-  ipcMain.handle('info', info);
-  ipcMain.handle('save', (_e, patch) => {
-    const allowed = ['congregation', 'm3Folder', 'theme', 'appearance', 'openAtLogin', 'autoUpdate'];
-    const clean = Object.fromEntries(Object.entries(patch || {}).filter(([k]) => allowed.includes(k)));
-    if (clean.theme && !['light', 'dark'].includes(clean.theme)) delete clean.theme;
-    if ('appearance' in clean && !APPEARANCES.includes(clean.appearance)) delete clean.appearance;
-    const s = saveSettings(dataDir(), clean);
-    if ('openAtLogin' in clean) applyLoginItem(s);
-    if ('appearance' in clean) applyAppearance(s);
-    service.settingsChanged();
-    return info();
-  });
-  ipcMain.handle('new-pin', () => { saveSettings(dataDir(), { pin: newPin() }); return info(); });
-  ipcMain.handle('browse-m3', async () => {
-    const r = await dialog.showOpenDialog(win, { title: 'Choose the M³ shared folder', properties: ['openDirectory'] });
-    if (r.canceled || !r.filePaths[0]) return info();
-    saveSettings(dataDir(), { m3Folder: r.filePaths[0] });
-    return info();
-  });
-  ipcMain.handle('check-update', async () => { await updates.check(); return info(); });
-  ipcMain.handle('install-update', () => updates.install()); // false while the video is being made
-  ipcMain.handle('copy', (_e, text) => { clipboard.writeText(String(text)); return true; });
-  ipcMain.handle('open', (_e, url) => {
-    if (/^http:\/\/(localhost|127\.0\.0\.1|attendance\.local|\d+\.\d+\.\d+\.\d+)(:\d+)?\//.test(url)) shell.openExternal(url);
-    return true;
-  });
-  ipcMain.handle('open-folder', (_e, which) => {
-    const s = getSettings();
-    const dir = which === 'm3' && s.m3Folder ? s.m3Folder : path.join(dataDir(), 'slides');
-    return shell.openPath(dir);
-  });
+  // What the web app's Settings asks the desktop app to do; only the AV computer itself can call these.
+  const host = {
+    version: app.getVersion(),
+    saveSettings(patch) {
+      const s = saveSettings(dataDir(), patch);
+      if ('openAtLogin' in patch) applyLoginItem(s);
+      if ('appearance' in patch) applyAppearance(s);
+      return s;
+    },
+    newPin: () => saveSettings(dataDir(), { pin: newPin() }),
+    async chooseFolder() {
+      const r = await dialog.showOpenDialog(win, { title: 'Choose the M³ shared folder', properties: ['openDirectory'] });
+      if (r.canceled || !r.filePaths[0]) return null;
+      saveSettings(dataDir(), { m3Folder: r.filePaths[0] });
+      return r.filePaths[0];
+    },
+    openFolder(which) {
+      const s = getSettings();
+      shell.openPath(which === 'm3' && s.m3Folder ? s.m3Folder : path.join(dataDir(), 'slides'));
+    },
+    updateStatus: () => (updates ? updates.status() : { state: 'idle', message: '', version: null, percent: 0 }),
+    checkUpdate: () => updates.check(),
+    installUpdate: () => updates.install(), // false while the video is being made
+  };
 
   app.on('second-instance', showWindow);
   app.on('window-all-closed', () => { /* stay in the tray */ });
@@ -174,7 +162,7 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(async () => {
     app.setAppUserModelId('com.symbobingo12.attendance');
     service = createService({ dataDir: dataDir(), getSettings, renderer, deliver });
-    server = createServer(service, { settings: getSettings, webDir: path.join(__dirname, '..', 'web') });
+    server = createServer(service, { settings: getSettings, webDir: path.join(__dirname, '..', 'web'), host });
     try {
       await server.listen();
     } catch (err) {

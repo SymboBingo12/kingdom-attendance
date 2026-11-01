@@ -2,9 +2,9 @@
 
 Count the meeting attendance on phones, then show it as a short video on the hall monitor and on Zoom.
 
-It replaces the old routine: counting into a Google Sheet, typing the numbers into Canva, downloading the slide, and uploading it to M³.
-Now attendants tap **+** on their phones. Someone types the Zoom number, and the AV desk presses **Finalize**.
-The app makes a 12-second attendance video and drops it into M³ by itself.
+It replaces the old routine: marking names in a spreadsheet, typing the numbers into Canva, downloading the slide, and uploading it to M³.
+Now everyone opens **one link**. Attendants mark each person **KH** or **Zoom** on their phones, and the AV desk presses **Finalize**.
+The app makes a 12-second attendance video and drops it into M³ by itself, and keeps the names for the circuit overseer's report.
 
 > An independent project. Not affiliated with or endorsed by any organisation. It uses original artwork only.
 
@@ -12,41 +12,45 @@ The app makes a 12-second attendance video and drops it into M³ by itself.
 
 | Who | What they do |
 |---|---|
-| **Attendants** (back of the hall) | Scan the QR code, enter the PIN, then tap **+** for each person in **Left**, **Center** and **Right**. **−** undoes a mistake. Several phones can count at once; they all show the same numbers. |
-| **Zoom host** | Adds up the numbers in people's Zoom names ("Cruz (4)" counts as 4) and types the total on `/zoom` or in the OBS dock. |
-| **AV desk** | Near the end of the meeting, checks the totals in the OBS dock and presses **Finalize**. About 15–30 seconds later the dock says **Ready in M³**. Click the video in M³ before the closing song ends. |
+| **Attendants** (back of the hall) | Scan the QR code, enter the PIN, open **Mark attendance**, and tap **KH** beside each person present (**− / +** for a household; tap again to clear). Search and **Not marked** help find who's left. Unnamed visitors have a counter; a visitor can be added by name. Several phones can mark at once; they all show the same list. |
+| **Zoom host** | Same link: taps **Zoom** beside the names on Zoom. |
+| **AV desk** | Near the end of the meeting, opens **AV desk** (or the OBS dock) and presses **Finalize**. After a short wait it says **Ready in M³**. Click the video in M³ before the closing song ends. To fix a mark: **Unlock**, fix, **Finalize** again. |
 
-The count is saved after every tap. If the computer restarts, the numbers are still there.
-The first tap on a new day starts a fresh count, and every finalized meeting is kept in **History**, with a CSV download.
+Without a publisher list the app counts by column instead: **Left / Center / Right**, and the Zoom host types the total with a **− [n] +** stepper.
+
+The count is saved after every tap. If the computer restarts, the marks are still there.
+The first tap on a new day starts a fresh meeting. Every finalized meeting is kept in **History** with the names as they were that day, and **Download for the circuit overseer** gives an Excel file in the attendance-sheet layout (one sheet per meeting, plus a summary with monthly averages). A numbers-only CSV is there too.
 
 ## One-time setup on the AV computer
 
 1. **Install.** Run `Kingdom-Attendance-Setup-<version>.exe`. The installer isn't code-signed, so Windows SmartScreen will warn you; choose **More info → Run anyway**.
-   The app lives in the tray and starts with Windows.
-2. **Congregation name.** In the app window, type it under *Attendance video*. It appears on the video.
-3. **M³.** In M³, open **Settings → Integrations → Shared folder** and turn on **"Add media from a shared folder"**.
-   Choose a folder, then choose the **same folder** in Kingdom Attendance (*M³ shared folder → Choose…*).
+   The app lives in the tray and starts with Windows. Its window is the same app the phones use, with the AV-only parts added.
+2. **Publisher list.** On the home screen, **Add your publisher list**: upload the attendance sheet (.xlsx) or a CSV, or paste names. Check what was read, then **Use this list**. Change it any time under **Publisher list**.
+3. **Settings → Attendance video.** Type the congregation name (it appears on the video).
+4. **M³.** In M³, open **Settings → Integrations → Shared folder** and turn on **"Add media from a shared folder"**.
+   Choose a folder, then choose the **same folder** in Kingdom Attendance (**Settings → M³ shared folder → Choose…**).
    The app puts each video in that folder's `YYYY-MM-DD` subfolder, and M³ adds it to that meeting's media list.
    If no folder is set, the video is saved to the Desktop for you to drag into M³.
-4. **OBS dock.** In OBS, open **View → Docks → Custom Browser Docks…**, name it `Attendance` and use the URL `http://localhost:4590/dock`.
-5. **Phones.** Print or show the QR code from the app window. Phones must be on the hall Wi-Fi.
+5. **OBS dock.** In OBS, open **View → Docks → Custom Browser Docks…**, name it `Attendance` and use the URL `http://localhost:4590/desk` (also shown under **Settings → OBS dock**).
+6. **Phones.** Show the QR code (**Settings → Phones** or **AV desk**). Phones must be on the hall Wi-Fi.
 
-## Pages
+## Addresses
 
-| Page | For |
+| Address | For |
 |---|---|
-| `/count` | Attendants' counting page (PIN needed on phones) |
-| `/zoom` | The Zoom host's number, on a phone |
-| `/dock` | The OBS dock: totals, Zoom number, Finalize, Unlock, Make video again, Connect a phone, History, New meeting |
-| `/history` | Every finalized meeting, with a CSV download |
+| `/` | The one link: Home, Mark attendance, History; on the AV computer also AV desk, Publisher list and Settings |
+| `/desk` | The OBS dock (opens the AV desk) |
 | `/slide` | The attendance video page. `?live=1` also works as an OBS Browser Source that replays when attendance is finalized. |
+
+The v1 addresses `/count`, `/zoom`, `/dock` and `/history` still work and lead to the new ones.
 
 ## Links, ports and privacy
 
 - The app announces itself as `attendance.local` on port **4590** (or 4591 if that's taken). It uses neither Stage Timer's port 80/4580 nor Stage Countdown's 4578.
   The QR code and links use the PC's IP address, because many Android phones can't open `.local` names. The address can change from week to week, so scan the QR code again if a saved link stops working.
-- **Numbers only.** No names or personal details are stored. Nothing leaves the hall network: the app makes no internet requests.
-- Phones need the 4-digit PIN; the AV computer itself doesn't. Five wrong PINs in a minute block that phone for a minute.
+- **Names stay on the AV computer.** The publisher list and each meeting's marks are saved only in the app's data folder on the AV computer. They never appear on the video, never go into this repository, and are shown only to phones that entered the PIN. Phones keep no copy.
+- Phones need the 4-digit PIN; the AV computer itself doesn't. Five wrong PINs in a minute block that phone for a minute. Finalize, Unlock, the list and Settings work only on the AV computer.
+- The only internet request is the update check against this project's GitHub releases (**Settings → Updates**; it can be switched off).
 
 ## The video
 

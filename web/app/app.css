@@ -142,3 +142,4 @@
 .connect > div { min-width: 0; overflow-wrap: anywhere; }
 .add-row { flex-wrap: wrap; }
 .add-row input { flex: 1 1 160px; }
+.overlay .st-sheet { max-width: 680px; margin-inline: auto; }
