@@ -34,6 +34,8 @@
     const dateText = date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     data = { hall, zoom, total };
     slide.dataset.theme = p.theme === 'dark' ? 'dark' : 'light';
+    // Same colour behind the stage, so rounding at the edge of a scaled display never shows a line.
+    document.documentElement.style.background = p.theme === 'dark' ? '#172036' : '#ffffff';
     $('introType').textContent = `${type} Meeting`;
     $('introCong').textContent = cong;
     $('introDate').textContent = dateText;

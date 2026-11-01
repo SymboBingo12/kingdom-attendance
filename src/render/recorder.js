@@ -55,6 +55,9 @@ async function renderAttendance({ slideUrl, outDir, fileBase, ffmpegPath = ffmpe
     width: W, height: H, useContentSize: true, show: false, frame: false, focusable: false, skipTaskbar: true,
     webPreferences: { offscreen: true, backgroundThrottling: false },
   });
+  // Windows shrinks a new window to fit the screen (a 1920×1080 screen at 125 % counts as 1536×864);
+  // setting the size again afterwards keeps the full 1920×1080, so frames need no resizing.
+  win.setContentSize(W, H);
   let ffmpeg = null;
   try {
     await win.loadURL(slideUrl);
@@ -78,20 +81,31 @@ async function renderAttendance({ slideUrl, outDir, fileBase, ffmpegPath = ffmpe
     });
 
     const frames = Math.round(DURATION * FPS);
+    const prof = { start: Date.now(), draw: 0, paint: 0, write: 0, resized: 0 };
     let last = null;
     for (let i = 0; i <= frames; i++) {
+      let t0 = Date.now();
       const painted = nextPaint();
       await wc.executeJavaScript(`window.drawAt(${i / FPS})`);
+      prof.draw += Date.now() - t0; t0 = Date.now();
       await painted;
+      prof.paint += Date.now() - t0; t0 = Date.now();
       let img = latest;
       const size = img.getSize();
-      if (size.width !== W || size.height !== H) img = img.resize({ width: W, height: H, quality: 'best' });
+      if (size.width !== W || size.height !== H) {
+        // Display scaling can round the paint up by a pixel or two: trim that; only resize if it's really off.
+        const close = size.width >= W && size.height >= H && size.width - W <= 4 && size.height - H <= 4;
+        img = close ? img.crop({ x: 0, y: 0, width: W, height: H }) : img.resize({ width: W, height: H, quality: 'best' });
+        prof.resized++;
+      }
       last = img;
       await write(ffmpeg.ff.stdin, img.toBitmap());
+      prof.write += Date.now() - t0;
       onProgress((i + 1) / (frames + 1));
     }
     ffmpeg.ff.stdin.end();
     await ffmpeg.done;
+    if (process.env.ATT_PROFILE) console.log('[render]', JSON.stringify({ ...prof, total: Date.now() - prof.start, painted: latest.getSize(), win: win.getContentSize() }));
     fs.renameSync(tmp, mp4);
     fs.writeFileSync(png, last.toPNG());
     return { mp4, png };
