@@ -1,0 +1,17 @@
+{
+  "name": "kingdom-attendance",
+  "productName": "Kingdom Attendance",
+  "version": "0.1.0",
+  "description": "Kingdom Hall attendance counter: count on phones, finalize into an attendance video for M³",
+  "main": "src/main.js",
+  "type": "commonjs",
+  "license": "MIT",
+  "author": "Caio (SymboBingo12)",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "electron .",
+    "serve": "node src/cli.js",
+    "test": "node --test \"test/*.test.js\"",
+    "dist": "electron-builder"
+  }
+}
