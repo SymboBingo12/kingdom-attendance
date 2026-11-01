@@ -59,6 +59,7 @@
   }
 
   const painted = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  window.drawAt = (t) => { draw(t); return true; };
   window.renderAt = async (t) => {
     await document.fonts.ready;
     draw(t);
