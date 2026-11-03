@@ -44,6 +44,16 @@ jobs:
         run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Put the changelog in the release notes
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # the newest section of CHANGELOG.md, without its heading
+          awk '/^## /{n++} n==1' CHANGELOG.md | tail -n +2 > release-notes.md
+          id=$(gh api "repos/$GITHUB_REPOSITORY/releases" --jq ".[] | select(.tag_name==\"$GITHUB_REF_NAME\") | .id" | head -n 1)
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$id" -F body=@release-notes.md -f name="Kingdom Hall Attendance ${GITHUB_REF_NAME#v}"
       - uses: actions/upload-artifact@v4
         with:
           name: Kingdom-Hall-Attendance-Setup
