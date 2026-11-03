@@ -31,6 +31,7 @@ function createAuth({ fetch: doFetch = fetch, clientId, clientSecret, load, save
       throw new GoogleError(0, 'No internet connection to Google.');
     }
     const data = await res.json().catch(() => ({}));
+    if (data.error === 'invalid_client') throw new GoogleError(400, "Google doesn't recognise this app's client ID or secret (invalid_client). This build has the wrong Google credentials.");
     if (!res.ok) throw new GoogleError(data.error === 'invalid_grant' ? 401 : res.status, data.error_description || data.error || 'Google refused the sign-in.');
     return data;
   }
