@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 · 2026-11-03
 
 ### Added
 - **Publisher list groups.** The list now has **Publishers**, **Unbaptized publishers** and an **Invited** section.

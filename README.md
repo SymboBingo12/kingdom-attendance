@@ -75,7 +75,8 @@ On a new computer or account, **Connect Google** first looks for sheets the app 
 Every September 1 the Log starts fresh tabs for the new service year; the old ones are kept, renamed with their year.
 The app asks Google only for the narrow *drive.file* permission, so it can reach the sheets it created and nothing else in the Drive. The sign-in token is kept in the data folder on the AV computer.
 
-Whoever builds the app needs a Google Cloud OAuth client ("Desktop app"). Put its ID and secret in `src/core/google/config.js`, or set `KA_GOOGLE_CLIENT_ID` and `KA_GOOGLE_CLIENT_SECRET`.
+Whoever builds the app needs a Google Cloud OAuth client ("Desktop app"). The ID and secret are not kept in git: put them in `src/core/google/config.local.js` (git-ignored, `module.exports = { clientId, clientSecret }`) or set `KA_GOOGLE_CLIENT_ID` and `KA_GOOGLE_CLIENT_SECRET`.
+The release workflow writes that file from the repository secrets of the same names.
 
 ## Before the first live meeting
 
@@ -86,7 +87,7 @@ Run [docs/hall-test-checklist.md](docs/hall-test-checklist.md) on the real AV co
 The installed app updates itself from this project's GitHub releases (`SymboBingo12/kingdom-attendance`).
 It checks 15 seconds after it starts and then every 6 hours. A new version downloads in the background and is installed when the app is quit, or when someone presses **Restart and update** in the window. It never restarts by itself, and it won't restart while the video is being made. **Update automatically** can be turned off in the window.
 
-To publish a new version: raise `version` in `package.json`, then run `npm run dist -- --publish always` with a `GH_TOKEN` that can write to the repository. Phones need nothing: they load the pages from the AV computer.
+To publish a new version: raise `version` in `package.json`, merge, then push a tag such as `v0.4.0`. The *Windows installer* workflow builds it and uploads it to a draft GitHub release; publish that draft and installed apps update. (By hand: `npm run dist -- --publish always` with a `GH_TOKEN` that can write to the repository.) Phones need nothing: they load the pages from the AV computer.
 
 ## Build from source
 
