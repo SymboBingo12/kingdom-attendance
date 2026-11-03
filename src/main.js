@@ -8,6 +8,8 @@ const { app, BrowserWindow, Tray, Menu, dialog, shell, nativeImage, nativeTheme,
 const { createService } = require('./core/service');
 const { createServer } = require('./core/server');
 const { loadSettings, saveSettings, newPin, appearanceOf } = require('./core/settings');
+const { createGoogleSync } = require('./core/google/sync');
+const googleConfig = require('./core/google/config');
 const { deliverVideo } = require('./core/m3');
 const { renderAttendance } = require('./render/recorder');
 const { createUpdates } = require('./core/updates');
@@ -164,7 +166,9 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(async () => {
     app.setAppUserModelId('com.symbobingo12.attendance');
     service = createService({ dataDir: dataDir(), getSettings, renderer, deliver });
-    server = createServer(service, { settings: getSettings, webDir: path.join(__dirname, '..', 'web'), host });
+    const google = createGoogleSync({ dataDir: dataDir(), getSettings, getHistory: () => service.store.listHistory(), ...googleConfig });
+    service.setSync(google);
+    server = createServer(service, { settings: getSettings, webDir: path.join(__dirname, '..', 'web'), host, google });
     try {
       await server.listen();
     } catch (err) {

@@ -1,7 +1,7 @@
 'use strict';
 
 // Settings (AV computer only): everything the old settings window had, grouped — the attendance video,
-// appearance, phones (QR, PIN, links), the OBS dock, Start with Windows and updates.
+// appearance, phones (QR, PIN, links), the OBS dock, Google Sheets, Start with Windows and updates.
 
 (function () {
   const UI = window.AppUI;
@@ -26,6 +26,31 @@
 
   const seg = (label, attr, values, current) => `<div class="st-seg" role="group" aria-label="${label}">${values.map((v) => `<button data-${attr}="${v}" aria-pressed="${current === v}">${cap(v)}</button>`).join('')}</div>`;
   const sw = (key, on, label, sub) => `<div class="st-option"><span>${label}<small>${sub}</small></span><button class="st-switch" role="switch" aria-checked="${!!on}" data-sw="${key}" aria-label="${label}"></button></div>`;
+
+  function google(g) {
+    if (!g) return '';
+    const link = (f, label) => (f ? `<div class="lrow"><div class="lrow__text"><span class="dim small">${label}</span><code>${UI.esc(f.name)}</code></div><div class="lrow__btns"><a class="st-btn st-btn--secondary" href="${UI.esc(f.url)}" target="_blank" rel="noopener">Open</a></div></div>` : '');
+    const when = g.lastSyncAt ? new Date(g.lastSyncAt).toLocaleString() : 'not yet';
+    let body;
+    if (g.choice) {
+      const names = [...g.choice.attendance, ...g.choice.log].map((f) => `<code>${UI.esc(f.name)}</code>`).join('<br>');
+      body = `${UI.banner('warn', 'info', 'Use the existing sheets?', 'This Google account already has sheets made by this app:')}<p class="st-card__hint">${names}</p>
+        <div class="row2"><button class="st-btn st-btn--primary" data-google="use">Use the existing sheets</button><button class="st-btn st-btn--secondary" data-google="new">Create new ones</button></div>`;
+    } else if (g.connected && g.files) {
+      body = `<p class="st-card__hint">Connected as <b>${UI.esc(g.email || 'your Google account')}</b>. ${g.syncing ? 'Syncing…' : g.pending ? `${g.pending} meeting${g.pending === 1 ? '' : 's'} waiting to sync.` : `Up to date (last sync: ${UI.esc(when)}).`}</p>
+        ${g.error ? UI.banner('danger', 'warn', "Couldn't sync", g.error, 'alert') : ''}
+        ${link(g.files.attendance, 'Attendance sheet')}${link(g.files.log, 'Log sheet')}
+        <div class="row2"><button class="st-btn st-btn--secondary" data-google="sync" ${g.syncing ? 'disabled' : ''}>Sync now</button><button class="st-btn st-btn--secondary" data-google="disconnect">Disconnect</button></div>`;
+    } else if (g.connecting || g.connected) {
+      body = `<p class="st-card__hint">${g.connecting ? 'Finish signing in in the browser window that opened…' : 'Setting up the sheets…'}</p>${g.error ? UI.banner('danger', 'warn', "Couldn't set up", g.error, 'alert') : ''}`;
+    } else {
+      body = `${g.error ? UI.banner('danger', 'warn', 'Not connected', g.error, 'alert') : ''}
+        <button class="st-btn st-btn--primary" data-google="connect" ${g.configured ? '' : 'disabled'}>Connect Google</button>
+        ${g.configured ? '' : '<p class="st-card__hint">Google sign-in is not set up in this build yet.</p>'}`;
+    }
+    return `<section class="st-card set"><h3 class="st-card__title">Google Sheets</h3>
+      <p class="st-card__hint">After every finalized meeting, the names and numbers are written to two Google Sheets. <b>Names are then stored on this computer and in the Google account you connect.</b> Connect only an account the congregation has agreed to. Past meetings keep updating if they are changed.</p>${body}</section>`;
+  }
 
   function render(info, mem) {
     const s = info.settings;
@@ -56,6 +81,7 @@
           ${linkRow(mem, 'dock', 'Dock address (opens the AV desk)', info.links.dock)}
           <ol class="steps"><li>In OBS: <b>View → Docks → Custom Browser Docks…</b></li><li>Dock Name: <b>Attendance</b>. URL: the dock address above. <b>Apply</b>.</li><li>Near the end of the meeting, press <b>Finalize</b> in the dock.</li></ol>
         </section>
+        ${google(mem.google)}
         <section class="st-card set">${sw('openAtLogin', s.openAtLogin, 'Start with Windows', 'Opens hidden in the tray when the computer starts')}</section>
         <section class="st-card set"><h3 class="st-card__title">Updates</h3>
           <p class="st-card__hint"><b>Kingdom Attendance ${UI.esc(info.version)}</b> · ${UI.esc((UPDATE_TEXT[u.state] || UPDATE_TEXT.idle)(u))}</p>
@@ -85,7 +111,8 @@
     // Loads the settings when the screen opens, and keeps the update status fresh while it stays open.
     after({ ctx }) {
       const mem = ctx.memory('settings');
-      const load = () => ctx.api.get('/api/settings').then((info) => { mem.info = info; ctx.redraw(); }).catch((err) => ctx.note(err.message));
+      const load = () => Promise.all([ctx.api.get('/api/settings'), ctx.api.get('/api/google').catch(() => null)])
+        .then(([info, g]) => { mem.info = info; mem.google = g; ctx.redraw(); }).catch((err) => ctx.note(err.message));
       if (!mem.info) load();
       clearTimeout(mem.poll);
       mem.poll = setTimeout(() => { if (location.hash === '#/settings') load(); }, 2000);
@@ -96,6 +123,23 @@
       const post = async (path, body = {}) => {
         try { mem.info = await ctx.api.post(path, body); ctx.redraw(); } catch (err) { ctx.note(err.message); }
       };
+      if (b.dataset.google) {
+        const a = b.dataset.google;
+        try {
+          if (a === 'connect') {
+            const { url } = await ctx.api.post('/api/google/connect', {});
+            window.open(url, '_blank');
+            mem.google = await ctx.api.get('/api/google');
+          } else if (a === 'use' || a === 'new') mem.google = await ctx.api.post('/api/google/choose', { use: a === 'use' });
+          else if (a === 'sync') mem.google = await ctx.api.post('/api/google/sync', {});
+          else if (a === 'disconnect') {
+            if (!window.confirm('Disconnect Google? Nothing is deleted from the Google account, but new meetings stop syncing.')) return;
+            mem.google = await ctx.api.post('/api/google/disconnect', {});
+          }
+        } catch (err) { ctx.note(err.message); }
+        ctx.redraw();
+        return;
+      }
       if (b.dataset.theme) return post('/api/settings', { theme: b.dataset.theme });
       if (b.dataset.appearance) return post('/api/settings', { appearance: b.dataset.appearance });
       if (b.dataset.sw) return post('/api/settings', { [b.dataset.sw]: b.getAttribute('aria-checked') !== 'true' });

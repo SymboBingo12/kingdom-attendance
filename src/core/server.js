@@ -29,14 +29,14 @@ const TYPES = {
 };
 const STATUS = {
   BAD_LANE: 400, BAD_DELTA: 400, BAD_ZOOM: 400, BAD_TYPE: 400, BAD_BODY: 400, BAD_MARK: 400, BAD_NAME: 400, BAD_LIST: 400, BAD_FILE: 400,
-  NOT_FINAL: 409, LOCKED: 409, BUSY: 409,
+  NOT_FINAL: 409, LOCKED: 409, BUSY: 409, GOOGLE_NOT_SET_UP: 400, GOOGLE_NO_NAME: 400, GOOGLE_NO_CHOICE: 409,
 };
 // Only the AV computer itself may change the meeting's state, the list or the settings.
 const AV_ONLY = new Set([
   '/api/finalize', '/api/unlock', '/api/new', '/api/type', '/api/rerender',
   '/api/roster/preview', '/api/roster/add', '/api/roster/remove', '/api/roster/template.csv',
   '/api/settings', '/api/pin/new', '/api/host/choose-folder', '/api/host/open-folder', '/api/host/check-update', '/api/host/install-update',
-  '/api/connect',
+  '/api/connect', '/api/google', '/api/google/connect', '/api/google/choose', '/api/google/disconnect', '/api/google/sync',
 ]);
 const MAX_BODY = 10 * 1024;
 const PIN_TRIES = 5;
@@ -138,7 +138,7 @@ function cleanSettings(body) {
 
 // host: what the desktop app does natively (settings side effects, folder picker, updates). trustLoopback: false
 // makes every request look like a phone's, for tests.
-function createServer(service, { settings, webDir, mdns = true, host = null, trustLoopback = true }) {
+function createServer(service, { settings, webDir, mdns = true, host = null, google = null, trustLoopback = true }) {
   const cfg = () => (typeof settings === 'function' ? settings() : settings);
   const failures = new Map(); // ip -> timestamps of wrong PINs
   const streams = new Set();
@@ -229,6 +229,14 @@ function createServer(service, { settings, webDir, mdns = true, host = null, tru
     '/api/host/install-update': () => ({ ok: host.installUpdate() }),
   };
 
+  // Google Sheets sync (AV computer only). Each answer is the sync's new status, except Connect, which returns the page to open.
+  const googleActions = {
+    '/api/google/connect': () => google.connect(),
+    '/api/google/choose': async (b) => { await google.choose(b.use === true); return google.status(); },
+    '/api/google/disconnect': async () => { await google.disconnect(); return google.status(); },
+    '/api/google/sync': async () => { google.flush(); return google.status(); },
+  };
+
   async function handle(req, res) {
     const u = new URL(req.url, 'http://x');
     const p = u.pathname;
@@ -288,6 +296,7 @@ function createServer(service, { settings, webDir, mdns = true, host = null, tru
         });
         return res.end(xlsx);
       }
+      if (p === '/api/google') return google ? send(res, 200, google.status()) : send(res, 404, { error: 'Not found' });
       if (p === '/api/settings') return host ? send(res, 200, await settingsInfo()) : send(res, 404, { error: 'Not found' });
       return send(res, 404, { error: 'Not found' });
     }
@@ -302,6 +311,11 @@ function createServer(service, { settings, webDir, mdns = true, host = null, tru
     if (req.method === 'POST' && actions[p]) {
       const body = await readBody(req);
       return send(res, 200, actions[p](body));
+    }
+    if (req.method === 'POST' && googleActions[p]) {
+      if (!google) return send(res, 404, { error: 'Not found' });
+      const body = await readBody(req);
+      return send(res, 200, await googleActions[p](body));
     }
     if (req.method === 'POST' && hostActions[p]) {
       if (!host) return send(res, 404, { error: 'Not found' });

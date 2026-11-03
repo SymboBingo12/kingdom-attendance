@@ -48,9 +48,9 @@ The v1 addresses `/count`, `/zoom`, `/dock` and `/history` still work and lead t
 
 - The app announces itself as `attendance.local` on port **4590** (or 4591 if that's taken). It uses neither Stage Timer's port 80/4580 nor Stage Countdown's 4578.
   The QR code and links use the PC's IP address, because many Android phones can't open `.local` names. The address can change from week to week, so scan the QR code again if a saved link stops working.
-- **Names stay on the AV computer.** The publisher list and each meeting's marks are saved only in the app's data folder on the AV computer. They never appear on the video, never go into this repository, and are shown only to phones that entered the PIN. Phones keep no copy.
+- **Names are kept on the AV computer and, if the congregation connects one, in its Google account.** The publisher list and each meeting's marks are saved in the app's data folder on the AV computer. With **Google Sheets** connected (below), the names are also written to two spreadsheets in that Google account, so connect only an account the congregation has agreed to. Names never appear on the video, never go into this repository, and are shown only to phones that entered the PIN. Phones keep no copy.
 - Phones need the 4-digit PIN; the AV computer itself doesn't. Five wrong PINs in a minute block that phone for a minute. Finalize, Update the video, the list and Settings work only on the AV computer.
-- The only internet request is the update check against this project's GitHub releases (**Settings → Updates**; it can be switched off).
+- The only internet requests are the update check against this project's GitHub releases (**Settings → Updates**; it can be switched off) and, only if Google Sheets is connected, the sync to Google.
 
 ## The video
 
@@ -62,6 +62,20 @@ The v1 addresses `/count`, `/zoom`, `/dock` and `/history` still work and lead t
 4. **Total:** the total, with both parts, held on screen.
 
 A still image of the last frame is saved next to it (tray → *Open Kingdom Attendance* → *Open the videos folder*).
+
+## Google Sheets (optional)
+
+**Settings → Google Sheets → Connect Google** signs in once and creates two spreadsheets in that account:
+
+- **Attendance | <Congregation>**: a *Weekend Meeting* and a *Midweek Meeting* tab (every name with Zoom or Kingdom Hall, then the totals) and a *Service Year Record* tab with the numbers for every meeting and the monthly averages.
+- **Log for Attendance | <Congregation>**: a *Weekend Meeting* and a *Midweek Meeting* tab with a row per person and a column per meeting date.
+
+It updates after every finalized meeting. A change made after finalizing overwrites that meeting's rows, and the desk asks you to update the video. If the hall has no internet the meeting waits and is sent later.
+On a new computer or account, **Connect Google** first looks for sheets the app already made in that account and asks **Use the existing sheets?** before creating anything.
+Every September 1 the Log starts fresh tabs for the new service year; the old ones are kept, renamed with their year.
+The app asks Google only for the narrow *drive.file* permission, so it can reach the sheets it created and nothing else in the Drive. The sign-in token is kept in the data folder on the AV computer.
+
+Whoever builds the app needs a Google Cloud OAuth client ("Desktop app"). Put its ID and secret in `src/core/google/config.js`, or set `KA_GOOGLE_CLIENT_ID` and `KA_GOOGLE_CLIENT_SECRET`.
 
 ## Before the first live meeting
 

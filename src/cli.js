@@ -7,6 +7,8 @@ const path = require('node:path');
 const { createService } = require('./core/service');
 const { createServer } = require('./core/server');
 const { loadSettings, saveSettings, newPin } = require('./core/settings');
+const { createGoogleSync } = require('./core/google/sync');
+const googleConfig = require('./core/google/config');
 const { version } = require('../package.json');
 
 const i = process.argv.indexOf('--data');
@@ -26,7 +28,9 @@ const host = {
 };
 
 const service = createService({ dataDir, getSettings });
-const server = createServer(service, { settings: getSettings, webDir: path.join(__dirname, '..', 'web'), host });
+const google = createGoogleSync({ dataDir, getSettings, getHistory: () => service.store.listHistory(), ...googleConfig });
+service.setSync(google);
+const server = createServer(service, { settings: getSettings, webDir: path.join(__dirname, '..', 'web'), host, google });
 
 server.listen().then(() => {
   const u = server.urls();

@@ -35,6 +35,7 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
   let meeting = M.upgrade(store.loadCurrent() || M.newMeeting(now()));
   let roster = store.loadRoster();
   let render = { status: 'idle', message: '', savedTo: null };
+  let sync = null; // Google Sheets sync, when the app has one
 
   // Phones may resend a tap after a Wi-Fi blip; each tap id counts once.
   const seen = new Set();
@@ -50,6 +51,8 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     return {
       meeting, totals: M.totals(meeting), render, congregation: s.congregation || '', theme: s.theme || 'light', appearance: appearanceOf(s),
       roster, visitors: meeting.visitors, mode: roster.length ? 'names' : 'columns',
+      // Phones get only the headline; the account and links stay on the AV computer.
+      google: sync ? (({ connected, pending, syncing, error }) => ({ connected, pending, syncing, error }))(sync.status()) : null,
     };
   };
 
@@ -58,6 +61,7 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     if (!next.finalized) return commit(next);
     const state = commit({ ...next, videoStale: true });
     store.upsertHistory({ ...meeting, people: snapshot() });
+    if (sync) sync.enqueue(meeting.date, meeting.type);
     return state;
   };
 
@@ -103,6 +107,11 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
   return Object.assign(events, {
     getState,
     store,
+
+    setSync(s) {
+      sync = s;
+      s.on('change', () => events.emit('change', getState()));
+    },
 
     tap(lane, delta, tapId) {
       if (tapId && seen.has(tapId)) return getState();
@@ -175,6 +184,7 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
       if (isRendering()) throw busy();
       commit(M.finalize(meeting, now()));
       store.upsertHistory({ ...meeting, people: snapshot() });
+      if (sync) sync.enqueue(meeting.date, meeting.type);
       startVideo();
       return getState();
     },

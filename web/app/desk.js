@@ -33,6 +33,15 @@
     return '';
   }
 
+  // Only shown when sync needs attention; phones see the same headline.
+  function googleNote(state) {
+    const g = state.google;
+    if (!g || !g.connected) return '';
+    if (g.error) return UI.banner('warn', 'warn', 'Google Sheets not up to date', g.error);
+    if (g.pending || g.syncing) return UI.banner('', 'info', 'Syncing to Google Sheets', g.pending ? `${g.pending} meeting${g.pending === 1 ? '' : 's'} waiting.` : '');
+    return '';
+  }
+
   views.desk = {
     render({ state, ctx }) {
       const m = state.meeting;
@@ -44,6 +53,7 @@
           ${UI.tiles(state.totals)}
           ${state.mode === 'names' ? `<p class="dim small" style="margin-top:-8px">Zoom comes from the names marked Zoom. Kingdom Hall includes ${m.unnamed || 0} unnamed visitor${m.unnamed === 1 ? '' : 's'}.</p>` : ''}
           ${status(state)}
+          ${googleNote(state)}
           ${m.finalized
             ? `<button class="st-btn ${m.videoStale ? 'st-btn--primary' : 'st-btn--secondary'} st-btn--main st-btn--block" data-act="rerender" ${rendering ? 'disabled' : ''}>Update the video</button>`
             : `<button class="st-btn st-btn--primary st-btn--main st-btn--block" data-act="finalize">Finalize</button>
