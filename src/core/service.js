@@ -14,11 +14,14 @@ const SEEN_TAPS = 1000;
 
 const MAX_NAME = 80;
 
-function cleanPerson({ name, group, size }) {
+function cleanPerson({ name, group, size, where }) {
   const n = typeof name === 'string' ? name.trim() : '';
   if (!n || n.length > MAX_NAME) throw new M.MeetingError('BAD_NAME', `Type a name of 1 to ${MAX_NAME} letters.`);
   const g = (typeof group === 'string' && group.trim().slice(0, MAX_NAME)) || 'Publishers';
-  return { name: n, group: g, size: Number.isInteger(size) && size >= 1 && size <= 20 ? size : householdSize(n) };
+  const person = { name: n, group: g, size: Number.isInteger(size) && size >= 1 && size <= 20 ? size : householdSize(n) };
+  // Where an invited person usually attends.
+  if (where === 'kh' || where === 'zoom') person.where = where;
+  return person;
 }
 
 function busy() {
@@ -116,12 +119,15 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
       return commit(meeting.finalized ? meeting : { ...meeting, marks: {} });
     },
 
-    addPerson(name, group) {
+    // An invited person or family comes with how many they are and where they attend; they are marked for
+    // today's meeting straight away (unless it is finalized), so the count follows.
+    addPerson(name, group, { size, where } = {}) {
       const next = roster.reduce((max, p) => Math.max(max, Number(p.id.slice(1)) || 0), 0) + 1;
-      const person = { id: `p${next}`, ...cleanPerson({ name, group }) };
+      const person = { id: `p${next}`, ...cleanPerson({ name, group, size, where }) };
       roster = [...roster, person];
       store.saveRoster(roster);
-      commit(meeting);
+      const m = today();
+      commit(person.where && !m.finalized ? M.setMark(m, person.id, person.where, person.size) : meeting);
       return person;
     },
 

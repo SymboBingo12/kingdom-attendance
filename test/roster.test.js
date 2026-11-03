@@ -35,10 +35,10 @@ test('households: "&", "/", " and " and " - " start at 2', () => {
   assert.equal(householdSize('Santos, Ana'), 1);
 });
 
-test('the blank template reads back as its three people', async () => {
+test('the blank template reads back as its Publishers and Unbaptized publishers columns', async () => {
   const { sheets } = await readListFile(Buffer.from(TEMPLATE_CSV), 'publisher-list-template.csv');
   assert.equal(sheets.length, 1);
-  assert.deepEqual(summary(sheets[0].people), ['Publishers: Santos, Ana (1)', 'Publishers: Reyes, Mark & Joy (2)', 'Bible students: Navarro, Ella (1)']);
+  assert.deepEqual(summary(sheets[0].people), ['Publishers: Santos, Ana (1)', 'Unbaptized publishers: Navarro, Ella (1)', 'Publishers: Reyes, Mark & Joy (2)', 'Unbaptized publishers: Castillo, Ian (1)', 'Publishers: Cruz, Lea (1)']);
 });
 
 test('pasted lines: a line in capitals starts a group', () => {
@@ -70,4 +70,9 @@ test('files that are not a list are refused with a plain reason', async () => {
   for (const [buf, name] of [[Buffer.alloc(0), 'a.xlsx'], [Buffer.from('%PDF-1.4 x'), 'a.xlsx'], [Buffer.from('x'), 'old.xls'], [Buffer.alloc(MAX_LIST_BYTES + 1), 'big.csv']]) {
     await assert.rejects(readListFile(buf, name), { code: 'BAD_FILE' }, name);
   }
+});
+
+test('capitalised UNBAPTIZED PUBLISHERS and INVITED lines start the matching groups', () => {
+  assert.deepEqual(summary(parseRows([['PUBLISHERS'], ['Ana'], ['UNBAPTIZED PUBLISHERS'], ['Ella'], ['INVITED'], ['Lim']])),
+    ['Publishers: Ana (1)', 'Unbaptized publishers: Ella (1)', 'Invited: Lim (1)']);
 });

@@ -98,3 +98,11 @@ test('files saved by 0.2.0 load, total, finalize and export as before', () => {
   service.finalize();
   assert.equal(service.store.historyCsv(), 'date,meeting,left,center,right,hall,zoom,total\n2026-11-01,weekend,30,40,20,90,15,105\n2026-10-28,midweek,30,40,20,90,15,105\n');
 });
+
+test('an invited family is added with its size and place, and counted for today', () => {
+  const { service } = make();
+  const p = service.addPerson('Ocampo family', 'Invited', { size: 4, where: 'zoom' });
+  assert.deepEqual([p.group, p.size, p.where], ['Invited', 4, 'zoom']);
+  assert.deepEqual(service.getState().meeting.marks[p.id], { where: 'zoom', n: 4 });
+  assert.equal(service.getState().totals.zoom, 4);
+});

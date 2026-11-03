@@ -7,7 +7,10 @@
 const ExcelJS = require('exceljs');
 
 const MAX_LIST_BYTES = 5 * 1024 * 1024;
-const TEMPLATE_CSV = 'Name,Group\n"Santos, Ana",Publishers\n"Reyes, Mark & Joy",Publishers\n"Navarro, Ella",Bible students\n';
+const TEMPLATE_CSV = 'Publishers,Unbaptized publishers\n"Santos, Ana","Navarro, Ella"\n"Reyes, Mark & Joy","Castillo, Ian"\n"Cruz, Lea",\n';
+const PUBLISHERS = 'Publishers';
+const UNBAPTIZED = 'Unbaptized publishers';
+const INVITED = 'Invited';
 const GROUP_WORDS = /\b(CLMS|VISITORS?|INVITED|GUESTS?|STUDENTS?|GROUP|PUBLISHERS|INTERESTED)\b/;
 const BAD_FILE = "That file couldn't be read. Save it as .xlsx or .csv and try again.";
 
@@ -21,11 +24,26 @@ class RosterError extends Error {
 // "Reyes, Mark & Joy" or "Angel / Remart" is a household of two; the attendant can change it when marking.
 const householdSize = (name) => (/&|\/|\s-\s|\sand\s/i.test(name) ? 2 : 1);
 
+// "UNBAPTIZED PUBLISHERS" and "INVITED" are the congregation's own groups; any other capitalised line keeps its words.
+const groupName = (text) => (/^publishers?$/i.test(text) ? PUBLISHERS : /^unbaptized publishers?$/i.test(text) ? UNBAPTIZED : /^invited$/i.test(text) ? INVITED : text);
+
 const isGroupLine = (text) => !/[a-z]/.test(text) && GROUP_WORDS.test(text);
 
 function parseRows(rows) {
   const clean = rows.map((r) => (Array.isArray(r) ? r : [r]).map((c) => String(c == null ? '' : c).trim()));
   const first = (r) => r.find((c) => c) || '';
+
+  // The template: a Publishers column and an Unbaptized publishers column, names listed down each.
+  const cols = clean.findIndex((r) => r.some((c) => /^publishers?$/i.test(c)) && r.some((c) => /^unbaptized publishers?$/i.test(c)));
+  if (cols >= 0) {
+    const pi = clean[cols].findIndex((c) => /^publishers?$/i.test(c));
+    const ui = clean[cols].findIndex((c) => /^unbaptized publishers?$/i.test(c));
+    const people = [];
+    for (const r of clean.slice(cols + 1)) {
+      for (const [i, group] of [[pi, PUBLISHERS], [ui, UNBAPTIZED]]) if (i >= 0 && r[i]) people.push({ name: r[i], group, size: householdSize(r[i]) });
+    }
+    return people;
+  }
 
   const head = clean.findIndex((r) => r.some((c) => /^name$/i.test(c)));
   if (head >= 0) {
@@ -46,7 +64,7 @@ function parseRows(rows) {
     if (!text) continue;
     if (/^sub-?total/i.test(text) || /^(grand total|total)$/i.test(text)) break;
     if (/^total\b/i.test(text) || /^[=\d.\s]+$/.test(text)) continue;
-    if (isGroupLine(text)) { group = /^publishers?$/i.test(text) ? 'Publishers' : text; continue; }
+    if (isGroupLine(text)) { group = groupName(text); continue; }
     people.push({ name: text, group, size: householdSize(text) });
   }
   return people;
@@ -105,4 +123,4 @@ async function readListFile(buf, filename = '') {
   return { sheets };
 }
 
-module.exports = { householdSize, parseRows, readListFile, RosterError, TEMPLATE_CSV, MAX_LIST_BYTES, BAD_FILE };
+module.exports = { PUBLISHERS, UNBAPTIZED, INVITED, householdSize, parseRows, readListFile, RosterError, TEMPLATE_CSV, MAX_LIST_BYTES, BAD_FILE };

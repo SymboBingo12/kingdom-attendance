@@ -124,7 +124,7 @@ test('the list can be edited from the AV computer', async (t) => {
   assert.deepEqual((await (await s.call('/api/roster')).json()).map((p) => p.id), ['p2', 'p3']);
   const tpl = await s.call('/api/roster/template.csv');
   assert.match(tpl.headers.get('content-disposition'), /publisher-list-template\.csv/);
-  assert.match(await tpl.text(), /^Name,Group/);
+  assert.match(await tpl.text(), /^Publishers,Unbaptized publishers/);
 });
 
 test('old links still work: they lead to the one link', async (t) => {

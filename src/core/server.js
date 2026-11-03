@@ -215,7 +215,7 @@ function createServer(service, { settings, webDir, mdns = true, host = null, tru
     '/api/type': (b) => service.setType(b.type),
     '/api/rerender': () => service.rerender(),
     '/api/roster': (b) => service.importRoster(b.people),
-    '/api/roster/add': (b) => service.addPerson(b.name, b.group),
+    '/api/roster/add': (b) => service.addPerson(b.name, b.group, { size: b.size, where: b.where }),
     '/api/roster/remove': (b) => service.removePerson(b.id),
   };
 
