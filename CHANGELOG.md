@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1 · 2026-11-03
+
+### Fixed
+- **Clearer Google sign-in error.** When Google rejects the app's client ID or secret (`invalid_client`), the app now says so instead of showing a message that looked like an expired sign-in.
+
 ## 0.4.0 · 2026-11-03
 
 ### Added
