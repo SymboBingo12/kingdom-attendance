@@ -1,6 +1,6 @@
 {
   "name": "kingdom-attendance",
-  "productName": "Kingdom Attendance",
+  "productName": "Kingdom Hall Attendance",
   "version": "0.4.0",
   "description": "Kingdom Hall attendance counter: count on phones, finalize into an attendance video for M³",
   "main": "src/main.js",
@@ -29,7 +29,7 @@
   },
   "build": {
     "appId": "com.symbobingo12.attendance",
-    "productName": "Kingdom Attendance",
+    "productName": "Kingdom Hall Attendance",
     "files": [
       "src/**",
       "web/**",
@@ -50,7 +50,7 @@
       },
       {
         "from": "LICENSE",
-        "to": "LICENSES/Kingdom-Attendance-MIT.txt"
+        "to": "LICENSES/Kingdom-Hall-Attendance-MIT.txt"
       }
     ],
     "win": {
@@ -60,7 +60,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "Kingdom-Attendance-Setup-${version}.exe"
+      "artifactName": "Kingdom-Hall-Attendance-Setup-${version}.exe"
     },
     "directories": {
       "output": "release"

@@ -1,6 +1,6 @@
 'use strict';
 
-// Kingdom Attendance's own artwork for the app's screens: original, drawn in code, in Steward's visual language
+// Kingdom Hall Attendance's own artwork for the app's screens: original, drawn in code, in Steward's visual language
 // (duotone, halftone dots, big circles, people seen from behind) with this app's palette: deep slate, terracotta and
 // warm sand, plus Steward's teal for Zoom. Each function returns an SVG string; one layer carries .art-breathe so it
 // can rest on welcome and empty screens. The video's artwork stays in art.js.

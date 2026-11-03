@@ -11,7 +11,7 @@ const onlyAddress = (records, address) => records.filter((r) => r.type !== 'AAAA
 // Announces "<hostname>.local" on the hall network so phones can open http://attendance.local:4590
 // instead of an IP address. When the PC moves to another network it is announced again with
 // the new address. Failures are reported to onError and never crash the app.
-function advertise({ hostname, port, getAddress, name = 'Kingdom Attendance', onError = () => {} }) {
+function advertise({ hostname, port, getAddress, name = 'Kingdom Hall Attendance', onError = () => {} }) {
   const bonjour = new Bonjour({}, onError);
   let address = null;
 

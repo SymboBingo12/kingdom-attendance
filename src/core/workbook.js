@@ -84,7 +84,7 @@ function summarySheet(wb, meetings) {
 
 async function buildOverseerWorkbook({ history, congregation }) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Kingdom Attendance';
+  wb.creator = 'Kingdom Hall Attendance';
   const meetings = history.map(upgrade);
   const used = new Set();
   for (const m of meetings) {

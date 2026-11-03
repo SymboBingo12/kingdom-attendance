@@ -1,6 +1,6 @@
 name: Windows installer
 
-# Builds Kingdom-Attendance-Setup-<version>.exe on a Windows runner.
+# Builds Kingdom-Hall-Attendance-Setup-<version>.exe on a Windows runner.
 #  - Run by hand (Actions → Windows installer → Run workflow), or push to update-G: the installer is attached to the run.
 #  - Push a tag such as v0.4.0: the installer is also uploaded to a DRAFT GitHub release, which the owner reviews and publishes.
 #    Installed apps update from published releases only.
@@ -46,6 +46,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
-          name: Kingdom-Attendance-Setup
+          name: Kingdom-Hall-Attendance-Setup
           path: release/*.exe
           if-no-files-found: error

@@ -15,6 +15,7 @@
 - **Privacy wording.** Names are now kept on the AV computer and in the connected Google account.
 
 ### Changed
+- **The app is now called Kingdom Hall Attendance** (window, tray, installer `Kingdom-Hall-Attendance-Setup-<version>.exe`). The data folder keeps its old name, so nothing is lost on update.
 - **Finalized meetings can still be changed.** A mark, tap or Zoom total changed after **Finalize** overwrites that meeting's record in History
   and flags the video as out of date. The AV desk shows **Update the video**; the Unlock button is gone.
 - **Attendance video is 20 seconds** (was 12): intro 2.5 s, Kingdom Hall 3 s, Zoom 3 s, total 11.5 s. Still 30 fps, 1920×1080.

@@ -1,6 +1,6 @@
 'use strict';
 
-// Kingdom Attendance desktop app: runs the server in the tray, makes the video on Finalize
+// Kingdom Hall Attendance desktop app: runs the server in the tray, makes the video on Finalize
 // and hands it to M³. Closing the window keeps it running; Quit from the tray stops it.
 
 const path = require('node:path');
@@ -15,7 +15,9 @@ const { renderAttendance } = require('./render/recorder');
 const { createUpdates } = require('./core/updates');
 
 // Developer switches: ATT_DATA_DIR uses a scratch data folder; ATT_SHOT saves a screenshot of the window.
-if (process.env.ATT_DATA_DIR) app.setPath('userData', path.resolve(process.env.ATT_DATA_DIR));
+// The app was first called "Kingdom Attendance". Its data folder (the list, History, settings, Google sign-in) keeps that
+// name, so renaming the app doesn't leave existing installs looking at an empty folder.
+app.setPath('userData', process.env.ATT_DATA_DIR ? path.resolve(process.env.ATT_DATA_DIR) : path.join(app.getPath('appData'), 'Kingdom Attendance'));
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -63,7 +65,7 @@ if (!app.requestSingleInstanceLock()) {
       // Wide enough for the desktop layout (sidebar from 900 px), but never bigger than the screen.
       const area = screen.getPrimaryDisplay().workAreaSize;
       win = new BrowserWindow({
-        width: Math.min(1280, area.width), height: Math.min(820, area.height), minWidth: 420, minHeight: 520, show: false, icon: ICON, title: 'Kingdom Attendance',
+        width: Math.min(1280, area.width), height: Math.min(820, area.height), minWidth: 420, minHeight: 520, show: false, icon: ICON, title: 'Kingdom Hall Attendance',
         backgroundColor: nativeTheme.shouldUseDarkColors ? '#121a2b' : '#ffffff', // the page colour, so opening doesn't flash
         autoHideMenuBar: true,
         webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
@@ -92,8 +94,8 @@ if (!app.requestSingleInstanceLock()) {
   async function confirmQuit() {
     const rendering = service && service.getState().render.status === 'rendering';
     const { response } = await dialog.showMessageBox(win && win.isVisible() ? win : null, {
-      type: 'question', buttons: ['Quit', 'Cancel'], defaultId: 1, cancelId: 1, title: 'Quit Kingdom Attendance',
-      message: rendering ? 'The video is still being made. Quit anyway?' : 'Quit Kingdom Attendance?',
+      type: 'question', buttons: ['Quit', 'Cancel'], defaultId: 1, cancelId: 1, title: 'Quit Kingdom Hall Attendance',
+      message: rendering ? 'The video is still being made. Quit anyway?' : 'Quit Kingdom Hall Attendance?',
       detail: 'Phones and the OBS dock stop working until it is opened again. The count is saved.',
     });
     if (response !== 0) return;
@@ -104,9 +106,9 @@ if (!app.requestSingleInstanceLock()) {
   function buildTray() {
     const img = nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 });
     tray = new Tray(img);
-    tray.setToolTip('Kingdom Attendance');
+    tray.setToolTip('Kingdom Hall Attendance');
     tray.setContextMenu(Menu.buildFromTemplate([
-      { label: 'Open Kingdom Attendance', click: showWindow },
+      { label: 'Open Kingdom Hall Attendance', click: showWindow },
       { label: 'Open the dock in the browser', click: () => shell.openExternal(server.urls().dock) },
       { type: 'separator' },
       { label: 'Quit', click: confirmQuit },
@@ -172,7 +174,7 @@ if (!app.requestSingleInstanceLock()) {
     try {
       await server.listen();
     } catch (err) {
-      dialog.showErrorBox('Kingdom Attendance could not start', `Ports ${getSettings().port} and ${getSettings().port + 1} are both in use.\n\n${err.message}`);
+      dialog.showErrorBox('Kingdom Hall Attendance could not start', `Ports ${getSettings().port} and ${getSettings().port + 1} are both in use.\n\n${err.message}`);
       quitting = true;
       app.quit();
       return;

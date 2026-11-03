@@ -104,7 +104,7 @@ function logRows(history, type, start) {
   return rows;
 }
 
-const readMeRows = (congregation) => [[], ['', `Log for Attendance | ${congregation}`], [], ['', 'Kept up to date by Kingdom Attendance after every finalized meeting.'],
+const readMeRows = (congregation) => [[], ['', `Log for Attendance | ${congregation}`], [], ['', 'Kept up to date by Kingdom Hall Attendance after every finalized meeting.'],
   ['', 'Each service year (September 1 – August 31) gets fresh Weekend Meeting and Midweek Meeting tabs; the old ones are kept, renamed with their year.']];
 
 module.exports = { TAB, serviceYearOf, yearLabel, recordTab, meetingRows, recordRows, logRows, readMeRows, totalsOf, colLetter };

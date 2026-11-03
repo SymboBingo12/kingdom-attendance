@@ -60,7 +60,7 @@
                <p class="dim small" style="margin-top:-8px">Saves the attendance in History and makes the video for M³. Later changes overwrite it and ask you to update the video.</p>`}
           </div><div class="deskside">
           <section class="st-card"><h3 class="st-card__title">Connect a phone</h3>
-            ${c ? `<div class="connect"><img class="qr" src="${c.qr}" alt="QR code that opens Kingdom Attendance"><div><div class="dim small">PIN</div><div class="pin st-num">${UI.esc(c.pin)}</div><div class="dim small">${UI.esc(c.count)}</div></div></div>`
+            ${c ? `<div class="connect"><img class="qr" src="${c.qr}" alt="QR code that opens Kingdom Hall Attendance"><div><div class="dim small">PIN</div><div class="pin st-num">${UI.esc(c.pin)}</div><div class="dim small">${UI.esc(c.count)}</div></div></div>`
               : '<p class="dim small">Loading the QR code…</p>'}
             <p class="st-card__hint" style="margin-top:var(--space-3)">One QR code for everyone: attendants and the Zoom host land on the same home screen.</p></section>
           <section class="st-card"><h3 class="st-card__title">Meeting</h3>

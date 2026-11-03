@@ -23,7 +23,7 @@
     const when = UI.longDate(m.date);
     if (av && !named) {
       return `<section class="welcome">${UI.disc(ART.listArt, 'st-rest st-arrive')}<div>
-          <div class="dim">${UI.esc(state.congregation || 'Kingdom Attendance')} · ${when}</div><h2>Add your publisher list</h2>
+          <div class="dim">${UI.esc(state.congregation || 'Kingdom Hall Attendance')} · ${when}</div><h2>Add your publisher list</h2>
           <p>Upload your attendance sheet once. Then attendants mark each person at the Kingdom Hall or on Zoom, and History keeps every name for the circuit overseer.</p>
           <div class="row2"><button class="st-btn st-btn--primary st-btn--main" data-go="setup">Add the list</button><button class="st-btn st-btn--secondary st-btn--main" data-go="mark">Count by Left, Center and Right instead</button></div></div></section>
         <section class="stats three">${stat('kh', 'Kingdom Hall', t.hall)}${stat('zm', 'Zoom', t.zoom)}${stat('', 'Total', t.total)}</section>`;
@@ -33,7 +33,7 @@
     const progress = named
       ? M.groupsOf(state.roster).map(([g, ps]) => { const k = M.countMarked(ps, m.marks); return meter(g, k, ps.length, `${k} of ${ps.length}`); }).join('')
       : ['left', 'center', 'right'].map((l) => meter(l[0].toUpperCase() + l.slice(1), m.lanes[l], t.hall, m.lanes[l])).join('');
-    return `<section class="herocard"><div><div class="eyebrow">${UI.esc(state.congregation || 'Kingdom Attendance')}</div><h2>${UI.typeName(m.type)}</h2>
+    return `<section class="herocard"><div><div class="eyebrow">${UI.esc(state.congregation || 'Kingdom Hall Attendance')}</div><h2>${UI.typeName(m.type)}</h2>
           <div class="meta"><span>${when}</span>${UI.livePill(state, ctx.live)}</div>
           <div class="cta"><button class="st-btn st-btn--primary st-btn--main" data-go="mark">${UI.icon('mark')}Mark attendance</button>${av ? `<button class="st-btn st-btn--secondary st-btn--main" data-go="desk">${UI.icon('desk')}AV desk</button>` : ''}</div></div>
         <div class="artframe art-grain st-rest st-arrive">${UI.art(ART.attendanceHeroArt)}</div></section>
@@ -64,11 +64,11 @@
       return `
         <div class="pad">
           <div class="artframe art-grain st-rest st-arrive">${UI.art(ART.attendanceHeroArt)}</div>
-          <header class="ptitle"><small>${UI.esc(state.congregation || 'Kingdom Attendance')} · ${UI.longDate(state.meeting.date)}</small>
+          <header class="ptitle"><small>${UI.esc(state.congregation || 'Kingdom Hall Attendance')} · ${UI.longDate(state.meeting.date)}</small>
             <div><h1>${UI.typeName(state.meeting.type)}</h1>${UI.livePill(state, ctx.live)}</div></header>
           ${first}
           ${UI.tiles(state.totals)}
-          <nav class="nav" aria-label="Kingdom Attendance">
+          <nav class="nav" aria-label="Kingdom Hall Attendance">
             ${card('mark', 'mark', 'Mark attendance', named ? `Tap KH or Zoom beside each name · ${marked} marked` : 'Count Left, Center and Right', { main: true, delay: 40 })}
             ${card('history', 'history', 'History', 'Past meetings and the report for the circuit overseer', { delay: 80 })}
             ${av ? card('desk', 'desk', 'AV desk', 'Finalize, the video, and connecting phones', { delay: 120 }) : ''}

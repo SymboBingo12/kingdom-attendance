@@ -11,7 +11,7 @@ Tick each box and note anything odd.
 
 ## 1. M³ and OBS (needs the hall setup)
 
-- [ ] M³: **Settings → Integrations → Shared folder → "Add media from a shared folder"** is on, and Kingdom Attendance points at the same folder.
+- [ ] M³: **Settings → Integrations → Shared folder → "Add media from a shared folder"** is on, and Kingdom Hall Attendance points at the same folder.
 - [ ] Mark a few names and press **Finalize** in the OBS dock. The dock says **Ready in M³** within about 30 s.
 - [ ] The video appears in **today's** meeting list in M³ **without restarting M³**. If it needs a refresh, write down how.
 - [ ] Clicking it in M³ plays it on the hall monitor, and the picture is sharp.
@@ -35,7 +35,7 @@ Tick each box and note anything odd.
 ## 4. Restart mid-count
 
 - [ ] Mark some names, then restart the AV computer.
-- [ ] Kingdom Attendance starts by itself in the tray, and the marks are the same as before.
+- [ ] Kingdom Hall Attendance starts by itself in the tray, and the marks are the same as before.
 - [ ] After updating from 0.2.x, the old History is still there with its numbers.
 
 ## 5. Timing

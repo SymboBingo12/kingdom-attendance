@@ -18,7 +18,7 @@ const b64url = (buf) => buf.toString('base64').replace(/\+/g, '-').replace(/\//g
 const emailOf = (idToken) => {
   try { return JSON.parse(Buffer.from(String(idToken).split('.')[1], 'base64url').toString('utf8')).email || ''; } catch { return ''; }
 };
-const PAGE = (msg) => `<!doctype html><meta charset="utf-8"><title>Kingdom Attendance</title><body style="font:18px system-ui;text-align:center;margin-top:20vh">${msg}</body>`;
+const PAGE = (msg) => `<!doctype html><meta charset="utf-8"><title>Kingdom Hall Attendance</title><body style="font:18px system-ui;text-align:center;margin-top:20vh">${msg}</body>`;
 
 function createAuth({ fetch: doFetch = fetch, clientId, clientSecret, load, save, now = () => Date.now() }) {
   const configured = () => !!clientId && !clientId.startsWith('YOUR_CLIENT_ID');
@@ -59,7 +59,7 @@ function createAuth({ fetch: doFetch = fetch, clientId, clientSecret, load, save
         try {
           const t = await token({ code: q.get('code'), redirect_uri: redirect, grant_type: 'authorization_code', code_verifier: verifier });
           save({ tokens: { access_token: t.access_token, refresh_token: t.refresh_token, expires_at: now() + (t.expires_in || 3600) * 1000 } });
-          finish('Connected. You can close this tab and go back to Kingdom Attendance.');
+          finish('Connected. You can close this tab and go back to Kingdom Hall Attendance.');
           resolve({ email: emailOf(t.id_token) });
         } catch (err) {
           finish('Google could not finish the sign-in. You can close this tab and try again.');

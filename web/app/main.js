@@ -1,6 +1,6 @@
 'use strict';
 
-// Kingdom Attendance web app: one link for everyone. Phones enter the PIN, then land on Home; the AV computer
+// Kingdom Hall Attendance web app: one link for everyone. Phones enter the PIN, then land on Home; the AV computer
 // (and the OBS dock at /desk) also gets the AV desk, the publisher list and Settings. Views register on
 // window.AppViews and draw from the live state the AV computer pushes over Server-Sent Events.
 
@@ -93,10 +93,10 @@
       const badge = i.badge != null ? `<span class="badge">${i.badge}</span>` : '';
       items += `<button class="navi" data-go="${i.go}" ${i.current ? 'aria-current="page"' : ''}>${UI.icon(i.to)}<span>${UI.esc(i.label)}</span>${badge}</button>`;
     }
-    const html = `<div class="brand">${UI.disc(window.AttendanceUiArt.markArt)}<div><b>Kingdom Attendance</b><small>${UI.esc(state.congregation || 'Kingdom Hall')}</small></div></div>
+    const html = `<div class="brand">${UI.disc(window.AttendanceUiArt.markArt)}<div><b>Kingdom Hall Attendance</b><small>${UI.esc(state.congregation || 'Kingdom Hall')}</small></div></div>
       ${sb.addList ? `<button class="addlist" data-go="setup">${UI.icon('plus')}Add publisher list</button>` : ''}
       <nav class="navlist">${items}</nav>
-      ${sb.pin && c ? `<div class="sidepin"><img class="qr" src="${c.qr}" alt="QR code that opens Kingdom Attendance on a phone"><div><div class="dim small">Phones · PIN</div><div class="pin st-num">${UI.esc(c.pin)}</div></div></div>` : ''}`;
+      ${sb.pin && c ? `<div class="sidepin"><img class="qr" src="${c.qr}" alt="QR code that opens Kingdom Hall Attendance on a phone"><div><div class="dim small">Phones · PIN</div><div class="pin st-num">${UI.esc(c.pin)}</div></div></div>` : ''}`;
     if (mem.html !== html) { side.innerHTML = html; mem.html = html; }
     return sb;
   }

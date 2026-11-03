@@ -72,7 +72,7 @@
           ${seg('Appearance', 'appearance', ['light', 'dark', 'auto'], s.appearance || 'light')}
         </section>
         <section class="st-card set"><h3 class="st-card__title">Phones</h3>
-          <div class="connect"><img class="qr" src="${info.qr}" alt="QR code that opens Kingdom Attendance"><div><div class="dim small">PIN</div><div class="pin st-num">${UI.esc(s.pin)}</div><button class="st-btn st-btn--secondary" data-act="newPin">New PIN</button></div></div>
+          <div class="connect"><img class="qr" src="${info.qr}" alt="QR code that opens Kingdom Hall Attendance"><div><div class="dim small">PIN</div><div class="pin st-num">${UI.esc(s.pin)}</div><button class="st-btn st-btn--secondary" data-act="newPin">New PIN</button></div></div>
           ${linkRow(mem, 'count', 'The one link for everyone', info.links.count)}
           ${linkRow(mem, 'named', 'Short name (iPhones and computers)', info.links.named)}
           <p class="st-card__hint">The address can change from week to week. If a saved link stops working, scan the QR code again.</p>
@@ -84,7 +84,7 @@
         ${google(mem.google)}
         <section class="st-card set">${sw('openAtLogin', s.openAtLogin, 'Start with Windows', 'Opens hidden in the tray when the computer starts')}</section>
         <section class="st-card set"><h3 class="st-card__title">Updates</h3>
-          <p class="st-card__hint"><b>Kingdom Attendance ${UI.esc(info.version)}</b> · ${UI.esc((UPDATE_TEXT[u.state] || UPDATE_TEXT.idle)(u))}</p>
+          <p class="st-card__hint"><b>Kingdom Hall Attendance ${UI.esc(info.version)}</b> · ${UI.esc((UPDATE_TEXT[u.state] || UPDATE_TEXT.idle)(u))}</p>
           <div class="row2"><button class="st-btn st-btn--secondary" data-host="check-update" ${['unsupported', 'checking', 'downloading', 'ready'].includes(u.state) ? 'disabled' : ''}>Check now</button>${u.state === 'ready' ? '<button class="st-btn st-btn--primary" data-act="install">Restart and update</button>' : ''}</div>
           ${sw('autoUpdate', s.autoUpdate, 'Update automatically', 'New versions download in the background and install when the app is quit. It never restarts by itself.')}
         </section>

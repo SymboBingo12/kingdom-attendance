@@ -34,7 +34,7 @@ const server = createServer(service, { settings: getSettings, webDir: path.join(
 
 server.listen().then(() => {
   const u = server.urls();
-  console.log(`Kingdom Attendance is running (data: ${dataDir})`);
+  console.log(`Kingdom Hall Attendance is running (data: ${dataDir})`);
   console.log(`  Link:   ${u.count}${u.named ? `  (or ${u.named})` : ''}`);
   console.log(`  Dock:   ${u.dock}`);
   console.log(`  PIN:    ${getSettings().pin}`);

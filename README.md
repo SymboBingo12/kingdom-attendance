@@ -1,4 +1,4 @@
-# Kingdom Attendance
+# Kingdom Hall Attendance
 
 Count the meeting attendance on phones, then show it as a short video on the hall monitor and on Zoom.
 
@@ -23,12 +23,12 @@ The first tap on a new day starts a fresh meeting. Every finalized meeting is ke
 
 ## One-time setup on the AV computer
 
-1. **Install.** Run `Kingdom-Attendance-Setup-<version>.exe`. The installer isn't code-signed, so Windows SmartScreen will warn you; choose **More info → Run anyway**.
+1. **Install.** Run `Kingdom-Hall-Attendance-Setup-<version>.exe`. The installer isn't code-signed, so Windows SmartScreen will warn you; choose **More info → Run anyway**.
    The app lives in the tray and starts with Windows. Its window is the same app the phones use, with the AV-only parts added.
 2. **Publisher list.** On the home screen, **Add your publisher list**: upload the attendance sheet (.xlsx) or a CSV, or paste names. Check what was read, then **Use this list**. Change it any time under **Publisher list**.
 3. **Settings → Attendance video.** Type the congregation name (it appears on the video).
 4. **M³.** In M³, open **Settings → Integrations → Shared folder** and turn on **"Add media from a shared folder"**.
-   Choose a folder, then choose the **same folder** in Kingdom Attendance (**Settings → M³ shared folder → Choose…**).
+   Choose a folder, then choose the **same folder** in Kingdom Hall Attendance (**Settings → M³ shared folder → Choose…**).
    The app puts each video in that folder's `YYYY-MM-DD` subfolder, and M³ adds it to that meeting's media list.
    If no folder is set, the video is saved to the Desktop for you to drag into M³.
 5. **OBS dock.** In OBS, open **View → Docks → Custom Browser Docks…**, name it `Attendance` and use the URL `http://localhost:4590/desk` (also shown under **Settings → OBS dock**).
@@ -61,7 +61,7 @@ The v1 addresses `/count`, `/zoom`, `/dock` and `/history` still work and lead t
 3. **Zoom:** the number counts up.
 4. **Total:** the total, with both parts, held on screen.
 
-A still image of the last frame is saved next to it (tray → *Open Kingdom Attendance* → *Open the videos folder*).
+A still image of the last frame is saved next to it (tray → *Open Kingdom Hall Attendance* → *Open the videos folder*).
 
 ## Google Sheets (optional)
 
