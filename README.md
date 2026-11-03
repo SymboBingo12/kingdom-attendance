@@ -4,7 +4,7 @@ Count the meeting attendance on phones, then show it as a short video on the hal
 
 It replaces the old routine: marking names in a spreadsheet, typing the numbers into Canva, downloading the slide, and uploading it to M³.
 Now everyone opens **one link**. Attendants mark each person **KH** or **Zoom** on their phones, and the AV desk presses **Finalize**.
-The app makes a 12-second attendance video and drops it into M³ by itself, and keeps the names for the circuit overseer's report.
+The app makes a 20-second attendance video and drops it into M³ by itself, and keeps the names for the circuit overseer's report.
 
 > An independent project. Not affiliated with or endorsed by any organisation. It uses original artwork only.
 
@@ -54,7 +54,7 @@ The v1 addresses `/count`, `/zoom`, `/dock` and `/history` still work and lead t
 
 ## The video
 
-12 seconds, 1920×1080, MP4 (H.264), light Steward design:
+20 seconds, 1920×1080, MP4 (H.264), light Steward design:
 
 1. **Intro:** Meeting Attendance, congregation, Midweek or Weekend, and the date.
 2. **Kingdom Hall:** the number counts up.

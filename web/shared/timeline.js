@@ -4,9 +4,9 @@
 // Deterministic: the same t always draws the same frame, so the video can be rendered frame by frame.
 
 (function (root) {
-  const DURATION = 12;
+  const DURATION = 20;
   const FPS = 30;
-  const BEATS = { intro: [0, 2.5], hall: [2.5, 5], zoom: [5, 7.5], total: [7.5, 12], foot: [2.5, 12] };
+  const BEATS = { intro: [0, 2.5], hall: [2.5, 5.5], zoom: [5.5, 8.5], total: [8.5, 20], foot: [2.5, 20] };
   const COUNT_DELAY = 0.3; // numbers start counting this long into their beat
   const COUNT_TIME = 1.8;
   const ENTER = 0.8;
