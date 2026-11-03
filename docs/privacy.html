@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy policy · Kingdom Hall Attendance</title>
+<style>
+  body { font: 18px/1.6 system-ui, sans-serif; max-width: 42rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; color: #1f2a44; background: #fff; }
+  h1 { color: #3a5a90; margin-bottom: .2em; }
+  a { color: #3a5a90; }
+  .dim { color: #5b6783; }
+  @media (prefers-color-scheme: dark) { body { background: #151a26; color: #e6eaf4; } h1, a { color: #9db6e6; } .dim { color: #a3aec7; } }
+</style>
+</head>
+<body>
+<p><a href="./">← Kingdom Hall Attendance</a></p>
+<h1>Privacy policy</h1>
+<p class="dim">Last updated: November 3, 2026</p>
+
+<p>Kingdom Hall Attendance is a desktop app that runs on a congregation's own computer. The developer runs no server and receives none of your data.</p>
+
+<h2>What the app keeps</h2>
+<ul>
+  <li><b>On the AV computer:</b> the publisher list (names), each meeting's attendance marks, the settings, and, if Google Sheets is connected, a sign-in token. These are saved in the app's data folder on that computer.</li>
+  <li><b>On phones:</b> nothing. Phones load pages from the AV computer over the hall's Wi-Fi and keep no copy of the names.</li>
+</ul>
+
+<h2>Google Sheets (optional)</h2>
+<p>If, and only if, someone chooses <b>Connect Google</b>, the app signs in with the Google account they pick and requests:</p>
+<ul>
+  <li><b>Access to files the app itself creates</b> (the <code>drive.file</code> permission), so it can create and update two spreadsheets, <em>Attendance | Congregation name</em> and <em>Log for Attendance | Congregation name</em>. The app cannot see any other file in that Google Drive.</li>
+  <li><b>Your email address</b>, shown in the app so you know which account is connected.</li>
+</ul>
+<p>After each finalized meeting the app writes the meeting's names, attendance marks and totals into those two spreadsheets. They therefore live in the connected Google account, and the people who can open them are decided by that account's sharing settings. <b>Connect only an account the congregation has agreed to.</b></p>
+<p>The data goes directly from the AV computer to Google. It is not sent to the developer or to any other party, and it is not used for advertising or analytics.</p>
+<p>The app's use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+
+<h2>Disconnecting and deleting</h2>
+<ul>
+  <li><b>Disconnect Google</b> in the app's Settings revokes the app's access and removes the sign-in token from the computer. New meetings then stop syncing. The spreadsheets already created stay in the Google account until the account owner deletes them.</li>
+  <li>You can also remove the app's access at any time at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+  <li>Deleting the app's data folder on the AV computer removes the names and history stored there.</li>
+</ul>
+
+<h2>Other internet use</h2>
+<p>The app checks this project's public GitHub releases for new versions (this can be switched off in Settings). That request contains no names or attendance data.</p>
+
+<h2>Contact</h2>
+<p>Questions or requests: open an issue at <a href="https://github.com/SymboBingo12/kingdom-attendance/issues">github.com/SymboBingo12/kingdom-attendance/issues</a>.</p>
+<p class="dim">An independent project. Not affiliated with or endorsed by any organisation.</p>
+</body>
+</html>
