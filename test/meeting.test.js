@@ -11,7 +11,7 @@ const sunday = new Date(2026, 10, 1); // Sun 1 Nov 2026
 
 test('a new meeting starts at zero, typed from the weekday', () => {
   assert.deepEqual(newMeeting(sunday), {
-    date: '2026-11-01', type: 'weekend', lanes: { left: 0, center: 0, right: 0 }, zoom: 0, finalized: false, finalizedAt: null,
+    date: '2026-11-01', type: 'weekend', lanes: { left: 0, center: 0, right: 0 }, zoom: 0, finalized: false, finalizedAt: null, videoStale: false,
     marks: {}, unnamed: 0, visitors: [],
   });
   assert.equal(meetingType(new Date(2026, 10, 5)), 'midweek'); // Thu
@@ -47,13 +47,13 @@ test('bad lanes and deltas are rejected', () => {
   assert.throws(() => applyTap(m0, 'left', 5), { code: 'BAD_DELTA' });
 });
 
-test('a finalized meeting is locked until unlocked', () => {
+test('a finalized meeting can still be changed', () => {
   let m = applyTap(applyTap(newMeeting(sunday), 'left', 1), 'left', 1);
   const f = finalize(m, new Date(2026, 10, 1, 11, 45));
   assert.equal(f.finalized, true);
   assert.ok(f.finalizedAt);
-  assert.throws(() => applyTap(f, 'left', 1), { code: 'LOCKED' });
-  assert.throws(() => setZoom(f, 3), { code: 'LOCKED' });
+  assert.equal(applyTap(f, 'left', 1).lanes.left, 3);
+  assert.equal(setZoom(f, 3).zoom, 3);
   const u = unlock(f);
   assert.equal(u.finalized, false);
   assert.equal(applyTap(u, 'left', 1).lanes.left, 3);
@@ -108,11 +108,11 @@ test('visitors added during the meeting get their own ids and can be marked', ()
   assert.throws(() => addVisitor(newMeeting(sunday), 'x'.repeat(81)), { code: 'BAD_NAME' });
 });
 
-test('marks are locked once finalized', () => {
+test('marks can still be changed once finalized', () => {
   const m = finalize(newMeeting(sunday), sunday);
-  assert.throws(() => setMark(m, 'p1', 'kh'), { code: 'LOCKED' });
-  assert.throws(() => bumpUnnamed(m, 1), { code: 'LOCKED' });
-  assert.throws(() => addVisitor(m, 'Lim'), { code: 'LOCKED' });
+  assert.equal(setMark(m, 'p1', 'kh').marks.p1.where, 'kh');
+  assert.equal(bumpUnnamed(m, 1).unnamed, 1);
+  assert.equal(addVisitor(m, 'Lim').meeting.visitors.length, 1);
 });
 
 test('bad marks are refused', () => {

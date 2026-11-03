@@ -1,6 +1,6 @@
 'use strict';
 
-// The AV desk (also the OBS dock at /desk): totals, Finalize and the video, Unlock, Midweek/Weekend,
+// The AV desk (also the OBS dock at /desk): totals, Finalize and the video, Midweek/Weekend,
 // New meeting, and the QR code with the PIN for phones. AV computer only.
 
 (function () {
@@ -26,9 +26,10 @@
 
   function status(state) {
     const r = state.render;
-    if (r.status === 'ready') return UI.banner('ok', 'info', r.message || 'Ready in M³', r.savedTo ? `Saved in ${r.savedTo}. Phones are locked.` : 'Phones are locked.');
     if (r.status === 'error') return UI.banner('danger', 'warn', "Couldn't make the video", r.message, 'alert');
-    if (state.meeting.finalized) return UI.banner('', 'lock', 'Finalized', 'Phones are locked.');
+    if (state.meeting.finalized && state.meeting.videoStale) return UI.banner('warn', 'warn', 'Attendance changed after finalizing', 'The record is updated. Update the video so M³ has the new numbers.');
+    if (r.status === 'ready') return UI.banner('ok', 'info', r.message || 'Ready in M³', r.savedTo ? `Saved in ${r.savedTo}.` : '');
+    if (state.meeting.finalized) return UI.banner('', 'lock', 'Finalized', 'Changes still update the record; then update the video.');
     return '';
   }
 
@@ -44,9 +45,9 @@
           ${state.mode === 'names' ? `<p class="dim small" style="margin-top:-8px">Zoom comes from the names marked Zoom. Kingdom Hall includes ${m.unnamed || 0} unnamed visitor${m.unnamed === 1 ? '' : 's'}.</p>` : ''}
           ${status(state)}
           ${m.finalized
-            ? `<div class="row2"><button class="st-btn st-btn--secondary st-btn--main" data-act="unlock" ${rendering ? 'disabled' : ''}>Unlock</button><button class="st-btn st-btn--secondary st-btn--main" data-act="rerender" ${rendering ? 'disabled' : ''}>Make the video again</button></div>`
+            ? `<button class="st-btn ${m.videoStale ? 'st-btn--primary' : 'st-btn--secondary'} st-btn--main st-btn--block" data-act="rerender" ${rendering ? 'disabled' : ''}>Update the video</button>`
             : `<button class="st-btn st-btn--primary st-btn--main st-btn--block" data-act="finalize">Finalize</button>
-               <p class="dim small" style="margin-top:-8px">Locks the numbers and makes the attendance video for M³.</p>`}
+               <p class="dim small" style="margin-top:-8px">Saves the attendance in History and makes the video for M³. Later changes overwrite it and ask you to update the video.</p>`}
           </div><div class="deskside">
           <section class="st-card"><h3 class="st-card__title">Connect a phone</h3>
             ${c ? `<div class="connect"><img class="qr" src="${c.qr}" alt="QR code that opens Kingdom Attendance"><div><div class="dim small">PIN</div><div class="pin st-num">${UI.esc(c.pin)}</div><div class="dim small">${UI.esc(c.count)}</div></div></div>`

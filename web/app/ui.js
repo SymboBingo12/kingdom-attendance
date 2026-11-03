@@ -37,6 +37,7 @@
     `<header class="bar"><button class="back" data-go="${back.to}">${icon('back')}${esc(back.label)}</button><h1>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ''}</h1>${right}</header>`;
 
   const livePill = (state, live) => {
+    if (state.meeting.finalized && state.meeting.videoStale) return '<span class="st-pill st-pill--warn"><i></i>Video out of date</span>';
     if (state.meeting.finalized) return '<span class="st-pill st-pill--warn"><i></i>Finalized</span>';
     return live === 'live' ? '<span class="st-pill st-pill--ok"><i></i>Live</span>' : '<span class="st-pill st-pill--warn"><i></i>Reconnecting…</span>';
   };

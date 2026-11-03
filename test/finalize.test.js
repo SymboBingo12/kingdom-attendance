@@ -102,3 +102,26 @@ test('without a renderer (headless) Finalize just locks the numbers', async () =
   assert.equal(service.getState().meeting.finalized, true);
   assert.equal(service.getState().render.status, 'idle');
 });
+
+test('a change after Finalize overwrites the history record and asks for a new video', async () => {
+  const { service, calls } = make();
+  service.tap('left', 1);
+  service.finalize();
+  await service.idle();
+  assert.equal(service.getState().meeting.videoStale, false);
+
+  service.tap('left', 1);
+  service.setZoom(5);
+  const s = service.getState();
+  assert.equal(s.meeting.finalized, true);
+  assert.equal(s.meeting.videoStale, true);
+  const list = service.store.listHistory();
+  assert.equal(list.length, 1);
+  assert.deepEqual([list[0].lanes.left, list[0].zoom], [2, 5]);
+
+  service.rerender();
+  await service.idle();
+  assert.equal(service.getState().meeting.videoStale, false);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1].totals.total, 7);
+});

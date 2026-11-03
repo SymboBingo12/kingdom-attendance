@@ -14,7 +14,7 @@ The app makes a 12-second attendance video and drops it into M³ by itself, and 
 |---|---|
 | **Attendants** (back of the hall) | Scan the QR code, enter the PIN, open **Mark attendance**, and tap **KH** beside each person present (**− / +** for a household; tap again to clear). Search and **Not marked** help find who's left. Unnamed visitors have a counter; a visitor can be added by name. Several phones can mark at once; they all show the same list. |
 | **Zoom host** | Same link: taps **Zoom** beside the names on Zoom. |
-| **AV desk** | Near the end of the meeting, opens **AV desk** (or the OBS dock) and presses **Finalize**. After a short wait it says **Ready in M³**. Click the video in M³ before the closing song ends. To fix a mark: **Unlock**, fix, **Finalize** again. |
+| **AV desk** | Near the end of the meeting, opens **AV desk** (or the OBS dock) and presses **Finalize**. After a short wait it says **Ready in M³**. Click the video in M³ before the closing song ends. Marks can still change after that: a change overwrites the meeting's record in History, and the desk asks you to press **Update the video**. |
 
 Without a publisher list the app counts by column instead: **Left / Center / Right**, and the Zoom host types the total with a **− [n] +** stepper.
 
@@ -49,7 +49,7 @@ The v1 addresses `/count`, `/zoom`, `/dock` and `/history` still work and lead t
 - The app announces itself as `attendance.local` on port **4590** (or 4591 if that's taken). It uses neither Stage Timer's port 80/4580 nor Stage Countdown's 4578.
   The QR code and links use the PC's IP address, because many Android phones can't open `.local` names. The address can change from week to week, so scan the QR code again if a saved link stops working.
 - **Names stay on the AV computer.** The publisher list and each meeting's marks are saved only in the app's data folder on the AV computer. They never appear on the video, never go into this repository, and are shown only to phones that entered the PIN. Phones keep no copy.
-- Phones need the 4-digit PIN; the AV computer itself doesn't. Five wrong PINs in a minute block that phone for a minute. Finalize, Unlock, the list and Settings work only on the AV computer.
+- Phones need the 4-digit PIN; the AV computer itself doesn't. Five wrong PINs in a minute block that phone for a minute. Finalize, Update the video, the list and Settings work only on the AV computer.
 - The only internet request is the update check against this project's GitHub releases (**Settings → Updates**; it can be switched off).
 
 ## The video

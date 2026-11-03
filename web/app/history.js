@@ -86,7 +86,7 @@
     // Fetches the history when the screen opens, and again after a meeting is finalized or unlocked.
     after({ ctx }) {
       const mem = ctx.memory('history');
-      const key = `${ctx.state.meeting.date}|${ctx.state.meeting.finalized}|${ctx.state.meeting.finalizedAt}`;
+      const key = `${ctx.state.meeting.date}|${ctx.state.meeting.finalized}|${ctx.state.meeting.finalizedAt}|${JSON.stringify(ctx.state.totals)}`;
       if (mem.key === key || mem.loading) return;
       mem.loading = true;
       ctx.api.get('/api/history').then((entries) => {

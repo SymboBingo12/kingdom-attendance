@@ -32,6 +32,7 @@ function newMeeting(d, type) {
     zoom: 0,
     finalized: false,
     finalizedAt: null,
+    videoStale: false, // changed after it was finalized: the video no longer matches
     marks: {}, // person id -> { where: 'kh' | 'zoom', n } when counting by name
     unnamed: 0, // people at the hall nobody knows by name
     visitors: [], // { id: 'v1', name } added during this meeting only
@@ -47,14 +48,9 @@ function upgrade(m) {
 const MAX_HOUSEHOLD = 20;
 const MAX_NAME = 80;
 
-function assertOpen(m) {
-  if (m.finalized) throw new MeetingError('LOCKED', 'Attendance is finalized. Unlock to change it.');
-}
-
 function applyTap(m, lane, delta) {
   if (!LANES.includes(lane)) throw new MeetingError('BAD_LANE', `Unknown column "${lane}".`);
   if (delta !== 1 && delta !== -1) throw new MeetingError('BAD_DELTA', 'A tap adds or removes one person.');
-  assertOpen(m);
   return { ...m, lanes: { ...m.lanes, [lane]: Math.max(0, m.lanes[lane] + delta) } };
 }
 
@@ -64,7 +60,6 @@ function setZoom(m, value) {
   if (!Number.isInteger(n) || n < 0 || n > MAX_ZOOM) {
     throw new MeetingError('BAD_ZOOM', `Zoom must be a whole number from 0 to ${MAX_ZOOM}.`);
   }
-  assertOpen(m);
   return { ...m, zoom: n };
 }
 
@@ -75,7 +70,6 @@ function setMark(m, id, where, n) {
   if (where !== 'kh' && where !== 'zoom' && where !== null) throw new MeetingError('BAD_MARK', 'Mark someone at the Kingdom Hall or on Zoom.');
   if (n !== undefined && (!Number.isInteger(n) || n < 1 || n > MAX_HOUSEHOLD)) throw new MeetingError('BAD_MARK', `A household is 1 to ${MAX_HOUSEHOLD} people.`);
   const up = upgrade(m);
-  assertOpen(up);
   const marks = { ...up.marks };
   if (where === null) delete marks[id];
   else marks[id] = { where, n: n || (marks[id] && marks[id].n) || 1 };
@@ -85,7 +79,6 @@ function setMark(m, id, where, n) {
 function bumpUnnamed(m, delta) {
   if (delta !== 1 && delta !== -1) throw new MeetingError('BAD_DELTA', 'A tap adds or removes one person.');
   const up = upgrade(m);
-  assertOpen(up);
   return { ...up, unnamed: Math.max(0, up.unnamed + delta) };
 }
 
@@ -93,7 +86,6 @@ function addVisitor(m, name) {
   const clean = typeof name === 'string' ? name.trim() : '';
   if (!clean || clean.length > MAX_NAME) throw new MeetingError('BAD_NAME', `Type a name of 1 to ${MAX_NAME} letters.`);
   const up = upgrade(m);
-  assertOpen(up);
   const id = `v${up.visitors.reduce((max, v) => Math.max(max, Number(v.id.slice(1)) || 0), 0) + 1}`;
   return { meeting: { ...up, visitors: [...up.visitors, { id, name: clean }] }, id };
 }
@@ -117,7 +109,7 @@ function totals(m) {
 }
 
 function finalize(m, now) {
-  return { ...m, finalized: true, finalizedAt: now.toISOString() };
+  return { ...m, finalized: true, finalizedAt: now.toISOString(), videoStale: false };
 }
 
 function unlock(m) {

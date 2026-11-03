@@ -60,15 +60,15 @@ test('bad Zoom input is refused and leaves the number alone', async (t) => {
   assert.equal((await ok.json()).totals.zoom, 23);
 });
 
-test('finalize locks taps until unlock', async (t) => {
+test('taps after finalize are accepted and flag the video as out of date', async (t) => {
   const s = await start();
   t.after(() => s.server.close());
   assert.equal((await s.call('/api/finalize', {})).status, 200);
-  const locked = await s.call('/api/tap', { lane: 'left', delta: 1, tapId: tapId() });
-  assert.equal(locked.status, 409);
-  assert.equal((await locked.json()).error, 'Attendance is finalized. Unlock to change it.');
-  assert.equal((await s.call('/api/unlock', {})).status, 200);
-  assert.equal((await s.call('/api/tap', { lane: 'left', delta: 1, tapId: tapId() })).status, 200);
+  const after = await s.call('/api/tap', { lane: 'left', delta: 1, tapId: tapId() });
+  assert.equal(after.status, 200);
+  const state = await after.json();
+  assert.equal(state.meeting.finalized, true);
+  assert.equal(state.meeting.videoStale, true);
 });
 
 test('away from the AV PC the PIN is required, and guessing is slowed down', async (t) => {

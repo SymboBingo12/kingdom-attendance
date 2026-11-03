@@ -18,12 +18,12 @@
     return [...state.roster, ...(state.visitors || []).map((v) => ({ ...v, group: vg, size: 1 }))];
   }
 
-  const lockBanner = (what) => UI.banner('warn', 'lock', 'Finalized', `To change ${what}, the AV desk presses Unlock.`);
+  const finalBanner = () => UI.banner('warn', 'lock', 'Already finalized', 'A change here updates the record. The AV desk then updates the video.');
 
   function names(state, ctx) {
     const mem = ctx.memory('mark');
     const m = state.meeting;
-    const lock = m.finalized ? 'disabled' : '';
+    const lock = '';
     const people = everyone(state);
     const left = people.filter((p) => !m.marks[p.id]).length;
     let html = '';
@@ -48,20 +48,20 @@
       .map(([f, l]) => `<button class="chip" data-f="${f}" aria-pressed="${mem.filter === f}">${l}</button>`).join('');
     return `${UI.bar('Mark attendance', UI.typeName(m.type), UI.livePill(state, ctx.live))}
       <div class="sticky">${UI.tiles(state.totals)}
-        ${m.finalized ? lockBanner('a mark') : ''}
+        ${m.finalized ? finalBanner() : ''}
         <input class="search" type="search" id="q" placeholder="Search a name" value="${UI.esc(mem.q || '')}" aria-label="Search a name" autocomplete="off">
         <div class="chips" role="group" aria-label="Show">${chips}</div>
       </div>
-      <div class="list ${m.finalized ? 'locked' : ''}">${html}</div>`;
+      <div class="list">${html}</div>`;
   }
 
   function columns(state, ctx) {
     const m = state.meeting;
-    const lock = m.finalized ? 'disabled' : '';
+    const lock = '';
     const lanes = LANES.map((l) => `<div class="lane"><button data-lane="${l}" data-d="-1" aria-label="One fewer in ${l}" ${lock}>−</button><span>${cap(l)}<b class="st-num">${m.lanes[l]}</b></span><button class="plus" data-lane="${l}" data-d="1" aria-label="One more in ${l}" ${lock}>+</button></div>`).join('');
     return `${UI.bar('Count attendance', UI.typeName(m.type), UI.livePill(state, ctx.live))}
-      <div class="pad countpad ${m.finalized ? 'locked' : ''}">
-        ${m.finalized ? lockBanner('a number') : ''}
+      <div class="pad countpad">
+        ${m.finalized ? finalBanner() : ''}
         <div class="bigtotal"><div class="k">Kingdom Hall</div><div class="v st-num">${state.totals.hall}</div></div>
         ${lanes}
         <div class="st-card"><h3 class="st-card__title" style="display:flex;gap:var(--space-3);align-items:center">${UI.disc(window.AttendanceArt.remoteArt, 'st-disc--sm')}Zoom</h3>
@@ -86,7 +86,6 @@
       const m = state.meeting;
       const mem = ctx.memory('mark');
       if (b.dataset.f) { mem.filter = b.dataset.f; ctx.redraw(); return; }
-      if (m.finalized) return;
       const tapId = ctx.newTapId();
       if (b.dataset.mark) {
         const x = m.marks[b.dataset.id];

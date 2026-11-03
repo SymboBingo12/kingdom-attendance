@@ -53,6 +53,14 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     };
   };
 
+  // A change to a finalized meeting overwrites its record in History and flags the video as out of date.
+  const edit = (next) => {
+    if (!next.finalized) return commit(next);
+    const state = commit({ ...next, videoStale: true });
+    store.upsertHistory({ ...meeting, people: snapshot() });
+    return state;
+  };
+
   const commit = (next) => {
     meeting = next;
     store.saveCurrent(meeting);
@@ -98,13 +106,13 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
 
     tap(lane, delta, tapId) {
       if (tapId && seen.has(tapId)) return getState();
-      const state = commit(M.applyTap(today(), lane, delta));
+      const state = edit(M.applyTap(today(), lane, delta));
       if (tapId) remember(tapId);
       return state;
     },
 
     setZoom(value) {
-      return commit(M.setZoom(today(), value));
+      return edit(M.setZoom(today(), value));
     },
 
     // ---- Counting by name ----
@@ -120,14 +128,15 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     },
 
     // An invited person or family comes with how many they are and where they attend; they are marked for
-    // today's meeting straight away (unless it is finalized), so the count follows.
+    // today's meeting straight away, so the count follows.
     addPerson(name, group, { size, where } = {}) {
       const next = roster.reduce((max, p) => Math.max(max, Number(p.id.slice(1)) || 0), 0) + 1;
       const person = { id: `p${next}`, ...cleanPerson({ name, group, size, where }) };
       roster = [...roster, person];
       store.saveRoster(roster);
       const m = today();
-      commit(person.where && !m.finalized ? M.setMark(m, person.id, person.where, person.size) : meeting);
+      if (person.where) edit(M.setMark(m, person.id, person.where, person.size));
+      else commit(meeting);
       return person;
     },
 
@@ -144,21 +153,21 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
       if (!person) throw new M.MeetingError('BAD_MARK', 'Unknown person.');
       // A first mark counts the whole household; a later one keeps whatever the attendant set.
       const count = n !== undefined ? n : (m.marks[id] ? undefined : person.size || 1);
-      const state = commit(M.setMark(m, id, where, count));
+      const state = edit(M.setMark(m, id, where, count));
       if (tapId) remember(tapId);
       return state;
     },
 
     unnamed(delta, tapId) {
       if (tapId && seen.has(tapId)) return getState();
-      const state = commit(M.bumpUnnamed(today(), delta));
+      const state = edit(M.bumpUnnamed(today(), delta));
       if (tapId) remember(tapId);
       return state;
     },
 
     addVisitor(name, where) {
       const { meeting: m, id } = M.addVisitor(today(), name);
-      return commit(where ? M.setMark(m, id, where) : m);
+      return edit(where ? M.setMark(m, id, where) : m);
     },
 
     // Locks the numbers, records them in history (with the names as they are today) and starts the video.
@@ -173,6 +182,7 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     rerender() {
       if (isRendering()) throw busy();
       if (!meeting.finalized) throw new M.MeetingError('NOT_FINAL', 'Finalize the attendance first.');
+      commit({ ...meeting, videoStale: false });
       startVideo();
       return getState();
     },
