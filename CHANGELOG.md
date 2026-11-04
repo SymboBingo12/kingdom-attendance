@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 · 2026-11-04
 
 ### Added
 - **Announce cleaners (optional).** **Settings → Cleaners on the video**: when on, the video's last slide shows the attendance total with the Kingdom Hall and Zoom breakdown on the left,
