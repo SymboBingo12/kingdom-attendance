@@ -43,10 +43,11 @@ if (!app.requestSingleInstanceLock()) {
     if (win) win.setBackgroundColor(nativeTheme.shouldUseDarkColors ? '#121a2b' : '#ffffff');
   };
 
-  function slideUrl({ meeting, totals, congregation, theme }) {
+  function slideUrl({ meeting, totals, congregation, theme, cleaners }) {
     const q = new URLSearchParams({
       hall: totals.hall, zoom: totals.zoom, total: totals.total, type: meeting.type, date: meeting.date, cong: congregation, theme,
     });
+    if (cleaners) for (const [k, v] of Object.entries({ cleaners: '1', rr: cleaners.restrooms, hh: cleaners.hall, hn: cleaners.hallName })) q.set(k, v);
     return `http://127.0.0.1:${server.port}/slide?${q}`;
   }
 
