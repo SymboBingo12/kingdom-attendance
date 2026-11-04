@@ -28,7 +28,7 @@ const TYPES = {
   '.woff2': 'font/woff2',
 };
 const STATUS = {
-  BAD_LANE: 400, BAD_DELTA: 400, BAD_ZOOM: 400, BAD_TYPE: 400, BAD_BODY: 400, BAD_MARK: 400, BAD_NAME: 400, BAD_CLEANERS: 400, BAD_LIST: 400, BAD_FILE: 400,
+  BAD_LANE: 400, BAD_DELTA: 400, BAD_ZOOM: 400, BAD_HALL: 400, BAD_TYPE: 400, BAD_BODY: 400, BAD_MARK: 400, BAD_NAME: 400, BAD_CLEANERS: 400, BAD_LIST: 400, BAD_FILE: 400,
   NOT_FINAL: 409, LOCKED: 409, BUSY: 409, GOOGLE_NOT_SET_UP: 400, GOOGLE_NO_NAME: 400, GOOGLE_NO_CHOICE: 409,
 };
 // Only the AV computer itself may change the meeting's state, the list or the settings.
@@ -123,6 +123,7 @@ const SETTING_KEYS = {
   congregation: (v) => (typeof v === 'string' ? v.trim().slice(0, 80) : undefined),
   theme: (v) => (['light', 'dark'].includes(v) ? v : undefined),
   appearance: (v) => (APPEARANCES.includes(v) ? v : undefined),
+  countMode: (v) => (['sections', 'overall'].includes(v) ? v : undefined),
   announceCleaners: (v) => (typeof v === 'boolean' ? v : undefined),
   cleanersHallName: (v) => (typeof v === 'string' ? v.trim().slice(0, 30) : undefined),
   openAtLogin: (v) => (typeof v === 'boolean' ? v : undefined),
@@ -207,6 +208,7 @@ function createServer(service, { settings, webDir, mdns = true, host = null, goo
 
   const actions = {
     '/api/tap': (b) => service.tap(b.lane, b.delta, tapIdOf(b)),
+    '/api/hall': (b) => service.setHall(b.value),
     '/api/zoom': (b) => service.setZoom(b.value),
     '/api/mark': (b) => service.mark(b.id, b.where === undefined ? null : b.where, b.n, tapIdOf(b)),
     '/api/unnamed': (b) => service.unnamed(b.delta, tapIdOf(b)),
@@ -237,7 +239,7 @@ function createServer(service, { settings, webDir, mdns = true, host = null, goo
     '/api/google/connect': () => google.connect(),
     '/api/google/choose': async (b) => { await google.choose(b.use === true); return google.status(); },
     '/api/google/disconnect': async () => { await google.disconnect(); return google.status(); },
-    '/api/google/sync': async () => { google.flush(); return google.status(); },
+    '/api/google/sync': async () => { google.resync(); return google.status(); },
   };
 
   async function handle(req, res) {

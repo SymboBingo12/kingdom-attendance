@@ -29,6 +29,7 @@ function newMeeting(d, type) {
     date: dateKey(d),
     type: type || meetingType(d),
     lanes: { left: 0, center: 0, right: 0 },
+    hall: 0, // the Kingdom Hall total typed in when counting overall (Settings → Counting)
     zoom: 0,
     finalized: false,
     finalizedAt: null,
@@ -42,8 +43,8 @@ function newMeeting(d, type) {
 
 // Meetings saved by 0.2.0 have no name fields; they count exactly as before.
 function upgrade(m) {
-  if (m.marks && m.visitors && typeof m.unnamed === 'number' && m.cleaners) return m;
-  return { marks: {}, unnamed: 0, visitors: [], cleaners: { restrooms: null, hall: null }, ...m };
+  if (m.marks && m.visitors && typeof m.unnamed === 'number' && m.cleaners && typeof m.hall === 'number') return m;
+  return { hall: 0, marks: {}, unnamed: 0, visitors: [], cleaners: { restrooms: null, hall: null }, ...m };
 }
 
 const MAX_HOUSEHOLD = 20;
@@ -53,6 +54,18 @@ function applyTap(m, lane, delta) {
   if (!LANES.includes(lane)) throw new MeetingError('BAD_LANE', `Unknown column "${lane}".`);
   if (delta !== 1 && delta !== -1) throw new MeetingError('BAD_DELTA', 'A tap adds or removes one person.');
   return { ...m, lanes: { ...m.lanes, [lane]: Math.max(0, m.lanes[lane] + delta) } };
+}
+
+function whole(value, label) {
+  const text = typeof value === 'string' ? value.trim() : value;
+  const n = typeof text === 'number' ? text : (typeof text === 'string' && /^\d+$/.test(text) ? Number(text) : NaN);
+  if (!Number.isInteger(n) || n < 0 || n > MAX_ZOOM) throw new MeetingError(`BAD_${label.toUpperCase()}`, `${label} must be a whole number from 0 to ${MAX_ZOOM}.`);
+  return n;
+}
+
+// Counting overall: the Kingdom Hall total typed in as one number.
+function setHall(m, value) {
+  return { ...m, hall: whole(value, 'Hall') };
 }
 
 function setZoom(m, value) {
@@ -109,7 +122,7 @@ function dropMarks(m, keepIds) {
 
 function totals(m) {
   const up = upgrade(m);
-  let hall = up.lanes.left + up.lanes.center + up.lanes.right + up.unnamed;
+  let hall = up.lanes.left + up.lanes.center + up.lanes.right + up.hall + up.unnamed;
   let zoom = up.zoom;
   for (const { where, n } of Object.values(up.marks)) {
     if (where === 'kh') hall += n;
@@ -132,6 +145,6 @@ function rollIfNewDay(m, now) {
 }
 
 module.exports = {
-  LANES, MeetingError, dateKey, meetingType, newMeeting, applyTap, setZoom, totals, finalize, unlock, rollIfNewDay,
+  LANES, MeetingError, dateKey, meetingType, newMeeting, applyTap, setHall, setZoom, totals, finalize, unlock, rollIfNewDay,
   upgrade, setMark, setCleaners, bumpUnnamed, addVisitor, dropMarks,
 };

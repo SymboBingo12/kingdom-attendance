@@ -46,8 +46,10 @@ function fakeGoogle() {
     if (rest === '' && init.method === 'GET') return reply({ sheets: [...book.tabs.values()].map((t) => ({ properties: { sheetId: t.sheetId, title: t.title } })) });
     if (rest === ':batchUpdate') {
       const r = body.requests[0];
+      book.formatted = (book.formatted || 0) + (body.requests.length > 1 ? 1 : 0);
       if (r.addSheet) { const sheetId = book.tabs.size + 100 + Math.floor(Math.random() * 1e6); book.tabs.set(sheetId, { sheetId, title: r.addSheet.properties.title, rows: [] }); return reply({ replies: [{ addSheet: { properties: { sheetId } } }] }); }
-      if (r.updateSheetProperties) { book.tabs.get(r.updateSheetProperties.properties.sheetId).title = r.updateSheetProperties.properties.title; return reply({}); }
+      if (r.updateSheetProperties) { if (r.updateSheetProperties.properties.title) book.tabs.get(r.updateSheetProperties.properties.sheetId).title = r.updateSheetProperties.properties.title; return reply({}); }
+      return reply({}); // styling requests
     }
     const range = decodeURIComponent(rest.replace('/values/', ''));
     const title = /^'((?:[^']|'')*)'/.exec(range)[1].replace(/''/g, "'");
@@ -102,10 +104,20 @@ test('connecting creates the two spreadsheets and fills them from History', asyn
   const [logId] = g.find('Log for Attendance | Riverside');
   assert.ok(attId && logId);
   const tab = g.rows(attId, 'Weekend Meeting');
-  assert.deepEqual(tab.slice(0, 4), [['PUBLIC TALK AND WATCHTOWER STUDY'], ['Riverside'], ['2026-11-01'], ['PUBLISHER', 'ZOOM', 'KINGDOM HALL']]);
-  assert.deepEqual(tab.slice(-2), [['SUB-TOTAL', 1, 2], ['TOTAL', 3, '']]);
-  assert.ok(tab.some((r) => r[0] === "'=cmd|evil"), 'a name that looks like a formula is kept as text');
-  assert.equal(g.rows(attId, 'Service Year Record (2026–2027)')[3][0], '2026-11-01');
+  // like the congregation's sample: an empty column A, the content from column B
+  assert.deepEqual(tab.slice(0, 4), [[], ['', 'PUBLIC TALK AND WATCHTOWER STUDY'], ['', '2026-11-01'], ['', 'PUBLISHER', 'ZOOM', 'KINGDOM HALL']]);
+  assert.deepEqual(tab[4], ['', 'Santos, Ana', '', 1]);
+  assert.ok(tab.some((r) => r[1] === 'UNBAPTIZED PUBLISHERS'));
+  assert.ok(tab.some((r) => r[1] === 'Lim' || r[1] === 'KINGDOM HALL VISITORS'));
+  const sub = tab.findIndex((r) => r[1] === 'SUB-TOTAL') + 1;
+  assert.deepEqual(tab.slice(-2), [['', 'SUB-TOTAL', `=SUM(C5:C${sub - 1})`, `=SUM(D5:D${sub - 1})`], ['', 'GRAND TOTAL', `=SUM(C${sub}:D${sub})`]]);
+  assert.ok(tab.some((r) => r[1] === "'=cmd|evil"), 'a name that looks like a formula is kept as text');
+  assert.ok(g.books.get(attId).formatted > 0, 'the tab was styled');
+  const rec = g.rows(attId, 'Service Year Record (2026–2027)');
+  assert.deepEqual(rec[1], ['', 'SERVICE YEAR 2026–2027 · ATTENDANCE RECORD']);
+  const sun = rec.filter((r) => r[1] === '2026-11-01')[1]; // the first match is the month's heading
+  assert.deepEqual([sun[5], sun[6]], [1, 2], 'the Sunday row holds the weekend Zoom and In-Person numbers');
+  assert.ok(rec.some((r) => r[1] === '2026-11-03'), 'every Tuesday is pre-listed');
   const log = g.rows(logId, 'Weekend Meeting');
   assert.equal(log[0][0], 'LOG FOR ATTENDANCE – WEEKEND MEETING – SERVICE YEAR 2026–2027');
   assert.deepEqual(log[2].slice(0, 2), ['Santos, Ana', 'Publisher']);
@@ -122,10 +134,11 @@ test('a change after Finalize overwrites the Google record', async () => {
   service.finalize();
   await sync.idle();
   const [attId] = g.find('Attendance | Riverside');
-  assert.deepEqual(g.rows(attId, 'Weekend Meeting').slice(-1), [['TOTAL', 1, '']]);
+  const khOf = () => g.rows(attId, 'Weekend Meeting').find((r) => r[1] === 'Navarro, Ella');
+  assert.deepEqual(khOf(), ['', 'Navarro, Ella', '', '']);
   service.mark('p2', 'zoom');
   await sync.idle();
-  assert.deepEqual(g.rows(attId, 'Weekend Meeting').slice(-1), [['TOTAL', 2, '']]);
+  assert.deepEqual(khOf(), ['', 'Navarro, Ella', 1, '']);
   assert.equal(service.store.listHistory().length, 1);
 });
 

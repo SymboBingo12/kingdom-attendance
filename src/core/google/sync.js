@@ -124,18 +124,15 @@ function createGoogleSync({ dataDir, getSettings, getHistory, fetch: doFetch = f
   }
 
   async function push(batch, history) {
-    const { congregation } = names();
     const { attendance, log } = state.files;
     for (const type of [...new Set(batch.map((b) => b.type))]) {
       const mine = history.filter((m) => m.type === type).sort((a, b) => b.date.localeCompare(a.date));
       if (mine[0] && batch.some((b) => same(b, mine[0]))) { // the tabs show the latest meeting of each kind
-        await api.ensureSheet(attendance.id, L.TAB[type]);
-        await api.writeRows(attendance.id, L.TAB[type], L.meetingRows(mine[0], congregation));
+        await api.writeSheet(attendance.id, L.TAB[type], L.meetingSheet(mine[0]));
       }
     }
     for (const year of [...new Set(batch.map((b) => L.serviceYearOf(b.date)))]) {
-      await api.ensureSheet(attendance.id, L.recordTab(year));
-      await api.writeRows(attendance.id, L.recordTab(year), L.recordRows(history, year));
+      await api.writeSheet(attendance.id, L.recordTab(year), L.recordSheet(history, year));
     }
     const pairs = new Map(batch.map((b) => [`${b.type}|${L.serviceYearOf(b.date)}`, [b.type, L.serviceYearOf(b.date)]]));
     for (const [type, year] of [...pairs.values()].sort((a, b) => a[1] - b[1])) { // oldest year first, so a rollover archives in order
@@ -169,6 +166,12 @@ function createGoogleSync({ dataDir, getSettings, getHistory, fetch: doFetch = f
     status,
     flush,
     idle: () => chain,
+
+    // "Sync now": rewrite every meeting from History, so sheets made by an older version get the current layout.
+    resync() {
+      if (state.tokens && state.files && !choice) { backfill(); change(); }
+      return flush();
+    },
 
     // Returns the Google page to open in a browser; the rest happens when the user comes back from it.
     async connect() {

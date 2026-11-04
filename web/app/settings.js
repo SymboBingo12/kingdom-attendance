@@ -67,6 +67,11 @@
           ${seg('Video colours', 'theme', ['light', 'dark'], s.theme || 'light')}
           <button class="st-btn st-btn--secondary" data-folder="videos">Open the videos folder</button>
         </section>
+        <section class="st-card set"><h3 class="st-card__title">Counting</h3>
+          <p class="st-card__hint">How attendance is counted when there is no publisher list (with a list, each person is marked by name).</p>
+          <div class="st-seg" role="group" aria-label="Counting">${[['sections', 'By section'], ['overall', 'Overall']].map(([v, l]) => `<button data-count="${v}" aria-pressed="${(s.countMode || 'sections') === v}">${l}</button>`).join('')}</div>
+          <p class="st-card__hint">${(s.countMode || 'sections') === 'overall' ? '<b>Overall</b>: type the Kingdom Hall total and the Zoom total.' : '<b>By section</b>: tap Left, Center and Right at the hall, and type the Zoom total.'}</p>
+        </section>
         <section class="st-card set"><h3 class="st-card__title">Cleaners on the video</h3>
           ${sw('announceCleaners', s.announceCleaners, 'Announce cleaners', 'The last slide shows the attendance on the left and the field service groups that clean on the right')}
           ${s.announceCleaners ? `<label class="lbl">Hall name on the slide<input class="field wide" id="clName" maxlength="30" value="${UI.esc(s.cleanersHallName || '')}" placeholder="Kingdom Hall" autocomplete="off"></label>
@@ -145,6 +150,7 @@
         ctx.redraw();
         return;
       }
+      if (b.dataset.count) return post('/api/settings', { countMode: b.dataset.count });
       if (b.dataset.theme) return post('/api/settings', { theme: b.dataset.theme });
       if (b.dataset.appearance) return post('/api/settings', { appearance: b.dataset.appearance });
       if (b.dataset.sw) return post('/api/settings', { [b.dataset.sw]: b.getAttribute('aria-checked') !== 'true' });

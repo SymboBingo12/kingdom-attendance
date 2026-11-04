@@ -63,7 +63,9 @@
       <div class="pad countpad">
         ${m.finalized ? finalBanner() : ''}
         <div class="bigtotal"><div class="k">Kingdom Hall</div><div class="v st-num">${state.totals.hall}</div></div>
-        ${lanes}
+        ${state.countMode === 'overall' ? `<div class="st-card"><h3 class="st-card__title">Kingdom Hall</h3>
+          <p class="st-card__hint">Type the overall count for the hall.</p>
+          <div class="zstep"><button data-hall="-1" aria-label="One fewer at the Kingdom Hall">−</button><input id="hallIn" data-live type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="${m.hall || 0}" aria-label="Kingdom Hall total"><button class="plus" data-hall="1" aria-label="One more at the Kingdom Hall">+</button></div></div>` : lanes}
         <div class="st-card"><h3 class="st-card__title" style="display:flex;gap:var(--space-3);align-items:center">${UI.disc(window.AttendanceArt.remoteArt, 'st-disc--sm')}Zoom</h3>
           <p class="st-card__hint">The Zoom host adds up the "(n)" names and types the total.</p>
           <div class="zstep"><button data-zoom="-1" aria-label="One fewer on Zoom" ${lock}>−</button><input id="zoomIn" data-live type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="${m.zoom}" aria-label="Zoom total" ${lock}><button class="plus" data-zoom="1" aria-label="One more on Zoom" ${lock}>+</button></div>
@@ -72,6 +74,7 @@
       </div>`;
   }
 
+  const setHall = (ctx, value) => ctx.act('/api/hall', { value: Math.min(MAX_ZOOM, Math.max(0, value)) });
   const setZoom = (ctx, value) => ctx.act('/api/zoom', { value: Math.min(MAX_ZOOM, Math.max(0, value)) });
 
   views.mark = {
@@ -108,6 +111,8 @@
         }
       } else if (b.dataset.lane) {
         await ctx.act('/api/tap', { lane: b.dataset.lane, delta: Number(b.dataset.d), tapId });
+      } else if (b.dataset.hall) {
+        await setHall(ctx, (m.hall || 0) + Number(b.dataset.hall));
       } else if (b.dataset.zoom) {
         await setZoom(ctx, m.zoom + Number(b.dataset.zoom));
       }
@@ -115,7 +120,7 @@
 
     onInput(el, ctx) {
       if (el.id === 'q') { ctx.memory('mark').q = el.value; ctx.redraw(); }
-      if (el.id === 'zoomIn') {
+      if (el.id === 'zoomIn' || el.id === 'hallIn') {
         const digits = el.value.replace(/\D/g, '');
         if (digits !== el.value) el.value = digits;
       }
@@ -123,9 +128,14 @@
 
     onChange(el, ctx) {
       if (el.id === 'zoomIn') setZoom(ctx, parseInt(el.value, 10) || 0);
+      if (el.id === 'hallIn') setHall(ctx, parseInt(el.value, 10) || 0);
     },
 
     onKeydown(el, ctx, e) {
+      if (el.id === 'hallIn' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        e.preventDefault();
+        setHall(ctx, (ctx.state.meeting.hall || 0) + (e.key === 'ArrowUp' ? 1 : -1));
+      }
       if (el.id === 'zoomIn' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
         e.preventDefault();
         setZoom(ctx, ctx.state.meeting.zoom + (e.key === 'ArrowUp' ? 1 : -1));

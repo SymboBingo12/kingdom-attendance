@@ -57,7 +57,7 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     const s = getSettings();
     return {
       meeting, totals: M.totals(meeting), render, congregation: s.congregation || '', theme: s.theme || 'light', appearance: appearanceOf(s),
-      roster, visitors: meeting.visitors, mode: roster.length ? 'names' : 'columns',
+      countMode: s.countMode === 'overall' ? 'overall' : 'sections', roster, visitors: meeting.visitors, mode: roster.length ? 'names' : 'columns',
       cleaners: cleanersFor(s, meeting),
       // Phones get only the headline; the account and links stay on the AV computer.
       google: sync ? (({ connected, pending, syncing, error }) => ({ connected, pending, syncing, error }))(sync.status()) : null,
@@ -128,6 +128,10 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
       const state = edit(M.applyTap(today(), lane, delta));
       if (tapId) remember(tapId);
       return state;
+    },
+
+    setHall(value) {
+      return edit(M.setHall(today(), value));
     },
 
     setZoom(value) {

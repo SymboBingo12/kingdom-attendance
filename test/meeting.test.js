@@ -4,14 +4,14 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   newMeeting, meetingType, applyTap, setZoom, totals, finalize, unlock, rollIfNewDay,
-  upgrade, setMark, setCleaners, bumpUnnamed, addVisitor, dropMarks,
+  upgrade, setHall, setMark, setCleaners, bumpUnnamed, addVisitor, dropMarks,
 } = require('../src/core/meeting');
 
 const sunday = new Date(2026, 10, 1); // Sun 1 Nov 2026
 
 test('a new meeting starts at zero, typed from the weekday', () => {
   assert.deepEqual(newMeeting(sunday), {
-    date: '2026-11-01', type: 'weekend', lanes: { left: 0, center: 0, right: 0 }, zoom: 0, finalized: false, finalizedAt: null, videoStale: false,
+    date: '2026-11-01', type: 'weekend', lanes: { left: 0, center: 0, right: 0 }, hall: 0, zoom: 0, finalized: false, finalizedAt: null, videoStale: false,
     marks: {}, unnamed: 0, visitors: [], cleaners: { restrooms: null, hall: null },
   });
   assert.equal(meetingType(new Date(2026, 10, 5)), 'midweek'); // Thu
@@ -136,4 +136,15 @@ test('cleaning groups are 1 to 5 per area, can be cleared, and can change after 
   assert.deepEqual(setCleaners(finalize(m, sunday), { restrooms: 5 }).cleaners, { restrooms: 5, hall: 3 });
   for (const bad of [0, 6, 1.5, '2', NaN]) assert.throws(() => setCleaners(m, { restrooms: bad }), { code: 'BAD_CLEANERS' });
   assert.deepEqual(upgrade({ date: '2026-10-28', type: 'midweek', lanes: { left: 1, center: 0, right: 0 }, zoom: 0 }).cleaners, { restrooms: null, hall: null }, 'older meetings load');
+});
+
+test('counting overall: the typed Kingdom Hall total is added to the totals', () => {
+  const m = setZoom(setHall(newMeeting(new Date(2026, 10, 4)), 42), 7);
+  assert.deepEqual(totals(m), { hall: 42, zoom: 7, total: 49 });
+  assert.equal(totals(setHall(m, '30')).hall, 30);
+  assert.throws(() => setHall(m, -1), { code: 'BAD_HALL' });
+  assert.throws(() => setHall(m, 'x'), { code: 'BAD_HALL' });
+  const old = newMeeting(new Date(2026, 10, 4));
+  delete old.hall;
+  assert.equal(totals(old).hall, 0, 'a meeting saved before this setting still counts');
 });

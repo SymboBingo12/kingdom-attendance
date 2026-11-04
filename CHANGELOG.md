@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.3 · 2026-11-04
+
+### Added
+- **Counting setting.** Settings → Counting picks how attendance is counted when there is no publisher list: **By section** (Left, Center and Right, as before) or **Overall** (type the Kingdom Hall total, plus the Zoom total). The Google sheet shows the overall count on its own row.
+
+### Changed
+- **The Attendance spreadsheet now looks like the congregation's sample.** The Weekend and Midweek tabs start in column B with the grey title and date bands, the PUBLISHER / ZOOM / KINGDOM HALL header, the UNBAPTIZED PUBLISHERS and INVITED THRU ZOOM & KH sections, a KINGDOM HALL VISITORS row, and SUB-TOTAL and GRAND TOTAL as formulas.
+  The Service Year Record has one block per month (September to August) with every Tuesday and Sunday listed, plus OVERALL TOTAL and AVERAGE rows. Gridlines are hidden and the columns are sized like the sample.
+- **Sync now rewrites every meeting.** Press it once to bring spreadsheets made by an earlier version up to the new layout.
+
 ## 0.5.2 · 2026-11-04
 
 ### Added
