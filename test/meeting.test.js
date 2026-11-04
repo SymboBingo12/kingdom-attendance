@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   newMeeting, meetingType, applyTap, setZoom, totals, finalize, unlock, rollIfNewDay,
-  upgrade, setMark, bumpUnnamed, addVisitor, dropMarks,
+  upgrade, setMark, setCleaners, bumpUnnamed, addVisitor, dropMarks,
 } = require('../src/core/meeting');
 
 const sunday = new Date(2026, 10, 1); // Sun 1 Nov 2026
@@ -12,7 +12,7 @@ const sunday = new Date(2026, 10, 1); // Sun 1 Nov 2026
 test('a new meeting starts at zero, typed from the weekday', () => {
   assert.deepEqual(newMeeting(sunday), {
     date: '2026-11-01', type: 'weekend', lanes: { left: 0, center: 0, right: 0 }, zoom: 0, finalized: false, finalizedAt: null, videoStale: false,
-    marks: {}, unnamed: 0, visitors: [],
+    marks: {}, unnamed: 0, visitors: [], cleaners: { restrooms: null, hall: null },
   });
   assert.equal(meetingType(new Date(2026, 10, 5)), 'midweek'); // Thu
   assert.equal(newMeeting(sunday, 'midweek').type, 'midweek');
@@ -127,4 +127,13 @@ test('dropping marks keeps only the people still on the list', () => {
   let m = setMark(setMark(newMeeting(sunday), 'p1', 'kh'), 'p2', 'zoom');
   m = setMark(addVisitor(m, 'Lim').meeting, 'v1', 'kh');
   assert.deepEqual(Object.keys(dropMarks(m, new Set(['p2'])).marks).sort(), ['p2', 'v1'], 'visitors are kept');
+});
+
+test('cleaning groups are 1 to 5 per area, can be cleared, and can change after finalizing', () => {
+  const m = setCleaners(newMeeting(sunday), { restrooms: 2, hall: 3 });
+  assert.deepEqual(m.cleaners, { restrooms: 2, hall: 3 });
+  assert.deepEqual(setCleaners(m, { hall: null }).cleaners, { restrooms: 2, hall: null }, 'the other area is kept');
+  assert.deepEqual(setCleaners(finalize(m, sunday), { restrooms: 5 }).cleaners, { restrooms: 5, hall: 3 });
+  for (const bad of [0, 6, 1.5, '2', NaN]) assert.throws(() => setCleaners(m, { restrooms: bad }), { code: 'BAD_CLEANERS' });
+  assert.deepEqual(upgrade({ date: '2026-10-28', type: 'midweek', lanes: { left: 1, center: 0, right: 0 }, zoom: 0 }).cleaners, { restrooms: null, hall: null }, 'older meetings load');
 });

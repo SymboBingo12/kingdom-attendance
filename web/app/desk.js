@@ -42,6 +42,18 @@
     return '';
   }
 
+  // With Announce cleaners on: which field service group (1-5) cleans the restrooms and the hall this meeting.
+  function cleanersCard(state) {
+    const c = state.cleaners;
+    if (!c) return '';
+    const m = state.meeting.cleaners || {};
+    const row = (key, label) => `<div class="lbl">${UI.esc(label)} · FSG</div><div class="st-seg" role="group" aria-label="${UI.esc(label)}">${[1, 2, 3, 4, 5].map((n) => `<button data-cl="${key}:${n}" aria-pressed="${m[key] === n}">${n}</button>`).join('')}</div>`;
+    const none = !m.restrooms && !m.hall;
+    return `<section class="st-card"><h3 class="st-card__title">Cleaners</h3>
+      ${row('restrooms', 'Restrooms')}${row('hall', c.hallName)}
+      <p class="st-card__hint">${none ? 'Pick the groups before Finalize, or the last slide says no cleaning groups are set. ' : ''}Tap a number again to clear it.${state.meeting.finalized ? ' A change now asks you to update the video.' : ''}</p></section>`;
+  }
+
   views.desk = {
     render({ state, ctx }) {
       const m = state.meeting;
@@ -54,6 +66,7 @@
           ${state.mode === 'names' ? `<p class="dim small" style="margin-top:-8px">Zoom comes from the names marked Zoom. Kingdom Hall includes ${m.unnamed || 0} unnamed visitor${m.unnamed === 1 ? '' : 's'}.</p>` : ''}
           ${status(state)}
           ${googleNote(state)}
+          ${cleanersCard(state)}
           ${m.finalized
             ? `<button class="st-btn ${m.videoStale ? 'st-btn--primary' : 'st-btn--secondary'} st-btn--main st-btn--block" data-act="rerender" ${rendering ? 'disabled' : ''}>Update the video</button>`
             : `<button class="st-btn st-btn--primary st-btn--main st-btn--block" data-act="finalize">Finalize</button>
@@ -88,6 +101,12 @@
     async onClick(b, ctx) {
       const mem = ctx.memory('desk');
       if (b.dataset.type) { await ctx.act('/api/type', { type: b.dataset.type }); return; }
+      if (b.dataset.cl) {
+        const [key, n] = b.dataset.cl.split(':');
+        const now = (ctx.state.meeting.cleaners || {})[key];
+        await ctx.act('/api/cleaners', { [key]: now === Number(n) ? null : Number(n) });
+        return;
+      }
       const a = b.dataset.act;
       if (a === 'finalize') await ctx.act('/api/finalize');
       else if (a === 'unlock') await ctx.act('/api/unlock');

@@ -60,7 +60,7 @@ test('a phone marks by name; the AV-only routes refuse it, with or without the P
   assert.equal((await s.call('/api/roster', undefined, s.pin)).status, 200);
 
   const avOnly = [
-    ['/api/finalize', {}], ['/api/unlock', {}], ['/api/new', {}], ['/api/type', { type: 'midweek' }], ['/api/rerender', {}],
+    ['/api/finalize', {}], ['/api/unlock', {}], ['/api/new', {}], ['/api/type', { type: 'midweek' }], ['/api/rerender', {}], ['/api/cleaners', { restrooms: 2 }],
     ['/api/roster', { people: PEOPLE }], ['/api/roster/add', { name: 'X' }], ['/api/roster/remove', { id: 'p1' }],
     ['/api/roster/preview', Buffer.from('x')], ['/api/settings', { congregation: 'X' }], ['/api/pin/new', {}],
     ['/api/host/choose-folder', {}], ['/api/host/open-folder', { which: 'm3' }], ['/api/host/check-update', {}], ['/api/host/install-update', {}],
@@ -173,8 +173,17 @@ test('settings round-trip through the app; unknown keys are ignored', async (t) 
 test('the cleaners settings are accepted, trimmed and limited', async (t) => {
   const s = await start();
   t.after(() => s.server.close());
-  await s.call('/api/settings', { announceCleaners: true, cleanersRestrooms: '  FSG 2 ', cleanersHall: 'FSG 3', cleanersHallName: 'West Hall', announceCleaners2: true });
-  assert.deepEqual(s.saved[s.saved.length - 1], { announceCleaners: true, cleanersRestrooms: 'FSG 2', cleanersHall: 'FSG 3', cleanersHallName: 'West Hall' });
-  await s.call('/api/settings', { announceCleaners: 'yes', cleanersHall: 'x'.repeat(60) });
-  assert.deepEqual(s.saved[s.saved.length - 1], { cleanersHall: 'x'.repeat(24) });
+  await s.call('/api/settings', { announceCleaners: true, cleanersHallName: '  West Hall ', cleanersRestrooms: 'FSG 9' });
+  assert.deepEqual(s.saved[s.saved.length - 1], { announceCleaners: true, cleanersHallName: 'West Hall' });
+  await s.call('/api/settings', { announceCleaners: 'yes', cleanersHallName: 'x'.repeat(60) });
+  assert.deepEqual(s.saved[s.saved.length - 1], { cleanersHallName: 'x'.repeat(30) });
+});
+
+test('the AV desk picks the cleaning groups; a bad group is refused', async (t) => {
+  const s = await start();
+  t.after(() => s.server.close());
+  const ok = await s.call('/api/cleaners', { restrooms: 2, hall: 3 });
+  assert.equal(ok.status, 200);
+  assert.deepEqual((await ok.json()).meeting.cleaners, { restrooms: 2, hall: 3 });
+  assert.equal((await s.call('/api/cleaners', { restrooms: 7 })).status, 400);
 });

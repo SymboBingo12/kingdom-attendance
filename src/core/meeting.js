@@ -36,13 +36,14 @@ function newMeeting(d, type) {
     marks: {}, // person id -> { where: 'kh' | 'zoom', n } when counting by name
     unnamed: 0, // people at the hall nobody knows by name
     visitors: [], // { id: 'v1', name } added during this meeting only
+    cleaners: { restrooms: null, hall: null }, // field service group numbers (1-5) cleaning today, for the video's last slide
   };
 }
 
 // Meetings saved by 0.2.0 have no name fields; they count exactly as before.
 function upgrade(m) {
-  if (m.marks && m.visitors && typeof m.unnamed === 'number') return m;
-  return { marks: {}, unnamed: 0, visitors: [], ...m };
+  if (m.marks && m.visitors && typeof m.unnamed === 'number' && m.cleaners) return m;
+  return { marks: {}, unnamed: 0, visitors: [], cleaners: { restrooms: null, hall: null }, ...m };
 }
 
 const MAX_HOUSEHOLD = 20;
@@ -74,6 +75,15 @@ function setMark(m, id, where, n) {
   if (where === null) delete marks[id];
   else marks[id] = { where, n: n || (marks[id] && marks[id].n) || 1 };
   return { ...up, marks };
+}
+
+// Which field service group (1-5, or null for none) cleans the restrooms and the hall.
+const GROUPS = [1, 2, 3, 4, 5];
+function setCleaners(m, { restrooms, hall }) {
+  const ok = (v) => v === null || v === undefined || GROUPS.includes(v);
+  if (!ok(restrooms) || !ok(hall)) throw new MeetingError('BAD_CLEANERS', 'A field service group is 1 to 5.');
+  const up = upgrade(m);
+  return { ...up, cleaners: { restrooms: restrooms === undefined ? up.cleaners.restrooms : restrooms, hall: hall === undefined ? up.cleaners.hall : hall } };
 }
 
 function bumpUnnamed(m, delta) {
@@ -123,5 +133,5 @@ function rollIfNewDay(m, now) {
 
 module.exports = {
   LANES, MeetingError, dateKey, meetingType, newMeeting, applyTap, setZoom, totals, finalize, unlock, rollIfNewDay,
-  upgrade, setMark, bumpUnnamed, addVisitor, dropMarks,
+  upgrade, setMark, setCleaners, bumpUnnamed, addVisitor, dropMarks,
 };

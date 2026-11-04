@@ -126,15 +126,24 @@ test('a change after Finalize overwrites the history record and asks for a new v
   assert.equal(calls[1].totals.total, 7);
 });
 
-test('Announce cleaners sends the groups to the renderer; off sends none', async () => {
-  const on = make({ extra: { announceCleaners: true, cleanersRestrooms: 'FSG 2', cleanersHall: 'FSG 3', cleanersHallName: 'West Hall' } });
+test('Announce cleaners sends the picked groups to the renderer; off sends none', async () => {
+  const on = make({ extra: { announceCleaners: true, cleanersHallName: 'West Hall' } });
+  on.service.setCleaners(2, 3);
   on.service.finalize();
   await on.service.idle();
   assert.deepEqual(on.calls[0].cleaners, { restrooms: 'FSG 2', hall: 'FSG 3', hallName: 'West Hall' });
   assert.deepEqual(on.service.getState().cleaners, on.calls[0].cleaners);
 
-  const off = make({ extra: { announceCleaners: false, cleanersRestrooms: 'FSG 2' } });
+  on.service.setCleaners(4); // only the restrooms change; the hall keeps its group. A change after Finalize asks for a new video
+  assert.equal(on.service.getState().meeting.videoStale, true);
+  on.service.rerender();
+  await on.service.idle();
+  assert.deepEqual(on.calls[1].cleaners, { restrooms: 'FSG 4', hall: 'FSG 3', hallName: 'West Hall' });
+
+  const off = make({ extra: { announceCleaners: false } });
+  off.service.setCleaners(2, 3);
   off.service.finalize();
   await off.service.idle();
   assert.equal(off.calls[0].cleaners, null);
+  assert.equal(off.service.getState().cleaners, null);
 });

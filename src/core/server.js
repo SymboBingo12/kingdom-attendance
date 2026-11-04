@@ -28,12 +28,12 @@ const TYPES = {
   '.woff2': 'font/woff2',
 };
 const STATUS = {
-  BAD_LANE: 400, BAD_DELTA: 400, BAD_ZOOM: 400, BAD_TYPE: 400, BAD_BODY: 400, BAD_MARK: 400, BAD_NAME: 400, BAD_LIST: 400, BAD_FILE: 400,
+  BAD_LANE: 400, BAD_DELTA: 400, BAD_ZOOM: 400, BAD_TYPE: 400, BAD_BODY: 400, BAD_MARK: 400, BAD_NAME: 400, BAD_CLEANERS: 400, BAD_LIST: 400, BAD_FILE: 400,
   NOT_FINAL: 409, LOCKED: 409, BUSY: 409, GOOGLE_NOT_SET_UP: 400, GOOGLE_NO_NAME: 400, GOOGLE_NO_CHOICE: 409,
 };
 // Only the AV computer itself may change the meeting's state, the list or the settings.
 const AV_ONLY = new Set([
-  '/api/finalize', '/api/unlock', '/api/new', '/api/type', '/api/rerender',
+  '/api/finalize', '/api/unlock', '/api/new', '/api/type', '/api/rerender', '/api/cleaners',
   '/api/roster/preview', '/api/roster/add', '/api/roster/remove', '/api/roster/template.csv',
   '/api/settings', '/api/pin/new', '/api/host/choose-folder', '/api/host/open-folder', '/api/host/check-update', '/api/host/install-update',
   '/api/connect', '/api/google', '/api/google/connect', '/api/google/choose', '/api/google/disconnect', '/api/google/sync',
@@ -124,8 +124,6 @@ const SETTING_KEYS = {
   theme: (v) => (['light', 'dark'].includes(v) ? v : undefined),
   appearance: (v) => (APPEARANCES.includes(v) ? v : undefined),
   announceCleaners: (v) => (typeof v === 'boolean' ? v : undefined),
-  cleanersRestrooms: (v) => (typeof v === 'string' ? v.trim().slice(0, 24) : undefined),
-  cleanersHall: (v) => (typeof v === 'string' ? v.trim().slice(0, 24) : undefined),
   cleanersHallName: (v) => (typeof v === 'string' ? v.trim().slice(0, 30) : undefined),
   openAtLogin: (v) => (typeof v === 'boolean' ? v : undefined),
   autoUpdate: (v) => (typeof v === 'boolean' ? v : undefined),
@@ -218,6 +216,7 @@ function createServer(service, { settings, webDir, mdns = true, host = null, goo
     '/api/new': (b) => service.newMeeting(b.type),
     '/api/type': (b) => service.setType(b.type),
     '/api/rerender': () => service.rerender(),
+    '/api/cleaners': (b) => service.setCleaners(b.restrooms, b.hall),
     '/api/roster': (b) => service.importRoster(b.people),
     '/api/roster/add': (b) => service.addPerson(b.name, b.group, { size: b.size, where: b.where }),
     '/api/roster/remove': (b) => service.removePerson(b.id),

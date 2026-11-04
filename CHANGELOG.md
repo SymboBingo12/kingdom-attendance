@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- **Cleaners are picked on the AV desk, per meeting.** With Announce cleaners on, the AV desk shows a **Cleaners** card: tap FSG 1 to 5 for the restrooms and for the hall. "FSG" is built in, so only the number is chosen.
+  Changing it after Finalize asks you to update the video. Settings keeps only the on/off switch and the hall's name on the slide.
+
 ## 0.5.0 · 2026-11-04
 
 ### Added

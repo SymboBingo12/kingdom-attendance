@@ -24,6 +24,13 @@ function cleanPerson({ name, group, size, where }) {
   return person;
 }
 
+// The groups named on the video's last slide ("FSG 2"), or null when Announce cleaners is off.
+function cleanersFor(settings, m) {
+  if (!settings.announceCleaners) return null;
+  const c = m.cleaners || {};
+  return { restrooms: c.restrooms ? `FSG ${c.restrooms}` : '', hall: c.hall ? `FSG ${c.hall}` : '', hallName: settings.cleanersHallName || 'Kingdom Hall' };
+}
+
 function busy() {
   return new M.MeetingError('BUSY', 'Still making the video.');
 }
@@ -51,7 +58,7 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     return {
       meeting, totals: M.totals(meeting), render, congregation: s.congregation || '', theme: s.theme || 'light', appearance: appearanceOf(s),
       roster, visitors: meeting.visitors, mode: roster.length ? 'names' : 'columns',
-      cleaners: s.announceCleaners ? { restrooms: s.cleanersRestrooms || '', hall: s.cleanersHall || '', hallName: s.cleanersHallName || 'Kingdom Hall' } : null,
+      cleaners: cleanersFor(s, meeting),
       // Phones get only the headline; the account and links stay on the AV computer.
       google: sync ? (({ connected, pending, syncing, error }) => ({ connected, pending, syncing, error }))(sync.status()) : null,
     };
@@ -93,7 +100,7 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     setRender({ status: 'rendering', message: 'Making the video…', savedTo: null });
     try {
       // With Announce cleaners on, the last slide also names the groups that clean.
-      const cleaners = s.announceCleaners ? { restrooms: s.cleanersRestrooms || '', hall: s.cleanersHall || '', hallName: s.cleanersHallName || 'Kingdom Hall' } : null;
+      const cleaners = cleanersFor(s, meeting);
       const files = await renderer({ meeting, totals: M.totals(meeting), congregation: s.congregation || '', theme: s.theme || 'light', cleaners });
       const out = await deliver({ mp4: files.mp4, dateKey: meeting.date });
       setRender({ status: 'ready', savedTo: out.savedTo, message: out.fallback ? `Saved to Desktop (${out.reason})` : 'Ready in M³' });
@@ -168,6 +175,11 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
       const state = edit(M.setMark(m, id, where, count));
       if (tapId) remember(tapId);
       return state;
+    },
+
+    // The AV desk picks which field service groups (1-5) clean; a change after Finalize makes the video out of date.
+    setCleaners(restrooms, hall) {
+      return edit(M.setCleaners(today(), { restrooms, hall }));
     },
 
     unnamed(delta, tapId) {
