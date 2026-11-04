@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2 · 2026-11-04
+
+### Added
+- **Connect button.** The AV desk header and the sidebar have a **Connect** button that opens a popup with the large QR code and PIN for phones.
+- **Connect a phone in the tray menu.** Right-click the app's tray icon (or the Dock icon on a Mac) and choose **Connect a phone (QR code)** to open a small window with the QR code and PIN, without opening the app first.
+
 ## 0.5.1 · 2026-11-04
 
 ### Changed

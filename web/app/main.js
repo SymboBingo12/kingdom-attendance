@@ -96,7 +96,7 @@
     const html = `<div class="brand">${UI.disc(window.AttendanceUiArt.markArt)}<div><b>Kingdom Hall Attendance</b><small>${UI.esc(state.congregation || 'Kingdom Hall')}</small></div></div>
       ${sb.addList ? `<button class="addlist" data-go="setup">${UI.icon('plus')}Add publisher list</button>` : ''}
       <nav class="navlist">${items}</nav>
-      ${sb.pin && c ? `<div class="sidepin"><img class="qr" src="${c.qr}" alt="QR code that opens Kingdom Hall Attendance on a phone"><div><div class="dim small">Phones · PIN</div><div class="pin st-num">${UI.esc(c.pin)}</div></div></div>` : ''}`;
+      ${sb.pin && c ? `<div class="sidepin"><img class="qr" src="${c.qr}" alt="QR code that opens Kingdom Hall Attendance on a phone"><div><div class="dim small">Phones · PIN</div><div class="pin st-num">${UI.esc(c.pin)}</div><button class="st-btn st-btn--secondary" data-connect>Connect</button></div></div>` : ''}`;
     if (mem.html !== html) { side.innerHTML = html; mem.html = html; }
     return sb;
   }
@@ -146,6 +146,11 @@
   wideQuery.addEventListener('change', () => draw());
 
   side.addEventListener('click', (e) => {
+    if (e.target.closest('[data-connect]')) {
+      const c = ctx.memory('side').connect;
+      if (c) window.AppUI.connectSheet(layer, c);
+      return;
+    }
     const b = e.target.closest('[data-go]');
     if (b) go(b.dataset.go);
   });

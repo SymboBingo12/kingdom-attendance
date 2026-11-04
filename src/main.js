@@ -104,12 +104,40 @@ if (!app.requestSingleInstanceLock()) {
     app.quit();
   }
 
+  // A small window with the QR code and PIN for phones, opened from the tray (or dock) menu.
+  let connectWin = null;
+  async function showConnect() {
+    if (connectWin) { connectWin.show(); connectWin.focus(); return; }
+    let info;
+    try {
+      info = await (await fetch(`http://127.0.0.1:${server.port}/api/connect`)).json();
+    } catch (err) {
+      dialog.showErrorBox('Connect a phone', `Could not get the QR code.\n\n${err.message}`);
+      return;
+    }
+    const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const html = `<!doctype html><meta charset="utf-8"><title>Connect a phone</title>
+      <style>:root{color-scheme:light dark}body{margin:0;padding:24px;font:15px system-ui,sans-serif;text-align:center;background:Canvas;color:CanvasText}
+      h1{font-size:20px;margin:0 0 4px}p{margin:6px 0;opacity:.75}img{width:240px;height:240px;background:#fff;border-radius:12px;margin:12px 0}
+      .pin{font-size:34px;font-weight:700;letter-spacing:6px;margin:4px 0}small{opacity:.7}</style>
+      <h1>Connect a phone</h1><p>Scan with the phone's camera, then enter the PIN.</p>
+      <img src="${esc(info.qr)}" alt="QR code"><div><small>PIN</small></div><div class="pin">${esc(info.pin)}</div>
+      <p><small>${esc(info.count)}</small></p>`;
+    connectWin = new BrowserWindow({
+      width: 360, height: 540, resizable: false, minimizable: false, maximizable: false, autoHideMenuBar: true, icon: ICON,
+      title: 'Connect a phone', webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+    });
+    connectWin.on('closed', () => { connectWin = null; });
+    connectWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  }
+
   function buildTray() {
     const img = nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 });
     tray = new Tray(img);
     tray.setToolTip('Kingdom Hall Attendance');
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'Open Kingdom Hall Attendance', click: showWindow },
+      { label: 'Connect a phone (QR code)', click: showConnect },
       { label: 'Open the dock in the browser', click: () => shell.openExternal(server.urls().dock) },
       { type: 'separator' },
       { label: 'Quit', click: confirmQuit },
@@ -184,6 +212,7 @@ if (!app.requestSingleInstanceLock()) {
     applyAppearance(getSettings());
     setupUpdates();
     buildTray();
+    if (process.platform === 'darwin' && app.dock) app.dock.setMenu(Menu.buildFromTemplate([{ label: 'Connect a phone (QR code)', click: showConnect }]));
     if (!process.argv.includes('--hidden')) showWindow();
   });
 }

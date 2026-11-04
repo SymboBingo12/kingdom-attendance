@@ -1,7 +1,7 @@
 {
   "name": "kingdom-attendance",
   "productName": "Kingdom Hall Attendance",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Kingdom Hall attendance counter: count on phones, finalize into an attendance video for M³",
   "main": "src/main.js",
   "type": "commonjs",

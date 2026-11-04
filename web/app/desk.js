@@ -78,7 +78,7 @@
       const mem = ctx.memory('desk');
       const c = mem.connect;
       const rendering = state.render.status === 'rendering';
-      return `${UI.bar('AV desk', UI.typeName(m.type), UI.livePill(state, ctx.live))}
+      return `${UI.bar('AV desk', UI.typeName(m.type), `<span class="acts"><button class="st-btn st-btn--secondary" data-act="connect">Connect</button>${UI.livePill(state, ctx.live)}</span>`)}
         <div class="pad deskgrid"><div class="deskmain">
           ${UI.tiles(state.totals)}
           ${state.mode === 'names' ? `<p class="dim small" style="margin-top:-8px">Zoom comes from the names marked Zoom. Kingdom Hall includes ${m.unnamed || 0} unnamed visitor${m.unnamed === 1 ? '' : 's'}.</p>` : ''}
@@ -119,7 +119,8 @@
       const mem = ctx.memory('desk');
       if (b.dataset.type) { await ctx.act('/api/type', { type: b.dataset.type }); return; }
       const a = b.dataset.act;
-      if (a === 'finalize') { if (ctx.state.cleaners) askCleaners(ctx.layer, ctx, 'finalize'); else await ctx.act('/api/finalize'); }
+      if (a === 'connect') { const c = mem.connect || await ctx.api.get('/api/connect'); mem.connect = c; UI.connectSheet(ctx.layer, c); }
+      else if (a === 'finalize') { if (ctx.state.cleaners) askCleaners(ctx.layer, ctx, 'finalize'); else await ctx.act('/api/finalize'); }
       else if (a === 'unlock') await ctx.act('/api/unlock');
       else if (a === 'rerender') { if (ctx.state.cleaners) askCleaners(ctx.layer, ctx, 'rerender'); else await ctx.act('/api/rerender'); }
       else if (a === 'new') {

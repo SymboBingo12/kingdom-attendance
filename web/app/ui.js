@@ -47,5 +47,21 @@
   const banner = (tone, iconName, title, text, role = 'status') =>
     `<div class="st-banner${tone ? ` st-banner--${tone}` : ''}" role="${role}">${icon(iconName, 'st-banner__icon')}<div class="st-banner__body"><b>${esc(title)}</b>${text ? `<p>${esc(text)}</p>` : ''}</div></div>`;
 
-  root.AppUI = { esc, icon, art, disc, typeName, longDate, bar, livePill, tiles, banner, resetArt: () => { artN = 0; } };
+  // A popup with the big QR code and PIN for phones (AV computer only; `info` is /api/connect).
+  const connectSheet = (layer, info) => {
+    layer.innerHTML = `<div class="overlay"><div class="st-scrim" id="conScrim"></div><div class="st-sheet" id="conSheet" style="text-align:center">
+      <h3>Connect a phone</h3><p class="dim">Scan with the phone's camera, then enter the PIN.</p>
+      <img class="qr" src="${info.qr}" alt="QR code that opens Kingdom Hall Attendance" style="width:240px;height:240px;background:#fff;margin:var(--space-3) auto">
+      <div class="dim small">PIN</div><div class="pin st-num" style="font-size:32px;letter-spacing:.16em">${esc(info.pin)}</div><div class="dim small">${esc(info.count)}</div>
+      <button class="st-btn st-btn--primary st-btn--main st-btn--block" id="conDone" style="margin-top:var(--space-4)">Done</button></div></div>`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const sc = document.getElementById('conScrim'); const sh = document.getElementById('conSheet');
+      if (sc && sh) { sc.classList.add('is-open'); sh.classList.add('is-open'); }
+    }));
+    const close = () => { layer.innerHTML = ''; };
+    document.getElementById('conDone').addEventListener('click', close);
+    document.getElementById('conScrim').addEventListener('click', close);
+  };
+
+  root.AppUI = { connectSheet, esc, icon, art, disc, typeName, longDate, bar, livePill, tiles, banner, resetArt: () => { artN = 0; } };
 })(window);
