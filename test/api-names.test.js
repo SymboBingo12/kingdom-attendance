@@ -169,3 +169,12 @@ test('settings round-trip through the app; unknown keys are ignored', async (t) 
   assert.equal((await s.call('/api/settings', { appearance: 'purple' })).status, 200);
   assert.equal(s.settings.appearance, 'dark', 'a bad value is dropped');
 });
+
+test('the cleaners settings are accepted, trimmed and limited', async (t) => {
+  const s = await start();
+  t.after(() => s.server.close());
+  await s.call('/api/settings', { announceCleaners: true, cleanersRestrooms: '  FSG 2 ', cleanersHall: 'FSG 3', cleanersHallName: 'West Hall', announceCleaners2: true });
+  assert.deepEqual(s.saved[s.saved.length - 1], { announceCleaners: true, cleanersRestrooms: 'FSG 2', cleanersHall: 'FSG 3', cleanersHallName: 'West Hall' });
+  await s.call('/api/settings', { announceCleaners: 'yes', cleanersHall: 'x'.repeat(60) });
+  assert.deepEqual(s.saved[s.saved.length - 1], { cleanersHall: 'x'.repeat(24) });
+});

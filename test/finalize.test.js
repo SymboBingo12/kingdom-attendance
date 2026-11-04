@@ -7,9 +7,9 @@ const os = require('node:os');
 const path = require('node:path');
 const { createService } = require('../src/core/service');
 
-function make({ renderer, deliver } = {}) {
+function make({ renderer, deliver, extra } = {}) {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'att-fin-'));
-  const settings = { congregation: 'Riverside Congregation', theme: 'light' };
+  const settings = { congregation: 'Riverside Congregation', theme: 'light', ...extra };
   const calls = [];
   const service = createService({
     dataDir,
@@ -124,4 +124,17 @@ test('a change after Finalize overwrites the history record and asks for a new v
   assert.equal(service.getState().meeting.videoStale, false);
   assert.equal(calls.length, 2);
   assert.equal(calls[1].totals.total, 7);
+});
+
+test('Announce cleaners sends the groups to the renderer; off sends none', async () => {
+  const on = make({ extra: { announceCleaners: true, cleanersRestrooms: 'FSG 2', cleanersHall: 'FSG 3', cleanersHallName: 'West Hall' } });
+  on.service.finalize();
+  await on.service.idle();
+  assert.deepEqual(on.calls[0].cleaners, { restrooms: 'FSG 2', hall: 'FSG 3', hallName: 'West Hall' });
+  assert.deepEqual(on.service.getState().cleaners, on.calls[0].cleaners);
+
+  const off = make({ extra: { announceCleaners: false, cleanersRestrooms: 'FSG 2' } });
+  off.service.finalize();
+  await off.service.idle();
+  assert.equal(off.calls[0].cleaners, null);
 });

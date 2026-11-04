@@ -2,6 +2,7 @@
 
 // Draws the attendance video. The numbers come from the query string:
 //   /slide?hall=104&zoom=23&total=127&type=weekend&date=2026-11-01&cong=…&theme=light
+//   &cleaners=1&rr=FSG 2&hh=FSG 3&hn=Kingdom Hall   the last slide also names the groups that clean
 //   &t=6       draw that moment (default: the final frame)
 //   &play=1    play in real time
 //   &live=1    follow the app and replay whenever attendance is finalized (OBS browser source fallback)
@@ -33,6 +34,17 @@
     const date = y ? new Date(y, m - 1, d) : new Date();
     const dateText = date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     data = { hall, zoom, total };
+    const rr = (p.rr || '').trim();
+    const hh = (p.hh || '').trim();
+    slide.dataset.cleaners = p.cleaners === '1' ? '1' : '0';
+    $('rrText').textContent = rr;
+    $('hhText').textContent = hh;
+    $('hhName').textContent = (p.hn || '').trim() || 'Kingdom Hall';
+    $('rrRow').hidden = !rr;
+    $('hhRow').hidden = !hh;
+    $('clNone').hidden = !!(rr || hh);
+    $('cleanHall').textContent = fmt(hall);
+    $('cleanZoom').textContent = fmt(zoom);
     slide.dataset.theme = p.theme === 'dark' ? 'dark' : 'light';
     // Same colour behind the stage, so rounding at the edge of a scaled display never shows a line.
     document.documentElement.style.background = p.theme === 'dark' ? '#172036' : '#ffffff';
@@ -58,6 +70,7 @@
     $('hallNum').textContent = fmt(f.hallShown);
     $('zoomNum').textContent = fmt(f.zoomShown);
     $('totalNum').textContent = fmt(f.totalShown);
+    $('cleanTotal').textContent = fmt(f.totalShown);
   }
 
   const painted = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -100,7 +113,7 @@
     const api = createApi({ getPin: () => q.get('pin') || pinStore.get() });
     let wasFinal = null;
     api.subscribe((s) => {
-      setData({ hall: s.totals.hall, zoom: s.totals.zoom, total: s.totals.total, type: s.meeting.type, date: s.meeting.date, cong: s.congregation, theme: q.get('theme') || s.theme });
+      setData({ hall: s.totals.hall, zoom: s.totals.zoom, total: s.totals.total, type: s.meeting.type, date: s.meeting.date, cong: s.congregation, theme: q.get('theme') || s.theme, ...(s.cleaners ? { cleaners: '1', rr: s.cleaners.restrooms, hh: s.cleaners.hall, hn: s.cleaners.hallName } : {}) });
       if (s.meeting.finalized && wasFinal === false) play();
       else if (!playing || !s.meeting.finalized) draw(DURATION);
       wasFinal = s.meeting.finalized;

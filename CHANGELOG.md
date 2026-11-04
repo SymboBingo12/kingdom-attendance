@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Announce cleaners (optional).** **Settings → Cleaners on the video**: when on, the video's last slide shows the attendance total with the Kingdom Hall and Zoom breakdown on the left,
+  and the field service groups assigned to clean the restrooms and the hall on the right. Type the groups (for example `FSG 2`) before pressing **Finalize**; a group left empty is not shown.
+
 ## 0.4.1 · 2026-11-03
 
 ### Fixed

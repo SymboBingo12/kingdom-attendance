@@ -61,6 +61,8 @@ The v1 addresses `/count`, `/zoom`, `/dock` and `/history` still work and lead t
 3. **Zoom:** the number counts up.
 4. **Total:** the total, with both parts, held on screen.
 
+**Announce cleaners** (Settings, off by default) changes the last slide: the total with the Kingdom Hall and Zoom numbers on the left, and the field service groups assigned to clean the restrooms and the hall on the right. Set the groups before pressing Finalize.
+
 A still image of the last frame is saved next to it (tray → *Open Kingdom Hall Attendance* → *Open the videos folder*).
 
 ## Google Sheets (optional)

@@ -67,6 +67,14 @@
           ${seg('Video colours', 'theme', ['light', 'dark'], s.theme || 'light')}
           <button class="st-btn st-btn--secondary" data-folder="videos">Open the videos folder</button>
         </section>
+        <section class="st-card set"><h3 class="st-card__title">Cleaners on the video</h3>
+          ${sw('announceCleaners', s.announceCleaners, 'Announce cleaners', 'The last slide shows the attendance on the left and the groups that clean on the right')}
+          ${s.announceCleaners ? `<div class="lbl">Update these before each Finalize</div>
+          <label class="lbl">Restrooms<input class="field wide" id="clRest" maxlength="24" value="${UI.esc(s.cleanersRestrooms || '')}" placeholder="FSG 2" autocomplete="off"></label>
+          <label class="lbl">Hall<input class="field wide" id="clHall" maxlength="24" value="${UI.esc(s.cleanersHall || '')}" placeholder="FSG 3" autocomplete="off"></label>
+          <label class="lbl">Hall name on the slide<input class="field wide" id="clName" maxlength="30" value="${UI.esc(s.cleanersHallName || '')}" placeholder="Kingdom Hall" autocomplete="off"></label>
+          <p class="st-card__hint">A group left empty is not shown. The video is made when you press Finalize, so change the groups first.</p>` : ''}
+        </section>
         <section class="st-card set"><h3 class="st-card__title">Appearance</h3>
           <p class="st-card__hint">This screen and every phone's pages. Auto follows each phone or computer.</p>
           ${seg('Appearance', 'appearance', ['light', 'dark', 'auto'], s.appearance || 'light')}
@@ -164,9 +172,10 @@
     },
 
     async onChange(el, ctx) {
-      if (el.id !== 'congIn') return;
+      const key = { congIn: 'congregation', clRest: 'cleanersRestrooms', clHall: 'cleanersHall', clName: 'cleanersHallName' }[el.id];
+      if (!key) return;
       const mem = ctx.memory('settings');
-      try { mem.info = await ctx.api.post('/api/settings', { congregation: el.value }); ctx.note('Saved', 'ok'); } catch (err) { ctx.note(err.message); }
+      try { mem.info = await ctx.api.post('/api/settings', { [key]: el.value }); ctx.note('Saved', 'ok'); } catch (err) { ctx.note(err.message); }
     },
   };
 })();

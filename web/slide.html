@@ -49,6 +49,20 @@
   #L-total .chip { font-size: 40px; padding: 14px 36px; border-radius: 999px; background: var(--s-surface); border: 2px solid var(--s-line); color: var(--s-dim); }
   #L-total .chip b { color: var(--s-text); font-variant-numeric: tabular-nums; margin-left: 12px; }
 
+  /* Announce cleaners: the last slide shows the count on the left and who cleans on the right. */
+  .slide:not([data-cleaners="1"]) #L-clean { display: none; }
+  .slide[data-cleaners="1"] #L-total { display: none; }
+  #L-clean { display: grid; grid-template-columns: 1fr 12px 1fr; gap: 90px; align-items: center; padding: 0 170px 120px; }
+  #L-clean .side { display: grid; gap: 14px; align-content: center; }
+  #L-clean .bar { width: 12px; height: 640px; border-radius: 6px; background: rgba(var(--s-ring), .35); }
+  #L-clean .big { font-size: 300px; margin: 0 0 22px -6px; }
+  #L-clean .tag { font-size: 28px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--s-dim); margin-top: 10px; }
+  #L-clean .card { display: flex; align-items: center; gap: 36px; height: 132px; padding: 0 44px; border-radius: 30px; background: var(--s-surface); border: 2px solid var(--s-line); }
+  #L-clean .card svg { width: 84px; height: 84px; flex: none; color: rgb(var(--s-ring)); }
+  #L-clean .card .v { margin-left: auto; font-size: 84px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+  #L-clean .grp { display: grid; gap: 14px; }
+  #L-clean .none { font-size: 40px; color: var(--s-dim); }
+  #L-clean [hidden] { display: none; }
   #L-foot { top: auto; bottom: 0; height: 120px; display: flex; justify-content: space-between; align-items: center; padding: 0 170px; font-size: 28px; color: var(--s-dim); }
   #L-foot .rule { position: absolute; left: 170px; right: 170px; top: 0; height: 2px; background: var(--s-line); }
 </style>
@@ -94,6 +108,42 @@
     <div class="el parts" data-b="total" data-d=".35">
       <span class="chip">Kingdom Hall<b id="chipHall">0</b></span>
       <span class="chip">Zoom<b id="chipZoom">0</b></span>
+    </div>
+  </div>
+
+  <div class="layer" id="L-clean">
+    <div class="side">
+      <div class="el eyebrow" data-b="total" data-d=".05">Total attendance</div>
+      <div class="el num big" data-b="total" data-d=".1" id="cleanTotal">0</div>
+      <div class="el tag" data-b="total" data-d=".3">In person</div>
+      <div class="el card" data-b="total" data-d=".35">
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 31 32 10l26 21"/><path d="M12 27v27h40V27"/><path d="M27 54V38h10v16"/></svg>
+        <span class="v" id="cleanHall">0</span>
+      </div>
+      <div class="el tag" data-b="total" data-d=".45">Zoom</div>
+      <div class="el card" data-b="total" data-d=".5">
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="9" width="52" height="34" rx="4"/><path d="M22 55h20M32 43v12"/></svg>
+        <span class="v" id="cleanZoom">0</span>
+      </div>
+    </div>
+    <div class="el bar" data-b="total" data-d=".2"></div>
+    <div class="side">
+      <div class="el eyebrow" data-b="total" data-d=".05">Cleaners</div>
+      <div class="grp" id="rrRow">
+        <div class="el tag" data-b="total" data-d=".3">Restrooms</div>
+        <div class="el card" data-b="total" data-d=".35">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="19" cy="12" r="5"/><path d="M12 30l-3 17h6v11h8V47h6l-3-17c-.6-3-3-5-6-5h0c-3 0-5.4 2-6 5z"/><circle cx="46" cy="12" r="5"/><path d="M38 28v16h5v14h6V44h5V28c0-2-1.600-3-3.500-3h-9c-2 0-3.500 1-3.500 3z"/></svg>
+          <span class="v" id="rrText"></span>
+        </div>
+      </div>
+      <div class="grp" id="hhRow">
+        <div class="el tag" data-b="total" data-d=".45" id="hhName">Kingdom Hall</div>
+        <div class="el card" data-b="total" data-d=".5">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 24h11v22H8zM27 24h11v22H27zM46 24h11v22H46z"/><path d="M13 46v10M32 46v10M51 46v10M6 56h52"/></svg>
+          <span class="v" id="hhText"></span>
+        </div>
+      </div>
+      <div class="el none" data-b="total" data-d=".3" id="clNone" hidden>No cleaning groups set</div>
     </div>
   </div>
 

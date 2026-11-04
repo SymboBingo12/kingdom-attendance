@@ -123,6 +123,10 @@ const SETTING_KEYS = {
   congregation: (v) => (typeof v === 'string' ? v.trim().slice(0, 80) : undefined),
   theme: (v) => (['light', 'dark'].includes(v) ? v : undefined),
   appearance: (v) => (APPEARANCES.includes(v) ? v : undefined),
+  announceCleaners: (v) => (typeof v === 'boolean' ? v : undefined),
+  cleanersRestrooms: (v) => (typeof v === 'string' ? v.trim().slice(0, 24) : undefined),
+  cleanersHall: (v) => (typeof v === 'string' ? v.trim().slice(0, 24) : undefined),
+  cleanersHallName: (v) => (typeof v === 'string' ? v.trim().slice(0, 30) : undefined),
   openAtLogin: (v) => (typeof v === 'boolean' ? v : undefined),
   autoUpdate: (v) => (typeof v === 'boolean' ? v : undefined),
 };

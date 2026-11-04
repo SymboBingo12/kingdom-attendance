@@ -13,6 +13,10 @@ const DEFAULTS = {
   m3Folder: '',
   theme: 'light', // the video's colours
   appearance: 'light', // the app's own colours: light (Caio's default), dark, or auto (follow the device)
+  announceCleaners: false, // the video's last slide also says which field service groups clean
+  cleanersRestrooms: '', // e.g. "FSG 2"
+  cleanersHall: '',
+  cleanersHallName: 'Kingdom Hall',
   openAtLogin: true,
   autoUpdate: true, // download new versions from GitHub; installed on quit or "Restart and update"
 };
