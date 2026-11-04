@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.1 · 2026-11-04
 
 ### Changed
 - **Finalize asks who the cleaners are.** With Announce cleaners on, pressing **Finalize** (or **Update the video**) first asks which field service group (FSG 1 to 5) cleans the restrooms and which cleans the hall.
