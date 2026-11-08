@@ -147,3 +147,20 @@ test('Announce cleaners sends the picked groups to the renderer; off sends none'
   assert.equal(off.calls[0].cleaners, null);
   assert.equal(off.service.getState().cleaners, null);
 });
+
+test('a new day starts at zero and picks midweek or weekend by itself, even before anyone taps', () => {
+  const os = require('node:os');
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const { createService } = require('../src/core/service');
+  let day = new Date(2026, 10, 4, 20, 0); // Wednesday evening
+  const s = createService({ dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'att-day-')), now: () => day, getSettings: () => ({}) });
+  s.setZoom(9);
+  assert.equal(s.getState().meeting.type, 'midweek');
+  assert.equal(s.getState().totals.zoom, 9);
+  day = new Date(2026, 10, 8, 9, 0); // Sunday morning, nobody has tapped
+  const st = s.getState();
+  assert.equal(st.meeting.date, '2026-11-08');
+  assert.equal(st.meeting.type, 'weekend');
+  assert.equal(st.totals.total, 0);
+});

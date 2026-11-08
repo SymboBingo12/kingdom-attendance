@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.4 · 2026-11-08
+
+### Fixed
+- **Phones connecting.** The phone link and QR code no longer pick a virtual adapter (VirtualBox, WSL, VPN) over the Wi-Fi or cable address, which could send phones to an address that never opens. Settings → Phones lists this computer's other addresses to try, and reminds you to allow Private networks in the Windows firewall.
+- **A new day starts fresh by itself.** At midnight (and the moment the app is opened on a new day) the count goes back to zero and the meeting becomes midweek or weekend by the day of the week. Before, yesterday's numbers stayed on screen until someone tapped.
+
 ## 0.5.3 · 2026-11-04
 
 ### Added

@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { pickLanAddress, buildUrls } = require('../src/core/server');
+const { pickLanAddress, lanAddresses, buildUrls } = require('../src/core/server');
 const { onlyAddress } = require('../src/core/mdns');
 
 const v4 = (address, internal = false) => ({ family: 'IPv4', address, internal });
@@ -45,4 +45,16 @@ test('attendance.local is announced with only the current IPv4 address', () => {
   ];
   assert.deepEqual(onlyAddress(records, '192.168.1.23').map((r) => r.type + ' ' + (r.type === 'A' ? r.data : '')), ['SRV ', 'A 192.168.1.23']);
   assert.deepEqual(onlyAddress(records, null).map((r) => r.type), ['SRV']);
+});
+
+test('the phone link skips virtual adapters (VirtualBox, WSL, VPN) even when Windows lists them first', () => {
+  const ifaces = {
+    'VirtualBox Host-Only Network': [v4('192.168.56.1')],
+    'vEthernet (WSL)': [v4('172.28.64.1')],
+    Tailscale: [v4('100.80.1.2')],
+    'Wi-Fi': [v4('192.168.254.131')],
+  };
+  assert.equal(pickLanAddress(ifaces), '192.168.254.131');
+  assert.deepEqual(lanAddresses(ifaces).map((a) => a.name), ['Wi-Fi', 'VirtualBox Host-Only Network', 'vEthernet (WSL)', 'Tailscale']);
+  assert.deepEqual(buildUrls({ port: 4590, ip: '192.168.254.131', hostname: null, others: lanAddresses(ifaces).slice(1) }).others[0], { name: 'VirtualBox Host-Only Network', url: 'http://192.168.56.1:4590/' });
 });

@@ -52,26 +52,43 @@ function safeEqual(a, b) {
 
 // The address phones on the hall Wi-Fi can reach. 169.254.x.x is what Windows gives an adapter
 // that has no network, so it is never the right one.
-function pickLanAddress(interfaces) {
-  for (const list of Object.values(interfaces)) {
+// Network adapters that are not the Wi-Fi or cable the phones are on (virtual machines, WSL, VPNs, Bluetooth).
+const VIRTUAL = /vethernet|virtual|vmware|vbox|hyper-v|wsl|docker|tailscale|zerotier|hamachi|vpn|bluetooth|loopback|utun|\btun|\btap|veth|bridge|br-/i;
+
+// Every IPv4 address a phone could try, best first: real Wi-Fi/Ethernet before virtual adapters, home-style
+// 192.168.x.x before 10.x and 172.16-31.x. (The first adapter Windows lists is often a virtual one.)
+function lanAddresses(interfaces) {
+  const found = [];
+  for (const [name, list] of Object.entries(interfaces)) {
     for (const a of list || []) {
-      if (a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.')) return a.address;
+      if (a.family !== 'IPv4' || a.internal || a.address.startsWith('169.254.')) continue;
+      const [p, q] = a.address.split('.').map(Number);
+      const range = p === 192 && q === 168 ? 0 : p === 10 ? 1 : p === 172 && q >= 16 && q <= 31 ? 2 : 3;
+      const real = /wi-?fi|wlan|wireless|ethernet|^en\d|^eth\d/i.test(name) ? 0 : 1;
+      found.push({ name, address: a.address, score: (VIRTUAL.test(name) ? 100 : 0) + range * 2 + real, order: found.length });
     }
   }
-  return null;
+  return found.sort((x, y) => x.score - y.score || x.order - y.order).map(({ name, address }) => ({ name, address }));
+}
+
+function pickLanAddress(interfaces) {
+  const first = lanAddresses(interfaces)[0];
+  return first ? first.address : null;
 }
 
 const lanAddress = () => pickLanAddress(os.networkInterfaces());
+const lanAlternatives = () => lanAddresses(os.networkInterfaces()).slice(1);
 
 // The links people are given. They use the IP address because many Android phones can't open
 // ".local" names; the short name is offered as well for phones and PCs that can.
-function buildUrls({ port, ip, hostname }) {
+function buildUrls({ port, ip, hostname, others = [] }) {
   const suffix = port === 80 ? '' : `:${port}`;
   const host = ip || hostname || 'localhost';
   return {
     count: `http://${host}${suffix}/`,
     dock: `http://localhost${suffix}/desk`,
     named: hostname ? `http://${hostname}${suffix}/` : null,
+    others: others.map((o) => ({ name: o.name, url: `http://${o.address}${suffix}/` })), // other addresses of this PC, if the first link doesn't open
   };
 }
 
@@ -169,7 +186,7 @@ function createServer(service, { settings, webDir, mdns = true, host = null, goo
     return false;
   }
 
-  const urls = () => buildUrls({ port, ip: lanAddress(), hostname: announcer ? announcer.hostname : null });
+  const urls = () => buildUrls({ port, ip: lanAddress(), hostname: announcer ? announcer.hostname : null, others: lanAlternatives() });
 
   function serveFile(res, file) {
     const resolved = path.resolve(webDir, file);
@@ -376,4 +393,4 @@ function createServer(service, { settings, webDir, mdns = true, host = null, goo
   };
 }
 
-module.exports = { createServer, isLoopback, pickLanAddress, buildUrls };
+module.exports = { createServer, isLoopback, pickLanAddress, lanAddresses, buildUrls };

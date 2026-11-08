@@ -44,6 +44,10 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
   let render = { status: 'idle', message: '', savedTo: null };
   let sync = null; // Google Sheets sync, when the app has one
 
+  // Midnight passes while the app is open: start the new day and tell every open screen.
+  const midnight = setInterval(() => { if (rollNow()) events.emit('change', getState()); }, 30 * 1000);
+  midnight.unref();
+
   // Phones may resend a tap after a Wi-Fi blip; each tap id counts once.
   const seen = new Set();
   const seenOrder = [];
@@ -53,7 +57,19 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     if (seenOrder.length > SEEN_TAPS) seen.delete(seenOrder.shift());
   };
 
+  // A new day starts a fresh count (its type, midweek or weekend, comes from the day of the week), whether or not anyone
+  // has tapped yet: screens and the AV desk never show yesterday's numbers.
+  const rollNow = () => {
+    const r = M.rollIfNewDay(meeting, now());
+    if (!r.rolled) return false;
+    meeting = r.meeting;
+    store.saveCurrent(meeting);
+    if (render.status !== 'rendering') render = { status: 'idle', message: '', savedTo: null };
+    return true;
+  };
+
   const getState = () => {
+    rollNow();
     const s = getSettings();
     return {
       meeting, totals: M.totals(meeting), render, congregation: s.congregation || '', theme: s.theme || 'light', appearance: appearanceOf(s),
@@ -80,7 +96,7 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     return getState();
   };
 
-  const today = () => M.rollIfNewDay(meeting, now()).meeting;
+  const today = () => { rollNow(); return meeting; };
 
   // The names used by today's meeting: the list, then visitors added today under the list's visitor group.
   const snapshot = () => {

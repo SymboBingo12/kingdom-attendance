@@ -86,6 +86,8 @@
           ${linkRow(mem, 'count', 'The one link for everyone', info.links.count)}
           ${linkRow(mem, 'named', 'Short name (iPhones and computers)', info.links.named)}
           <p class="st-card__hint">The address can change from week to week. If a saved link stops working, scan the QR code again.</p>
+          ${(info.links.others || []).length ? `<p class="st-card__hint"><b>Phone still can't connect?</b> This computer has other addresses. Try one of these:</p>${info.links.others.map((o, i) => linkRow(mem, `other${i}`, UI.esc(o.name), o.url)).join('')}` : ''}
+          <p class="st-card__hint">Phones must be on the same Wi-Fi as this computer. If Windows asks about the firewall the first time, choose <b>Private networks</b>.</p>
         </section>
         <section class="st-card set"><h3 class="st-card__title">OBS dock</h3>
           ${linkRow(mem, 'dock', 'Dock address (opens the AV desk)', info.links.dock)}
@@ -167,7 +169,9 @@
         if (!r.ok) ctx.note('Wait until the video is finished, then try again.');
         return;
       }
-      const url = mem.info && mem.info.links[b.dataset.copy || b.dataset.open];
+      const key = b.dataset.copy || b.dataset.open;
+      const other = /^other(\d+)$/.exec(key || '');
+      const url = mem.info && (other ? (mem.info.links.others[Number(other[1])] || {}).url : mem.info.links[key]);
       if (b.dataset.copy && url) {
         if (await copy(url)) { mem.copied = b.dataset.copy; ctx.redraw(); setTimeout(() => { mem.copied = null; ctx.redraw(); }, 1500); }
       }
