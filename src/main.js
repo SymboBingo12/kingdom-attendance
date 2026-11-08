@@ -45,7 +45,7 @@ if (!app.requestSingleInstanceLock()) {
 
   function slideUrl({ meeting, totals, congregation, theme, cleaners }) {
     const q = new URLSearchParams({
-      hall: totals.hall, zoom: totals.zoom, total: totals.total, type: meeting.type, date: meeting.date, cong: congregation, theme,
+      hall: totals.hall, zoom: totals.zoom, total: totals.total, vis: (meeting.khVisitors || {}).n || 0, type: meeting.type, date: meeting.date, cong: congregation, theme,
     });
     if (cleaners) for (const [k, v] of Object.entries({ cleaners: '1', rr: cleaners.restrooms, hh: cleaners.hall, hn: cleaners.hallName })) q.set(k, v);
     return `http://127.0.0.1:${server.port}/slide?${q}`;

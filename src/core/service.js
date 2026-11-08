@@ -153,6 +153,10 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
       return edit(M.setHall(today(), value));
     },
 
+    setKhVisitors(value, included) {
+      return edit(M.setKhVisitors(today(), value, included));
+    },
+
     setZoom(value) {
       return edit(M.setZoom(today(), value));
     },

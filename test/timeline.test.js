@@ -59,3 +59,18 @@ test('beats crossfade: the hall fades in as the intro fades out', () => {
   assert.equal(vis(20, 'total', 0).o, 1);
   assert.equal(vis(20, 'intro', 0).o, 0);
 });
+
+test('with Kingdom Hall visitors there is one more slide after Zoom; the video stays 20 s and the total is untouched', () => {
+  const { BEATS_VISITORS, settledAt } = require('../web/shared/timeline');
+  const dv = { ...d, visitors: 6 };
+  assert.deepEqual(BEATS_VISITORS.visitors, [8.5, 11.5]);
+  assert.deepEqual(BEATS_VISITORS.total, [11.5, 20]);
+  assert.equal(frameAt(10, dv).beat, 'visitors');
+  assert.equal(frameAt(10, d).beat, 'total', 'no visitors: the same four slides as before');
+  assert.equal(frameAt(11, dv).visitorsShown, 6);
+  assert.equal(frameAt(20, dv).totalShown, 127, 'visitors are not added to the total here');
+  assert.ok(settledAt(dv) > settledAt(d) && settledAt(dv) < 20);
+  assert.deepEqual(frameAt(settledAt(dv), dv), frameAt(20, dv));
+  assert.equal(vis(10, 'visitors', 0, d).o, 0, 'the visitors slide is invisible when there are none');
+  assert.ok(vis(10, 'visitors', 0.3, dv).o > 0);
+});

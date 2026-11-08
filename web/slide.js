@@ -2,6 +2,7 @@
 
 // Draws the attendance video. The numbers come from the query string:
 //   /slide?hall=104&zoom=23&total=127&type=weekend&date=2026-11-01&cong=…&theme=light
+//   &vis=5    Kingdom Hall visitors: one more slide after Zoom (not part of the total)
 //   &cleaners=1&rr=FSG 2&hh=FSG 3&hn=Kingdom Hall   the last slide also names the groups that clean
 //   &t=6       draw that moment (default: the final frame)
 //   &play=1    play in real time
@@ -9,7 +10,7 @@
 // window.renderAt(t) draws a moment and resolves after it is painted; the video renderer uses it.
 
 (function () {
-  const { DURATION, frameAt, vis, clamp } = window.AttendanceTimeline;
+  const { DURATION, frameAt, vis, clamp, settledAt } = window.AttendanceTimeline;
   const { hallArt, platformArt, remoteArt } = window.AttendanceArt;
   const q = new URLSearchParams(location.search);
   const $ = (id) => document.getElementById(id);
@@ -20,6 +21,7 @@
   $('artIntro').innerHTML = hallArt({ id: 'a1' });
   $('artHall').innerHTML = platformArt({ id: 'a2' });
   $('artZoom').innerHTML = remoteArt({ id: 'a3' });
+  $('artVis').innerHTML = hallArt({ id: 'a4' });
 
   const num = (v) => clamp(Math.round(Number(v) || 0), 0, 99999);
   let data = {};
@@ -33,7 +35,7 @@
     const [y, m, d] = String(p.date || '').split('-').map(Number);
     const date = y ? new Date(y, m - 1, d) : new Date();
     const dateText = date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    data = { hall, zoom, total };
+    data = { hall, zoom, total, visitors: num(p.vis) };
     const rr = (p.rr || '').trim();
     const hh = (p.hh || '').trim();
     slide.dataset.cleaners = p.cleaners === '1' ? '1' : '0';
@@ -60,7 +62,7 @@
   function draw(t) {
     const f = frameAt(t, data);
     for (const el of els) {
-      const v = vis(t, el.dataset.b, parseFloat(el.dataset.d || 0));
+      const v = vis(t, el.dataset.b, parseFloat(el.dataset.d || 0), data);
       let tf = `translateY(${((1 - v.e) * 20 - v.x * 10).toFixed(2)}px)`;
       if (el.dataset.s) tf = `scale(${((0.97 + 0.03 * v.e) * (1 + 0.03 * v.p)).toFixed(4)})`;
       if (el.dataset.r) tf = `scale(${(0.92 + 0.08 * v.e).toFixed(4)})`;
@@ -69,11 +71,13 @@
     }
     $('hallNum').textContent = fmt(f.hallShown);
     $('zoomNum').textContent = fmt(f.zoomShown);
+    $('visNum').textContent = fmt(f.visitorsShown);
     $('totalNum').textContent = fmt(f.totalShown);
     $('cleanTotal').textContent = fmt(f.totalShown);
   }
 
   const painted = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  window.settledAt = () => settledAt(data); // when the last slide stops moving; the renderer repeats that frame from then on
   window.drawAt = (t) => { draw(t); return true; };
   window.renderAt = async (t) => {
     await document.fonts.ready;
@@ -113,7 +117,7 @@
     const api = createApi({ getPin: () => q.get('pin') || pinStore.get() });
     let wasFinal = null;
     api.subscribe((s) => {
-      setData({ hall: s.totals.hall, zoom: s.totals.zoom, total: s.totals.total, type: s.meeting.type, date: s.meeting.date, cong: s.congregation, theme: q.get('theme') || s.theme, ...(s.cleaners ? { cleaners: '1', rr: s.cleaners.restrooms, hh: s.cleaners.hall, hn: s.cleaners.hallName } : {}) });
+      setData({ hall: s.totals.hall, zoom: s.totals.zoom, total: s.totals.total, vis: (s.meeting.khVisitors || {}).n || 0, type: s.meeting.type, date: s.meeting.date, cong: s.congregation, theme: q.get('theme') || s.theme, ...(s.cleaners ? { cleaners: '1', rr: s.cleaners.restrooms, hh: s.cleaners.hall, hn: s.cleaners.hallName } : {}) });
       if (s.meeting.finalized && wasFinal === false) play();
       else if (!playing || !s.meeting.finalized) draw(DURATION);
       wasFinal = s.meeting.finalized;

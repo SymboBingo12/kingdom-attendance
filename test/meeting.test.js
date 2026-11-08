@@ -4,14 +4,14 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   newMeeting, meetingType, applyTap, setZoom, totals, finalize, unlock, rollIfNewDay,
-  upgrade, setHall, setMark, setCleaners, bumpUnnamed, addVisitor, dropMarks,
+  upgrade, setHall, setKhVisitors, setMark, setCleaners, bumpUnnamed, addVisitor, dropMarks,
 } = require('../src/core/meeting');
 
 const sunday = new Date(2026, 10, 1); // Sun 1 Nov 2026
 
 test('a new meeting starts at zero, typed from the weekday', () => {
   assert.deepEqual(newMeeting(sunday), {
-    date: '2026-11-01', type: 'weekend', lanes: { left: 0, center: 0, right: 0 }, hall: 0, zoom: 0, finalized: false, finalizedAt: null, videoStale: false,
+    date: '2026-11-01', type: 'weekend', lanes: { left: 0, center: 0, right: 0 }, hall: 0, khVisitors: { n: 0, included: null }, zoom: 0, finalized: false, finalizedAt: null, videoStale: false,
     marks: {}, unnamed: 0, visitors: [], cleaners: { restrooms: null, hall: null },
   });
   assert.equal(meetingType(new Date(2026, 10, 5)), 'midweek'); // Thu
@@ -147,4 +147,15 @@ test('counting overall: the typed Kingdom Hall total is added to the totals', ()
   const old = newMeeting(new Date(2026, 10, 4));
   delete old.hall;
   assert.equal(totals(old).hall, 0, 'a meeting saved before this setting still counts');
+});
+
+test('Kingdom Hall visitors typed as a number: added, or only noted when the hall count already has them', () => {
+  const m = setHall(newMeeting(new Date(2026, 10, 4)), 30);
+  assert.equal(totals(setKhVisitors(m, 5, false)).hall, 35, 'not in the count yet: added');
+  assert.equal(totals(setKhVisitors(m, 5, true)).hall, 30, 'already in the count: only noted');
+  assert.throws(() => setKhVisitors(m, 5), { code: 'BAD_VISITORS' });
+  assert.deepEqual(setKhVisitors(setKhVisitors(m, 5, true), 0).khVisitors, { n: 0, included: null });
+  const old = newMeeting(new Date(2026, 10, 4));
+  delete old.khVisitors;
+  assert.equal(totals(old).hall, 0, 'a meeting saved before this still counts');
 });

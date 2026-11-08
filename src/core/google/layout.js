@@ -31,7 +31,7 @@ const groupOrder = (groups) => {
 };
 
 const totalsOf = (m) => {
-  let hall = (m.lanes ? m.lanes.left + m.lanes.center + m.lanes.right : 0) + (m.hall || 0) + (m.unnamed || 0);
+  let hall = (m.lanes ? m.lanes.left + m.lanes.center + m.lanes.right : 0) + (m.hall || 0) + (m.unnamed || 0) + (m.khVisitors && m.khVisitors.included === false ? m.khVisitors.n : 0);
   let zoom = m.zoom || 0;
   for (const { where, n } of Object.values(m.marks || {})) { if (where === 'kh') hall += n; else zoom += n; }
   return { hall, zoom, total: hall + zoom };
@@ -81,7 +81,11 @@ function meetingSheet(m) {
   if (!people.length) for (const l of ['left', 'center', 'right']) names.push(t.put([l[0].toUpperCase() + l.slice(1), '', (m.lanes || {})[l] || '']));
   if (m.hall) names.push(t.put(['Kingdom Hall (overall count)', '', m.hall]));
   if (m.zoom) names.push(t.put(['Zoom (typed total)', m.zoom, '']));
-  const visitors = t.put(['KINGDOM HALL VISITORS', '', m.unnamed || '']);
+  // Visitors typed as a number: added here, or only noted when the Kingdom Hall count already has them.
+  const kv = m.khVisitors || { n: 0, included: null };
+  const added = (m.unnamed || 0) + (kv.included === false ? kv.n : 0);
+  const note = kv.included === true && kv.n ? ` (${kv.n} already counted above)` : '';
+  const visitors = t.put([`KINGDOM HALL VISITORS${note}`, '', added || '']);
   const sub = t.put(['SUB-TOTAL', `=SUM(C${first}:C${visitors})`, `=SUM(D${first}:D${visitors})`]);
   const grand = t.put(['GRAND TOTAL', `=SUM(C${sub}:D${sub})`]);
   // styles, later ones win: numbers, names, group bands, the visitors row, the totals

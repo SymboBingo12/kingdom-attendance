@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.6 · 2026-11-08
+
+### Added
+- **Kingdom Hall visitors in the count.** When counting by section or overall, a Kingdom Hall visitors box sits under the hall count. The first time it goes above zero the app asks whether the visitors are already in the Kingdom Hall count. If yes, they are only noted; if no, they are added. The answer can be changed on the same card. The Google sheet shows them on the KINGDOM HALL VISITORS row.
+- **A Visitors slide in the video.** When there are Kingdom Hall visitors, a slide with their number comes after Zoom. It is separate from the total slide, which looks the same as before, and the video stays 20 seconds. With no visitors the video is unchanged.
+
 ## 0.5.5 · 2026-11-08
 
 ### Changed

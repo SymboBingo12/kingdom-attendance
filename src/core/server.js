@@ -28,7 +28,7 @@ const TYPES = {
   '.woff2': 'font/woff2',
 };
 const STATUS = {
-  BAD_LANE: 400, BAD_DELTA: 400, BAD_ZOOM: 400, BAD_HALL: 400, BAD_TYPE: 400, BAD_BODY: 400, BAD_MARK: 400, BAD_NAME: 400, BAD_CLEANERS: 400, BAD_LIST: 400, BAD_FILE: 400,
+  BAD_LANE: 400, BAD_DELTA: 400, BAD_ZOOM: 400, BAD_HALL: 400, BAD_VISITORS: 400, BAD_TYPE: 400, BAD_BODY: 400, BAD_MARK: 400, BAD_NAME: 400, BAD_CLEANERS: 400, BAD_LIST: 400, BAD_FILE: 400,
   NOT_FINAL: 409, LOCKED: 409, BUSY: 409, GOOGLE_NOT_SET_UP: 400, GOOGLE_NO_NAME: 400, GOOGLE_NO_CHOICE: 409,
 };
 // Only the AV computer itself may change the meeting's state, the list or the settings.
@@ -226,6 +226,7 @@ function createServer(service, { settings, webDir, mdns = true, host = null, goo
   const actions = {
     '/api/tap': (b) => service.tap(b.lane, b.delta, tapIdOf(b)),
     '/api/hall': (b) => service.setHall(b.value),
+    '/api/khvisitors': (b) => service.setKhVisitors(b.value, b.included),
     '/api/zoom': (b) => service.setZoom(b.value),
     '/api/mark': (b) => service.mark(b.id, b.where === undefined ? null : b.where, b.n, tapIdOf(b)),
     '/api/unnamed': (b) => service.unnamed(b.delta, tapIdOf(b)),

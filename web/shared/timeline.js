@@ -7,13 +7,18 @@
   const DURATION = 20;
   const FPS = 30;
   const BEATS = { intro: [0, 2.5], hall: [2.5, 5.5], zoom: [5.5, 8.5], total: [8.5, 20], foot: [2.5, 20] };
+  // With Kingdom Hall visitors there is one more slide, after Zoom. It is only a number of its own: the total slide is the same,
+  // and the video stays 20 s because the total simply holds for less time.
+  const BEATS_VISITORS = { intro: [0, 2.5], hall: [2.5, 5.5], zoom: [5.5, 8.5], visitors: [8.5, 11.5], total: [11.5, 20], foot: [2.5, 20] };
+  const beatsFor = (d) => (d && Number(d.visitors) > 0 ? BEATS_VISITORS : BEATS);
   const COUNT_DELAY = 0.3; // numbers start counting this long into their beat
   const COUNT_TIME = 1.8;
   const ENTER = 0.8;
   const EXIT = 0.5;
 
   // From here to the end every frame is identical: the total has finished counting and everything has arrived.
-  const SETTLED = BEATS.total[0] + COUNT_DELAY + COUNT_TIME;
+  const settledAt = (d) => beatsFor(d).total[0] + COUNT_DELAY + COUNT_TIME;
+  const SETTLED = settledAt();
 
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const easeOut = (p) => 1 - Math.pow(1 - p, 4);
@@ -22,30 +27,35 @@
 
   function frameAt(t, d) {
     t = clamp(t, 0, DURATION);
+    const beats = beatsFor(d);
     let beat = 'total';
-    for (const k of ['intro', 'hall', 'zoom', 'total']) {
-      const [a, b] = BEATS[k];
+    for (const k of ['intro', 'hall', 'zoom', 'visitors', 'total']) {
+      if (!beats[k]) continue;
+      const [a, b] = beats[k];
       if (t >= a && t < b) { beat = k; break; }
     }
     return {
       beat,
-      hallShown: countUp(t, BEATS.hall[0] + COUNT_DELAY, d.hall),
-      zoomShown: countUp(t, BEATS.zoom[0] + COUNT_DELAY, d.zoom),
-      totalShown: countUp(t, BEATS.total[0] + COUNT_DELAY, d.total),
+      hallShown: countUp(t, beats.hall[0] + COUNT_DELAY, d.hall),
+      zoomShown: countUp(t, beats.zoom[0] + COUNT_DELAY, d.zoom),
+      visitorsShown: beats.visitors ? countUp(t, beats.visitors[0] + COUNT_DELAY, d.visitors) : 0,
+      totalShown: countUp(t, beats.total[0] + COUNT_DELAY, d.total),
     };
   }
 
   // How visible one element of a beat is at t: o = opacity, e = arrival 0..1, x = departure 0..1, p = progress through the beat.
   // The departure straddles the boundary, so the next beat fades in while this one fades out.
-  function vis(t, beat, delay) {
-    const [a, b] = BEATS[beat];
+  function vis(t, beat, delay, d) {
+    const beats = beatsFor(d);
+    if (!beats[beat]) return { o: 0, e: 0, x: 0, p: 0 }; // the visitors slide when there are none
+    const [a, b] = beats[beat];
     const last = beat === 'total' || beat === 'foot';
     const e = easeOut(clamp((t - a - delay) / (beat === 'intro' ? 1 : ENTER)));
     const x = last ? 0 : easeInOut(clamp((t - (b - 0.3)) / EXIT));
     return { o: e * (1 - x), e, x, p: clamp((t - a) / (b - a)) };
   }
 
-  const api = { DURATION, FPS, BEATS, SETTLED, frameAt, vis, clamp };
+  const api = { DURATION, FPS, BEATS, BEATS_VISITORS, beatsFor, SETTLED, settledAt, frameAt, vis, clamp };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.AttendanceTimeline = api;
 })(typeof window !== 'undefined' ? window : globalThis);

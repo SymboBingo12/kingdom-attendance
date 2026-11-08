@@ -83,6 +83,7 @@ async function renderAttendance({ slideUrl, outDir, fileBase, ffmpegPath = ffmpe
     const frames = Math.round(DURATION * FPS);
     const prof = { start: Date.now(), draw: 0, paint: 0, write: 0, resized: 0 };
     let last = null;
+    const settleAt = Number(await wc.executeJavaScript('window.settledAt()')) || SETTLED; // later when there is a visitors slide
     let settled = null; // once nothing moves (the held total), the same frame is written again
     for (let i = 0; i <= frames; i++) {
       if (settled) {
@@ -107,7 +108,7 @@ async function renderAttendance({ slideUrl, outDir, fileBase, ffmpegPath = ffmpe
       last = img;
       const bitmap = img.toBitmap();
       // Settle one frame late, so the first fully settled frame has really been painted.
-      if ((i - 1) / FPS >= SETTLED) settled = bitmap;
+      if ((i - 1) / FPS >= settleAt) settled = bitmap;
       await write(ffmpeg.ff.stdin, bitmap);
       prof.write += Date.now() - t0;
       onProgress((i + 1) / (frames + 1));

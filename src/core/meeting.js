@@ -30,6 +30,7 @@ function newMeeting(d, type) {
     type: type || meetingType(d),
     lanes: { left: 0, center: 0, right: 0 },
     hall: 0, // the Kingdom Hall total typed in when counting overall (Settings → Counting)
+    khVisitors: { n: 0, included: null }, // visitors at the hall counted by number; included: are they already in the Kingdom Hall count?
     zoom: 0,
     finalized: false,
     finalizedAt: null,
@@ -43,8 +44,8 @@ function newMeeting(d, type) {
 
 // Meetings saved by 0.2.0 have no name fields; they count exactly as before.
 function upgrade(m) {
-  if (m.marks && m.visitors && typeof m.unnamed === 'number' && m.cleaners && typeof m.hall === 'number') return m;
-  return { hall: 0, marks: {}, unnamed: 0, visitors: [], cleaners: { restrooms: null, hall: null }, ...m };
+  if (m.marks && m.visitors && typeof m.unnamed === 'number' && m.cleaners && typeof m.hall === 'number' && m.khVisitors) return m;
+  return { hall: 0, khVisitors: { n: 0, included: null }, marks: {}, unnamed: 0, visitors: [], cleaners: { restrooms: null, hall: null }, ...m };
 }
 
 const MAX_HOUSEHOLD = 20;
@@ -66,6 +67,14 @@ function whole(value, label) {
 // Counting overall: the Kingdom Hall total typed in as one number.
 function setHall(m, value) {
   return { ...m, hall: whole(value, 'Hall') };
+}
+
+// Visitors at the Kingdom Hall, as a number. `included` says whether the Kingdom Hall count already has them
+// (then they are only noted); if not, they are added to it.
+function setKhVisitors(m, value, included) {
+  const n = whole(value, 'Visitors');
+  if (n > 0 && typeof included !== 'boolean') throw new MeetingError('BAD_VISITORS', 'Say whether the visitors are already in the Kingdom Hall count.');
+  return { ...m, khVisitors: { n, included: n > 0 ? included : null } };
 }
 
 function setZoom(m, value) {
@@ -122,7 +131,7 @@ function dropMarks(m, keepIds) {
 
 function totals(m) {
   const up = upgrade(m);
-  let hall = up.lanes.left + up.lanes.center + up.lanes.right + up.hall + up.unnamed;
+  let hall = up.lanes.left + up.lanes.center + up.lanes.right + up.hall + up.unnamed + (up.khVisitors.included === false ? up.khVisitors.n : 0);
   let zoom = up.zoom;
   for (const { where, n } of Object.values(up.marks)) {
     if (where === 'kh') hall += n;
@@ -145,6 +154,6 @@ function rollIfNewDay(m, now) {
 }
 
 module.exports = {
-  LANES, MeetingError, dateKey, meetingType, newMeeting, applyTap, setHall, setZoom, totals, finalize, unlock, rollIfNewDay,
+  LANES, MeetingError, dateKey, meetingType, newMeeting, applyTap, setHall, setKhVisitors, setZoom, totals, finalize, unlock, rollIfNewDay,
   upgrade, setMark, setCleaners, bumpUnnamed, addVisitor, dropMarks,
 };
