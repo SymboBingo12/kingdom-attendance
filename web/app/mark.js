@@ -70,8 +70,16 @@
           <p class="st-card__hint">The Zoom host adds up the "(n)" names and types the total.</p>
           <div class="zstep"><button data-zoom="-1" aria-label="One fewer on Zoom" ${lock}>−</button><input id="zoomIn" data-live type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" value="${m.zoom}" aria-label="Zoom total" ${lock}><button class="plus" data-zoom="1" aria-label="One more on Zoom" ${lock}>+</button></div>
         </div>
-        ${ctx.wide && ctx.who && ctx.who.local ? '' /* the banner above already says it */ : `<p class="dim small" style="text-align:center">No publisher list yet, so counting is by column.${ctx.who && ctx.who.local ? ' <button class="st-btn st-btn--quiet" data-go="setup">Add a list</button>' : ''}</p>`}
       </div>`;
+  }
+
+  // Counting by list, but there is no list yet.
+  function noList(state, ctx) {
+    const av = ctx.who && ctx.who.local;
+    return `${UI.bar('Mark attendance', UI.typeName(state.meeting.type), UI.livePill(state, ctx.live))}
+      <div class="pad"><div class="st-card"><h3 class="st-card__title">No publisher list yet</h3>
+        <p class="st-card__hint">${av ? 'Add your list to mark people by name, or choose another way to count in Settings.' : 'The AV computer has not added the publisher list yet.'}</p>
+        ${av ? '<button class="st-btn st-btn--primary st-btn--block" data-go="setup">Add the list</button><button class="st-btn st-btn--quiet st-btn--block" data-go="settings">Counting settings</button>' : ''}</div></div>`;
   }
 
   const setHall = (ctx, value) => ctx.act('/api/hall', { value: Math.min(MAX_ZOOM, Math.max(0, value)) });
@@ -81,6 +89,7 @@
     render({ state, ctx }) {
       const mem = ctx.memory('mark');
       if (!mem.filter) mem.filter = 'all';
+      if (state.countMode === 'list' && !state.roster.length) return noList(state, ctx);
       return state.mode === 'names' ? names(state, ctx) : columns(state, ctx);
     },
 

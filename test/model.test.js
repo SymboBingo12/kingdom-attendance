@@ -65,3 +65,10 @@ test('sidebar: with no list, the AV computer sees "Add publisher list" and a ban
   assert.equal(sidebar({ av: true, named: false, count: 0, route: 'setup' }).items.find((i) => i.current).to, 'list');
   assert.equal(sidebar({ av: true, named: true, count: 3, route: 'setup' }).items.find((i) => i.current).to, 'list');
 });
+
+test('sidebar: counting by section or overall has no "add your list" reminder', () => {
+  const s = sidebar({ av: true, named: false, count: 0, route: 'home', listMode: false });
+  assert.equal(s.addList, false);
+  assert.equal(s.noListBanner, false);
+  assert.equal(s.items.find((i) => i.to === 'list').go, 'setup', 'the list stays reachable');
+});

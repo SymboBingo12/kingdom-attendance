@@ -164,3 +164,21 @@ test('a new day starts at zero and picks midweek or weekend by itself, even befo
   assert.equal(st.meeting.type, 'weekend');
   assert.equal(st.totals.total, 0);
 });
+
+test('counting is one mode at a time: list, section or overall', () => {
+  const os = require('node:os');
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const { createService } = require('../src/core/service');
+  let mode;
+  const s = createService({ dataDir: fs.mkdtempSync(path.join(os.tmpdir(), 'att-mode-')), now: () => new Date(2026, 10, 4, 20, 0), getSettings: () => ({ countMode: mode }) });
+  assert.equal(s.getState().countMode, 'sections', 'no list yet: by section');
+  s.importRoster([{ name: 'Santos, Ana', group: 'Publishers', size: 1 }]);
+  assert.equal(s.getState().countMode, 'list', 'a list and nothing chosen: by list, as before');
+  assert.equal(s.getState().mode, 'names');
+  mode = 'overall';
+  assert.equal(s.getState().countMode, 'overall');
+  assert.equal(s.getState().mode, 'columns', 'with a list kept but another mode chosen, people are not marked by name');
+  mode = 'list';
+  assert.equal(s.getState().mode, 'names');
+});

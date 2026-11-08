@@ -68,12 +68,15 @@ function createService({ dataDir, now = () => new Date(), getSettings = () => lo
     return true;
   };
 
+  // How attendance is counted: by the publisher list, by section (Left, Center, Right) or as one overall number. One at a time.
+  const countMode = (s) => (['list', 'sections', 'overall'].includes(s.countMode) ? s.countMode : (roster.length ? 'list' : 'sections'));
+
   const getState = () => {
     rollNow();
     const s = getSettings();
     return {
       meeting, totals: M.totals(meeting), render, congregation: s.congregation || '', theme: s.theme || 'light', appearance: appearanceOf(s),
-      countMode: s.countMode === 'overall' ? 'overall' : 'sections', roster, visitors: meeting.visitors, mode: roster.length ? 'names' : 'columns',
+      countMode: countMode(s), roster, visitors: meeting.visitors, mode: countMode(s) === 'list' && roster.length ? 'names' : 'columns',
       cleaners: cleanersFor(s, meeting),
       // Phones get only the headline; the account and links stay on the AV computer.
       google: sync ? (({ connected, pending, syncing, error }) => ({ connected, pending, syncing, error }))(sync.status()) : null,

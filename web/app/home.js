@@ -21,7 +21,7 @@
     const m = state.meeting;
     const t = state.totals;
     const when = UI.longDate(m.date);
-    if (av && !named) {
+    if (av && !named && state.countMode === 'list') {
       return `<section class="welcome">${UI.disc(ART.listArt, 'st-rest st-arrive')}<div>
           <div class="dim">${UI.esc(state.congregation || 'Kingdom Hall Attendance')} · ${when}</div><h2>Add your publisher list</h2>
           <p>Upload your attendance sheet once. Then attendants mark each person at the Kingdom Hall or on Zoom, and History keeps every name for the circuit overseer.</p>
@@ -32,6 +32,7 @@
     const people = state.roster.length;
     const progress = named
       ? M.groupsOf(state.roster).map(([g, ps]) => { const k = M.countMarked(ps, m.marks); return meter(g, k, ps.length, `${k} of ${ps.length}`); }).join('')
+      : state.countMode === 'overall' ? [meter('Kingdom Hall', t.hall, t.total, t.hall), meter('Zoom', t.zoom, t.total, t.zoom)].join('')
       : ['left', 'center', 'right'].map((l) => meter(l[0].toUpperCase() + l.slice(1), m.lanes[l], t.hall, m.lanes[l])).join('');
     return `<section class="herocard"><div><div class="eyebrow">${UI.esc(state.congregation || 'Kingdom Hall Attendance')}</div><h2>${UI.typeName(m.type)}</h2>
           <div class="meta"><span>${when}</span>${UI.livePill(state, ctx.live)}</div>
@@ -40,7 +41,7 @@
       <section class="stats${named ? '' : ' three'}">${stat('kh', 'Kingdom Hall', t.hall)}${stat('zm', 'Zoom', t.zoom)}${stat('', 'Total', t.total)}
         ${named ? stat('', 'Marked', `${marked}<span class="of"> of ${people}</span>`, `<div class="meter"><i style="width:${people ? Math.round((marked / people) * 100) : 0}%"></i></div>`) : ''}</section>
       <section class="cols2">
-        <div class="panel"><h3>${named ? 'By group' : 'By column'}</h3>${progress}</div>
+        <div class="panel"><h3>${named ? 'By group' : state.countMode === 'overall' ? 'By attendance' : 'By column'}</h3>${progress}</div>
         <div class="panel"><h3>Quick actions</h3>
           ${action('mark', 'mark', 'Mark attendance', named ? `${people - marked} ${people - marked === 1 ? 'person' : 'people'} not marked yet` : 'Count Left, Center and Right')}
           ${av ? action('desk', 'desk', 'Finalize and make the video', 'Near the end of the meeting') : ''}
@@ -55,7 +56,7 @@
       const named = state.mode === 'names';
       if (ctx.wide) return `<div class="pad">${wide(state, ctx, av, named)}</div>`;
       const marked = Object.keys(state.meeting.marks || {}).length;
-      const first = !named && av
+      const first = !named && av && state.countMode === 'list'
         ? `<div class="st-card st-card--raised" style="display:grid;gap:var(--space-3)">
             <div style="display:flex;gap:var(--space-4);align-items:center">${UI.disc(ART.listArt)}<div><b style="font-size:var(--text-lg)">Add your publisher list</b><p class="dim small" style="margin:4px 0 0">Mark each person at the Kingdom Hall or on Zoom, like your attendance sheet.</p></div></div>
             <button class="st-btn st-btn--primary st-btn--main st-btn--block" data-go="setup">Add the list</button>

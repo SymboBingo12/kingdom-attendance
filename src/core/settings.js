@@ -13,7 +13,7 @@ const DEFAULTS = {
   m3Folder: '',
   theme: 'light', // the video's colours
   appearance: 'light', // the app's own colours: light (Caio's default), dark, or auto (follow the device)
-  countMode: 'sections', // counting without a publisher list: 'sections' (Left, Center, Right) or 'overall' (one Kingdom Hall number)
+  // countMode ('list', 'sections' or 'overall') has no default: until it is chosen, a computer with a publisher list counts by list and one without counts by section
   announceCleaners: false, // the video's last slide also says which field service groups clean
   cleanersHallName: 'Kingdom Hall', // the hall's name on that slide; the groups are picked per meeting on the AV desk
   openAtLogin: true,

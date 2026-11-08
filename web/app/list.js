@@ -171,7 +171,7 @@
 
   views.list = {
     render({ state, ctx }) {
-      if (state.mode !== 'names') { ctx.go('setup'); return ''; }
+      if (!state.roster.length) { ctx.go('setup'); return ''; }
       return listScreen(state, ctx);
     },
     async onClick(b, ctx) {

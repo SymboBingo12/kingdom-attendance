@@ -52,8 +52,10 @@
       <p class="st-card__hint">After every finalized meeting, the names and numbers are written to two Google Sheets. <b>Names are then stored on this computer and in the Google account you connect.</b> Connect only an account the congregation has agreed to. Past meetings keep updating if they are changed.</p>${body}</section>`;
   }
 
-  function render(info, mem) {
+  function render(info, mem, state) {
     const s = info.settings;
+    const mode = state.countMode;
+    const people = state.roster.length;
     const u = info.update || { state: 'idle' };
     return `${UI.bar('Settings')}
       <div class="pad setpad">
@@ -68,9 +70,10 @@
           <button class="st-btn st-btn--secondary" data-folder="videos">Open the videos folder</button>
         </section>
         <section class="st-card set"><h3 class="st-card__title">Counting</h3>
-          <p class="st-card__hint">How attendance is counted when there is no publisher list (with a list, each person is marked by name).</p>
-          <div class="st-seg" role="group" aria-label="Counting">${[['sections', 'By section'], ['overall', 'Overall']].map(([v, l]) => `<button data-count="${v}" aria-pressed="${(s.countMode || 'sections') === v}">${l}</button>`).join('')}</div>
-          <p class="st-card__hint">${(s.countMode || 'sections') === 'overall' ? '<b>Overall</b>: type the Kingdom Hall total and the Zoom total.' : '<b>By section</b>: tap Left, Center and Right at the hall, and type the Zoom total.'}</p>
+          <p class="st-card__hint">How attendance is counted. Pick one; they can't be mixed. Choose it before the meeting starts.</p>
+          <div class="st-seg" role="group" aria-label="Counting">${[['list', 'By list'], ['sections', 'By section'], ['overall', 'Overall']].map(([v, l]) => `<button data-count="${v}" aria-pressed="${mode === v}">${l}</button>`).join('')}</div>
+          <p class="st-card__hint">${{ list: '<b>By list</b>: attendants mark each person at the Kingdom Hall or on Zoom.', sections: '<b>By section</b>: tap Left, Center and Right at the hall, and type the Zoom total.', overall: '<b>Overall</b>: type the Kingdom Hall total and the Zoom total.' }[mode]}</p>
+          ${mode === 'list' || people ? `<div class="lrow"><div class="lrow__text"><span class="dim small">Publisher list</span><code>${people ? `${people} people` : 'Not added yet'}</code></div><div class="lrow__btns"><button class="st-btn st-btn--secondary" data-go="${people ? 'list' : 'setup'}">${people ? 'Open' : 'Add the list'}</button></div></div>` : `<div class="lrow"><div class="lrow__text"><span class="dim small">Publisher list</span><code>Not used when counting this way</code></div><div class="lrow__btns"><button class="st-btn st-btn--secondary" data-go="setup">Add the list</button></div></div>`}
         </section>
         <section class="st-card set"><h3 class="st-card__title">Cleaners on the video</h3>
           ${sw('announceCleaners', s.announceCleaners, 'Announce cleaners', 'The last slide shows the attendance on the left and the field service groups that clean on the right')}
@@ -117,7 +120,7 @@
   views.settings = {
     render({ ctx }) {
       const mem = ctx.memory('settings');
-      return mem.info ? render(mem.info, mem) : `${UI.bar('Settings')}<div class="pad"><p class="dim" style="text-align:center">Loading…</p></div>`;
+      return mem.info ? render(mem.info, mem, ctx.state) : `${UI.bar('Settings')}<div class="pad"><p class="dim" style="text-align:center">Loading…</p></div>`;
     },
 
     // Loads the settings when the screen opens, and keeps the update status fresh while it stays open.

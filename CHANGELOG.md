@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.5 · 2026-11-08
+
+### Changed
+- **One way of counting at a time.** Settings → Counting now has **By list**, **By section** and **Overall**, and only one can be used. Until one is chosen, a computer with a publisher list counts by list and one without counts by section, as before.
+- **No "add your publisher list" reminder unless you count by list.** With By section or Overall the banner, the sidebar button and the Home prompt are gone; the list stays available in Settings → Counting and the Publisher list screen.
+
 ## 0.5.4 · 2026-11-08
 
 ### Fixed

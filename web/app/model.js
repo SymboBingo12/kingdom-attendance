@@ -25,8 +25,8 @@
   const countMarked = (people, marks) => people.filter((p) => marks[p.id]).length;
 
   // The desktop sidebar: which screens it lists, which one is lit, and the "no list yet" prompts.
-  // av: this is the AV computer; named: a publisher list is in use; route: the screen showing now.
-  function sidebar({ av, named, count, route }) {
+  // av: this is the AV computer; named: there is a publisher list; listMode: counting is by list (the "add your list" prompts only show then); route: the screen showing now.
+  function sidebar({ av, named, count, route, listMode = true }) {
     const lit = route === 'setup' ? 'list' : route;
     const items = [
       { to: 'home', label: 'Home' },
@@ -41,7 +41,7 @@
       );
     }
     for (const i of items) { i.go = i.go || i.to; i.current = i.to === lit; }
-    return { items, addList: !!av && !named, noListBanner: !!av && !named && lit !== 'list', pin: !!av };
+    return { items, addList: !!av && listMode && !named, noListBanner: !!av && listMode && !named && lit !== 'list', pin: !!av };
   }
 
   const api = { groupsOf, visible, countMarked, sidebar };

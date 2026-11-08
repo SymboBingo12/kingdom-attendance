@@ -80,7 +80,7 @@
     side.hidden = !wide;
     if (!wide) return null;
     const av = !!(who && who.local);
-    const sb = window.AttendanceModel.sidebar({ av, named: state.mode === 'names', count: state.roster.length, route: name });
+    const sb = window.AttendanceModel.sidebar({ av, named: state.roster.length > 0, listMode: state.countMode === 'list', count: state.roster.length, route: name });
     const mem = ctx.memory('side');
     if (sb.pin && (!mem.tried || mem.stale) && !mem.loading) {
       Object.assign(mem, { tried: true, stale: false, loading: true });
@@ -101,7 +101,7 @@
     return sb;
   }
 
-  const noListBanner = () => `<div class="nolist" role="status">${UI.icon('info')}<span><b>No publisher list yet.</b> Counting is ${state.countMode === 'overall' ? 'by the overall total' : 'by Left, Center and Right'}. Add your list to mark people by name.</span><button class="st-btn st-btn--primary" data-go="setup">Add the list</button></div>`;
+  const noListBanner = () => `<div class="nolist" role="status">${UI.icon('info')}<span><b>No publisher list yet.</b> Counting by list needs one. Add it, or pick another way to count in Settings.</span><button class="st-btn st-btn--primary" data-go="setup">Add the list</button></div>`;
 
   // Redraws the screen, keeping the focused field (and its cursor) so typing isn't interrupted by live updates.
   function draw() {
